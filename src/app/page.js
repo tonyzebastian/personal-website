@@ -1,6 +1,6 @@
 import ListItem from '@/components/list/ListItem';
 import Title from '@/components/list/Title';
-import {projects, experience, musings, designAreas, now, experience_small} from '@/lib/content';
+import {projects, experience, musings, designAreas, now} from '@/lib/content';
 import HighlightLink from '@/components/ui/HighlightLink';
 import CopyEmailLink from '@/components/ui/CopyEmailLink';
 import Hero from '@/components/Hero';

@@ -56,15 +56,24 @@ export const projects = [
 export const experience = [
   {
     name: 'Sundial',
-    date: 'Designer',
-    link: 'https://sundial.so/',
+    date: 'Design Engineer',
+    link: '/project/sundial',
     image: '/icons/sundial.png',
     secondaryText: "Oct'25 - Present",
+    projects: [
+      {
+        title: "Coming soon",
+        description: "Projects at Sundial will be shared soon.",
+        images: [],
+        link: "/project/sundial",
+        requiresPassword: true
+      }
+    ]
   },
   {
     name: 'Postman',
     date: 'Senior Product Designer',
-    link: 'https://www.postman.com/',
+    link: '/project/postman',
     image: '/icons/postman.png',
     secondaryText: "Jun'22 - Jun'25",
     projects: [
@@ -73,21 +82,20 @@ export const experience = [
         description: "New Trial experiences, API Observability & more.",
         images: ["/images/projects/live_collections_1.png", "/images/projects/trial_02.mp4"],
         link: "/project/postman",
-        requiresPassword: true
+        requiresPassword: false
       }
     ]
   },
   { 
     name: 'Hypersonix', 
     date: 'Lead Product Designer', 
-    link: 'https://hypersonix.ai/',
+    link: '/project/hypersonix',
     image: '/icons/hypersonix.png',
     secondaryText: "Oct'20 - May'22",
     projects: [
       {
         title: "A summary of my experience",
         description: "0 to 1 projects, Design system, App studio & more.",
-        
         images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
         link: "/project/hypersonix",
         requiresPassword: false

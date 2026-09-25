@@ -1,4 +1,4 @@
-export const posttrialdata = {
+export const newTrialData = {
   // Page-level configuration
   page: {
     title: "New Trial Experiences",

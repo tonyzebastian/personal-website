@@ -13,14 +13,14 @@ export default function ExperienceWithProjects({
   projects = []
 }) {
   const [isLinkHovered, setIsLinkHovered] = useState(false);
+  const isExternal = link && !link.startsWith('/');
 
   return (
     <div>
       
       <Link 
         href={link}
-        target="_blank"
-        rel="noopener noreferrer"
+        {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
         className="block"
         onMouseEnter={() => setIsLinkHovered(true)}
         onMouseLeave={() => setIsLinkHovered(false)}
@@ -29,7 +29,7 @@ export default function ExperienceWithProjects({
           <Title
             image={image}
             title={name}
-            isExternal={true}
+            isExternal={isExternal}
             fromFontWeight={600}
             isHovered={isLinkHovered}
           />

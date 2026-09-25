@@ -1,4 +1,4 @@
-export const postobvdata = {
+export const apiObservabilityData = {
   // Page-level configuration
   page: {
     title: "Live Collections: First observability feature in Postman",

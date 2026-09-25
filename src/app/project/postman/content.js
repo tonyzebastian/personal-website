@@ -12,6 +12,7 @@ export const postmanData = {
   projects: [
     {
       title: "New Trial Experiences",
+      duration: "2024",
       link: "/project/newtrialexp",
       sections: [
         {
@@ -28,17 +29,8 @@ export const postmanData = {
       ]
     },
     {
-      title: "Live Collections",
-      link: "/project/api-observability",
-      sections: [
-        {
-          description: "A 0 to 1 project that introduced observability capabilities in Postman, enabling users to monitor and track their API collections in real-time.",
-          images: ["/images/projects/live_collections_1.png", "/images/projects/live_collections_2.png"]
-        }
-      ]
-    },
-    {
-      title: "Mini Projects",
+      title: "Improving Environment usage experience",
+      duration: "2023 - 2024",
       link: "/project/miniprojects",
       sections: [
         {
@@ -52,6 +44,17 @@ export const postmanData = {
             "Secret Field - Enhanced security for sensitive data.",
             "App Loading Interaction - Created delightful loading states."
           ]
+        }
+      ]
+    },
+    {
+      title: "Live Collections",
+      duration: "2022 - 2023",
+      link: "/project/api-observability",
+      sections: [
+        {
+          description: "A 0 to 1 project that introduced observability capabilities in Postman, enabling users to monitor and track their API collections in real-time.",
+          images: ["/images/projects/live_collections_1.png", "/images/projects/live_collections_2.png"]
         }
       ]
     }

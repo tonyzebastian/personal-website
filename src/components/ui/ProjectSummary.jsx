@@ -94,7 +94,7 @@ export default function ProjectSummary({
 
   // For non-password projects, use Link for proper navigation
   return (
-    <Link href={`${projectLink}?dialog=true`} className="block">
+    <Link href={projectLink} className="block">
       <div className="space-y-4 cursor-pointer group">
         <div>
           <div className="flex items-center gap-2">

@@ -4,51 +4,7 @@ import Image from 'next/image';
 import { useState, useCallback, useEffect, memo, useMemo, Suspense } from 'react';
 import { X, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-const isVideo = (src) => /\.(mp4|mov|webm|ogg|avi)$/i.test(src);
-const isGif = (src) => src.endsWith('.gif');
-
-// ============================================================================
-// MEDIA COMPONENTS
-// ============================================================================
-
-const MediaItem = memo(({ src, alt, width, height, onClick, className = "" }) => {
-  const combinedClasses = useMemo(() =>
-    `w-full h-auto rounded-xl border border-slate-100 ${className}`,
-    [className]
-  );
-
-  if (isVideo(src)) {
-    return (
-      <video
-        src={src}
-        className={combinedClasses}
-        autoPlay
-        muted
-        loop
-        playsInline
-        onClick={onClick}
-      />
-    );
-  }
-
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      width={width}
-      height={height}
-      className={combinedClasses}
-      unoptimized={isGif(src)}
-      onClick={onClick}
-    />
-  );
-});
-MediaItem.displayName = 'MediaItem';
+import MediaItem, { isVideo } from '@/components/ui/MediaItem';
 
 const MediaOverlay = memo(({ selectedItem, onClose }) => {
   if (!selectedItem) return null;

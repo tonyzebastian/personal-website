@@ -1,49 +1,17 @@
-import { postobvdata } from './content';
+import { apiObservabilityData } from './content';
 import { CaseStudyPage } from '@/components/CaseStudyTemplate';
+import { sharedViewport, generateProjectMetadata } from '@/lib/metadata';
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1.0,
-  maximumScale: 1.0,
-  userScalable: false,
-};
+export const viewport = sharedViewport;
 
-export const metadata = {
+export const metadata = generateProjectMetadata({
   title: 'Live Collections',
   description: 'First observability feature in Postman. Turning static API documentation into living entities that stayed in sync with real API traffic.',
+  slug: 'api-observability',
   keywords: 'observability, API documentation, live collections, Postman, product design',
-  author: 'Tony Sebastian',
-  robots: 'index,follow',
-  alternates: {
-    canonical: 'https://tonyzeb.design/project/api-observability',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@tonyzebastian',
-    creator: '@tonyzebastian',
-    title: 'Live Collections',
-    description: 'First observability feature in Postman. Turning static API documentation into living entities.',
-    image: 'https://tonyzeb.design/preview.png',
-    imageAlt: 'Live Collections Case Study',
-  },
-  openGraph: {
-    title: 'Live Collections',
-    description: 'First observability feature in Postman. Turning static API documentation into living entities.',
-    url: 'https://tonyzeb.design/project/api-observability',
-    siteName: 'Tony Sebastian',
-    images: [{
-      url: 'https://tonyzeb.design/preview.png',
-      alt: 'Live Collections Case Study',
-      width: 1200,
-      height: 630,
-    }],
-    locale: 'en_US',
-    type: 'website',
-  },
-};
+});
 
 export default function ApiObservabilityPage() {
-  const { page, projects } = postobvdata;
-
+  const { page, projects } = apiObservabilityData;
   return <CaseStudyPage pageData={page} projects={projects} />;
 }

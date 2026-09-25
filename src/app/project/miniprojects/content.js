@@ -1,8 +1,7 @@
-export const postminidata = {
-  // Page-level configuration
+export const miniProjectsData = {
   page: {
-    title: "Mini Projects",
-    description: "A collection of mini projects I worked on during my time at Postman that made a huge impact.",
+    title: "Improving Environment Usage Experience",
+    description: "Improving environment management workflows and enhancing the user experience across different parts of the Postman product.",
     role: "Lead Product Designer",
     company: "Postman",
     logo: "/icons/postman.png",
