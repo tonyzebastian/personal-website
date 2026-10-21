@@ -82,3 +82,49 @@ li {
     #FAFAFF 100%
   );
 }
+
+/* Experience timeline (ported from the Sundial "What's New" page).
+   --line-top / --line-height / --timeline-progress are set from
+   TimelineScrollProgress. The line runs from the first to the last node. */
+.exp-timeline::before,
+.exp-timeline::after {
+  content: "";
+  position: absolute;
+  left: 11.5px;
+  width: 1px;
+  top: var(--line-top, 0px);
+  height: var(--line-height, 0px);
+}
+
+.exp-timeline::before {
+  background: #e3ded6;
+}
+
+.exp-timeline::after {
+  background: #875e8c;
+  opacity: 0.95;
+  transform: scaleY(var(--timeline-progress, 0));
+  transform-origin: top;
+  transition: transform 80ms linear;
+}
+
+.exp-timeline-dot {
+  box-sizing: border-box;
+  border: 1px solid rgba(135, 94, 140, 0.5);
+  background: #fff;
+  box-shadow: 0 0 0 3px #fff;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.exp-timeline-dot[data-reached="true"] {
+  border-color: #875e8c;
+  background: #875e8c;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px rgba(135, 94, 140, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exp-timeline::after,
+  .exp-timeline-dot {
+    transition: none;
+  }
+}
