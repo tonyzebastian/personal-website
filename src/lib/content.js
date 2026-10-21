@@ -57,10 +57,10 @@ export const experience = [
   {
     name: 'Sundial',
     slug: 'sundial',
-    date: 'Designer',
+    date: 'Lead Designer',
     link: 'https://sundial.so/',
     image: '/icons/sundial.png',
-    secondaryText: "Oct'25 - Present",
+    secondaryText: "Oct'25 - Oct'26",
     items: [],
   },
   {
