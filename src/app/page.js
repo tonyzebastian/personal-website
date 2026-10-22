@@ -4,7 +4,6 @@ import {projects, experience, musings, designAreas, now, experience_small} from 
 import HighlightLink from '@/components/ui/HighlightLink';
 import CopyEmailLink from '@/components/ui/CopyEmailLink';
 import Hero from '@/components/Hero';
-import ExperienceWithProjects from '@/components/ui/ExperienceWithProjects';
 
 export const viewport = {
   width: 'device-width',
@@ -67,40 +66,24 @@ export default function HomePage() {
 
         <div className="mx-auto max-w-2xl px-8  pb-16">
           <div className='flex flex-col gap-6 pt-8'>
-          {/* Projects Section */}
-          <div className="my-6">
-            <h2 className="mb-2">Pet Projects</h2>
-            <div className="space-y-1">
-              {projects.map(project => (
-                <ListItem 
-                  key={project.link}
-                  image={project.image}
-                  title={project.name}
-                  isExternal={true}
-                  primaryText={project.date}
-                  secondaryText={project.secondaryText}
-                  href={project.link}
-                />
-              ))}
-            </div>
-          </div>
-
           {/* Experience Section */}
           <div className="my-6">
-            <h2 className="mb-4">Experience</h2>
+            <h2 className="mb-2">Experience</h2>
             <div>
-              {experience.map(exp => (
-                <ExperienceWithProjects
-                  key={exp.link}
-                  name={exp.name}
-                  date={exp.date}
-                  link={exp.link}
-                  image={exp.image}
-                  secondaryText={exp.secondaryText}
-                  projects={exp.projects || []}
-                />
-              ))}
-              <div className="flex flex-col md:flex-row items-start md:items-center pt-2 gap-6 transition-all">
+              <div className="space-y-1">
+                {experience.map(exp => (
+                  <ListItem
+                    key={exp.link}
+                    image={exp.image}
+                    title={exp.name}
+                    isExternal={true}
+                    primaryText={exp.date}
+                    secondaryText={exp.secondaryText}
+                    href={exp.link}
+                  />
+                ))}
+              </div>
+              <div className="flex flex-col md:flex-row items-start md:items-center pt-4 gap-6 transition-all">
                 {designAreas.map((area, index) => (
                   <a 
                     key={index} 
@@ -118,6 +101,24 @@ export default function HomePage() {
                 ))}
                 <span className="font-sans text-slate-500 text-sm md:-ml-2">and more.</span>
               </div>
+            </div>
+          </div>
+
+          {/* Projects Section */}
+          <div className="my-6">
+            <h2 className="mb-2">Pet Projects</h2>
+            <div className="space-y-1">
+              {projects.map(project => (
+                <ListItem 
+                  key={project.link}
+                  image={project.image}
+                  title={project.name}
+                  isExternal={true}
+                  primaryText={project.date}
+                  secondaryText={project.secondaryText}
+                  href={project.link}
+                />
+              ))}
             </div>
           </div>
 
