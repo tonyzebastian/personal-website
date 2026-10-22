@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import MediaGrid from './MediaGrid';
+import ViewLine from './ViewLine';
 
 // A curved branch from the timeline into the heading, as on the home page
 // (omitted when hideNode is set, e.g. a company's only item at the end of the
@@ -16,14 +16,7 @@ export default function ExperienceItem({ title, description, images = [], link, 
           <h3 className="shrink-0 text-sm text-slate-900 transition-all group-hover:font-semibold group-focus-visible:font-semibold">
             {title}
           </h3>
-          <span
-            className="h-px flex-1 origin-left scale-x-0 bg-[#c8c0cc] transition-transform duration-300 ease-out delay-150 group-hover:scale-x-100 group-focus-visible:scale-x-100 [@media(hover:none)]:scale-x-100"
-            aria-hidden
-          />
-          <span className="flex shrink-0 items-center gap-1 text-xs text-slate-600 opacity-0 transition-opacity duration-200 delay-0 group-hover:opacity-100 group-hover:delay-[450ms] group-focus-visible:opacity-100 group-focus-visible:delay-[450ms] [@media(hover:none)]:opacity-100">
-            View project
-            <ArrowRight size={12} aria-hidden />
-          </span>
+          <ViewLine />
         </div>
         <p className="text-slate-600 mt-1 text-xs">{description}</p>
       </div>

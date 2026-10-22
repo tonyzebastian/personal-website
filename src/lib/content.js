@@ -61,6 +61,7 @@ export const experience = [
     link: 'https://sundial.so/',
     image: '/icons/sundial.png',
     secondaryText: "Oct'25 - Oct'26",
+    description: "A Sequoia-backed AI analytics startup founded by Meta executives, including Julie Zhuo, Meta's former VP of Design. I lead design across the product.",
     items: [],
   },
   {
@@ -70,6 +71,7 @@ export const experience = [
     link: 'https://www.postman.com/',
     image: '/icons/postman.png',
     secondaryText: "Jun'22 - Jun'25",
+    description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
     items: [
       {
         title: "New Trial Experiences",
@@ -107,14 +109,12 @@ export const experience = [
     link: 'https://hypersonix.ai/',
     image: '/icons/hypersonix.png',
     secondaryText: "Oct'20 - May'22",
-    items: [
-      {
-        title: "A summary of my experience",
-        description: "0 to 1 projects, Design system, App studio & more.",
-        images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
-        link: "/project/hypersonix",
-      },
-    ],
+    description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
+    caseStudy: {
+      link: "/project/hypersonix",
+      images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
+    },
+    items: [],
     projects: [
       {
         title: "A summary of my experience",
