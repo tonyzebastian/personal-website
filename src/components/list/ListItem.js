@@ -30,8 +30,10 @@ const ListItem = ({
       {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className="block"
     >
+      {/* The side borders are always reserved (transparent) so hovering only
+          changes their colour; adding them on hover shifted the contents 1px. */}
       <div
-        className="flex flex-col md:flex-row items-start md:items-center justify-between py-3 rounded -mx-4 px-4 md:hover:bg-slate-50 md:hover:border-l md:hover:border-r"
+        className="flex flex-col md:flex-row items-start md:items-center justify-between py-3 rounded -mx-4 px-[15px] border-l border-r border-transparent md:hover:bg-slate-50 md:hover:border-gray-200"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
