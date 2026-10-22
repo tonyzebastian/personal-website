@@ -48,6 +48,13 @@ module.exports = {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
+  			timeline: {
+  				purple: '#875e8c',
+  				blush: '#fcf3f2',
+  				peach: '#fff7f5',
+  				clay: '#f8f6f3',
+  				line: '#e3ded6'
+  			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

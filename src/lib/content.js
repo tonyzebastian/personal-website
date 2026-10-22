@@ -56,17 +56,42 @@ export const projects = [
 export const experience = [
   {
     name: 'Sundial',
-    date: 'Designer',
+    slug: 'sundial',
+    date: 'Lead Designer',
     link: 'https://sundial.so/',
     image: '/icons/sundial.png',
-    secondaryText: "Oct'25 - Present",
+    secondaryText: "Oct'25 - Oct'26",
+    description: "A Sequoia-backed AI analytics startup founded by Meta executives, including Julie Zhuo, Meta's former VP of Design. I lead design across the product.",
+    items: [],
   },
   {
     name: 'Postman',
+    slug: 'postman',
     date: 'Senior Product Designer',
     link: 'https://www.postman.com/',
     image: '/icons/postman.png',
     secondaryText: "Jun'22 - Jun'25",
+    description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
+    items: [
+      {
+        title: "New Trial Experiences",
+        description: "Designed new trial experiences that improved user awareness by 27% and conversion by 5%.",
+        images: ["/images/projects/trial_01.png", "/images/projects/trial_02.mp4"],
+        link: "/project/newtrialexp",
+      },
+      {
+        title: "Live Collections",
+        description: "A 0 to 1 project that brought API observability into Postman, letting users monitor their collections in real time.",
+        images: ["/images/projects/live_collections_1.png", "/images/projects/live_collections_2.png"],
+        link: "/project/api-observability",
+      },
+      {
+        title: "Mini Projects",
+        description: "Smaller but impactful improvements: environment management, secret fields and app loading interactions.",
+        images: ["/images/projects/mini_project_02.mp4", "/images/projects/mini_proj_01.png"],
+        link: "/project/miniprojects",
+      },
+    ],
     projects: [
       {
         title: "Projects",
@@ -79,10 +104,17 @@ export const experience = [
   },
   { 
     name: 'Hypersonix', 
+    slug: 'hypersonix',
     date: 'Lead Product Designer', 
     link: 'https://hypersonix.ai/',
     image: '/icons/hypersonix.png',
     secondaryText: "Oct'20 - May'22",
+    description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
+    caseStudy: {
+      link: "/project/hypersonix",
+      images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
+    },
+    items: [],
     projects: [
       {
         title: "A summary of my experience",
