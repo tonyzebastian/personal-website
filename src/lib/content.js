@@ -33,18 +33,6 @@ export const projects = [
     image: '/icons/resume.png',
   },
   {
-    name: 'ScriptFlow',
-    date: 'GPT for your words and ElevenLabs for your voice',
-    link: 'https://scriptflow.vercel.app/',
-    image: '/icons/scriptflow.png',
-  },
-  {
-    name: 'Figma Recap',
-    date: 'Every edit, every design— At a glance',
-    link: 'https://www.figmarecap.in/',
-    image: '/icons/figmarecap.png',
-  },
-  {
     name: 'Abstract Illustration Library',
     date: 'A library of free to use illustrations',
     link: 'https://abstract-library.framer.website/',
