@@ -38,7 +38,6 @@ This is a personal portfolio website for Tony Sebastian, a visual product design
 - **PostCSS** - CSS processing
 
 ### Performance & Analytics
-- **@vercel/speed-insights** - Performance monitoring
 - **Next.js Image Optimization** - Built-in image optimization
 
 ## Project Structure
@@ -175,10 +174,13 @@ All content is exported from `src/lib/content.js`:
 
 ## Deployment
 
-### Vercel (Recommended)
-- Optimized for Vercel deployment
-- Speed Insights integration included
-- Automatic deployments from Git
+### Cloudflare Pages
+- Deployed to Cloudflare Pages (project `tonyzebdesign`); pushes to Git trigger builds and pull requests get preview deployments
+- Static export: `output: 'export'` in `next.config.mjs`, so `npm run build` writes the site to `out/`, which is the build output directory
+- Images are unoptimized (`images.unoptimized: true`) because there is no Next.js image server on a static host
+- Static export rules out server features: API routes, middleware, ISR and on-demand image optimization
+- Node.js 22 or newer (see `engines` in `package.json` and `.nvmrc`)
+- Vercel is no longer used; Vercel Speed Insights and Analytics were removed
 
 ### Build Configuration
 - ESLint errors ignored during builds for flexibility
@@ -194,7 +196,6 @@ All content is exported from `src/lib/content.js`:
 - Structured data for social sharing
 
 ### Performance
-- Speed Insights tracking
 - Core Web Vitals optimization
 - Progressive loading strategies
 
