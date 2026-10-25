@@ -60,11 +60,11 @@ export default function ExperiencePage() {
           <div className="relative">
             <TimelineBranches />
             <div className="relative z-10 flex flex-col gap-16">
-              {experience.map((company, index) => (
+              {experience.filter((company) => company.timeline !== false).map((company, index, list) => (
                 <CompanyGroup
                   key={company.slug}
                   company={company}
-                  isLastCompany={index === experience.length - 1}
+                  isLastCompany={index === list.length - 1}
                 />
               ))}
             </div>

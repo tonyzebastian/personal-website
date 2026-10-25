@@ -1,9 +1,8 @@
-import ListItem from '@/components/list/ListItem';
-import Title from '@/components/list/Title';
-import {projects, experience, musings, designAreas, now, experience_small} from '@/lib/content';
-import HighlightLink from '@/components/ui/HighlightLink';
-import CopyEmailLink from '@/components/ui/CopyEmailLink';
 import Hero from '@/components/Hero';
+import Row from '@/components/Row';
+import ShowMore from '@/components/ShowMore';
+import Contact from '@/components/Contact';
+import { experience, projects, musings } from '@/lib/content';
 
 export const viewport = {
   width: 'device-width',
@@ -51,117 +50,58 @@ export const metadata = {
 
 };
 
+// Musings shown before "View more".
+const MUSINGS_SHOWN = 3;
+
+function Section({ id, title, children }) {
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-2">
+      <h2 id={id}>{title}</h2>
+      <div>{children}</div>
+    </section>
+  );
+}
+
+const musingRow = (musing) => (
+  <Row key={musing.link} href={musing.link} title={musing.name} meta={[musing.date]} />
+);
+
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-2xl px-8 pt-8 pb-16">
-          <Hero />
-          <div className='flex flex-col gap-6 pt-8'>
-          {/* Experience Section */}
-          <div className="my-6">
-            <h2 className="mb-2">Experience</h2>
-            <div>
-              <div className="space-y-1">
-                {experience.map(exp => (
-                  <ListItem
-                    key={exp.link}
-                    image={exp.image}
-                    title={exp.name}
-                    isExternal={true}
-                    primaryText={exp.date}
-                    secondaryText={exp.secondaryText}
-                    href={exp.link}
-                  />
-                ))}
-              </div>
-              <div className="flex flex-col md:flex-row items-start md:items-center pt-4 gap-6 transition-all">
-                {designAreas.map((area, index) => (
-                  <a 
-                    key={index} 
-                    href={area.link}
-                    target={area.isExternal ? "_blank" : "_self"}
-                    rel={area.isExternal ? "noopener noreferrer" : ""}
-                    className="group no-underline"
-                  >
-                    <Title 
-                      title={area.title}
-                      image={area.image}
-                      isExternal={area.isExternal}
-                    />
-                  </a>
-                ))}
-                <span className="font-sans text-slate-500 text-sm md:-ml-2">and more.</span>
-              </div>
-            </div>
-          </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-16 px-6 pt-8 pb-24 md:px-8">
+      <Hero />
 
-          {/* Projects Section */}
-          <div className="my-6">
-            <h2 className="mb-2">Pet Projects</h2>
-            <div className="space-y-1">
-              {projects.map(project => (
-                <ListItem 
-                  key={project.link}
-                  image={project.image}
-                  title={project.name}
-                  isExternal={true}
-                  primaryText={project.date}
-                  secondaryText={project.secondaryText}
-                  href={project.link}
-                />
-              ))}
-            </div>
-          </div>
+      <Section id="experience" title="Experience">
+        {experience.map((job) => (
+          <Row
+            key={job.slug}
+            href={job.link}
+            icon={job.image}
+            title={job.name}
+            meta={[job.period, job.role]}
+          />
+        ))}
+      </Section>
 
+      <Section id="projects" title="Pet Projects">
+        {projects.map((project) => (
+          <Row
+            key={project.name}
+            href={project.link}
+            icon={project.image}
+            title={project.name}
+            meta={[project.description]}
+          />
+        ))}
+      </Section>
 
-          {/* Musings Section */}
-          <div className="my-6">
-            <h2 className="mb-2">Musings</h2>
-            <div className="space-y-1">
-              {musings.map(musing => (
-                <ListItem
-                  key={musing.link}
-                  title={musing.name}
-                  isExternal={false}
-                  primaryText={musing.date}
-                  secondaryText={musing.secondaryText}
-                  href={musing.link}
-                />
-              ))}
-            </div>
-          </div>
+      <Section id="musings" title="Musings">
+        <ShowMore more={musings.slice(MUSINGS_SHOWN).map(musingRow)}>
+          {musings.slice(0, MUSINGS_SHOWN).map(musingRow)}
+        </ShowMore>
+      </Section>
 
-          {/* Now Section */}
-          <div className="my-6">
-            <h2 className="mb-2">Now</h2>
-            <div className="space-y-4">
-              {now.map((item, index) => (
-                <p key={index} className="text-slate-700">
-                  {Array.isArray(item.description) ? (
-                    item.description.map((part, i) => (
-                      typeof part === 'string' ? part : (
-                        <HighlightLink key={i} href={part.href}>
-                          {part.text}
-                        </HighlightLink>
-                      )
-                    ))
-                  ) : (
-                    item.description
-                  )}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          {/* Contact Section */}
-          <div className="mt-6 mb-8">
-            <h2 className="mb-2">Contact</h2>
-            <div className="text-slate-700 font-sans text-sm">
-            Reach me on <HighlightLink href='https://x.com/tonyzeb_design'> twitter </HighlightLink> or{' '}
-            <CopyEmailLink />
-            </div>
-          </div>
-
-          </div>
+      <Contact />
     </div>
   );
 }

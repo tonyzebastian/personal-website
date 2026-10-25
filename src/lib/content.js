@@ -22,21 +22,28 @@ export const metadata = {
 export const projects = [
   {
     name: 'UX Nudges',
-    date: 'A collection of nudges from apps',
+    description: 'A collection of nudges from apps',
     link: 'https://ux-nudge.web.app/',
     image: '/icons/nudges.png',
   },
   {
     name: 'Resume Builder',
-    date: 'The simplest resumer builder',
+    description: 'The simplest resumer builder',
     link: 'https://resume-builder-dun-rho.vercel.app/',
     image: '/icons/resume.png',
   },
   {
     name: 'Abstract Illustration Library',
-    date: 'A library of free to use illustrations',
+    description: 'A library of free to use illustrations',
     link: 'https://abstract-library.framer.website/',
     image: '/icons/abstract.png',
+  },
+  {
+    // Details and its own panel to come.
+    name: 'Juny Made',
+    description: 'Studio, details soon',
+    link: null,
+    image: null,
   },
 ];
 
@@ -45,20 +52,20 @@ export const experience = [
   {
     name: 'Sundial',
     slug: 'sundial',
-    date: 'Lead Designer',
+    role: 'Lead Designer',
     link: 'https://sundial.so/',
     image: '/icons/sundial.png',
-    secondaryText: "Oct'25 - Oct'26",
+    period: "Oct'25 - Oct'26",
     description: "A Sequoia-backed AI analytics startup founded by Meta executives, including Julie Zhuo, Meta's former VP of Design. I lead design across the product.",
     items: [],
   },
   {
     name: 'Postman',
     slug: 'postman',
-    date: 'Senior Product Designer',
+    role: 'Senior Product Designer',
     link: 'https://www.postman.com/',
     image: '/icons/postman.png',
-    secondaryText: "Jun'22 - Jun'25",
+    period: "Jun'22 - Jun'25",
     description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
     items: [
       {
@@ -92,10 +99,10 @@ export const experience = [
   { 
     name: 'Hypersonix', 
     slug: 'hypersonix',
-    date: 'Lead Product Designer', 
+    role: 'Lead Product Designer', 
     link: 'https://hypersonix.ai/',
     image: '/icons/hypersonix.png',
-    secondaryText: "Oct'20 - May'22",
+    period: "Oct'20 - May'22",
     description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
     caseStudy: {
       link: "/project/hypersonix",
@@ -112,25 +119,28 @@ export const experience = [
       }
     ]
   },
-];
-
-/* More experience Section */
-export const designAreas = [
+  // Earlier roles: rows on the home page only, not on the /experience timeline.
   {
-    title: "AVRL",
-    image: '/icons/avrl.png',
-    isExternal: true,
+    name: 'AVRL',
+    slug: 'avrl',
+    role: 'Visual Designer',
     link: 'https://www.linkedin.com/company/advanced-voice-research-labs/',
+    image: '/icons/avrl.png',
+    period: null,
+    timeline: false,
+    items: [],
   },
   {
-    title: "Infosys",
-    image: "/icons/infosys.png",
-    isExternal: true,
+    name: 'Infosys',
+    slug: 'infosys',
+    role: 'Senior Associate Consultant',
     link: 'https://www.infosys.com/',
-  }
+    image: '/icons/infosys.png',
+    period: null,
+    timeline: false,
+    items: [],
+  },
 ];
-
-
 
 export const musings = [
   { name: 'Reduce perceived wait times through visual delight', date: 'May 2024', link: '/musings/perceived_wait'},
@@ -144,8 +154,9 @@ export const musings = [
 export const bio = {
   intro: "I like to build things. I'm into design, art and cinematography. Believes in consistency, side projects and letting life shape my craft.",
   social: {
+    x: "https://x.com/tonyzebastian",
     linkedin: "https://www.linkedin.com/in/tonyzebastian/",
-    twitter: "https://x.com/tonyzebastian"
+    github: "https://github.com/tonyzebastian"
   }
 };
 

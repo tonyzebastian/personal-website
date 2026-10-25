@@ -1,5 +1,5 @@
 import HighlightLink from '@/components/ui/HighlightLink';
-import { aboutBio, aboutFunThings, aboutPrinciples, aboutConversation, animation, photography, junymade } from '@/lib/content';
+import { aboutBio, aboutFunThings, aboutPrinciples, now, animation, photography, junymade } from '@/lib/content';
 import { galleryImages } from './config';
 import MasonryGridLightbox from '@/components/ui/MasonryGridLigthbox';
 
@@ -99,6 +99,23 @@ export default function About() {
                     </ul>
                 </section>
     
+                {/* Now Section */}
+                <section className="mb-8">
+                    <h4 className="mb-2">Now</h4>
+                    <div className="space-y-4">
+                        {now.map((item, index) => (
+                            <p key={index} className="text-slate-700">
+                                {Array.isArray(item.description)
+                                    ? item.description.map((part, i) =>
+                                        typeof part === 'string' ? part : (
+                                            <HighlightLink key={i} href={part.href}>{part.text}</HighlightLink>
+                                        ))
+                                    : item.description}
+                            </p>
+                        ))}
+                    </div>
+                </section>
+
                 {/* Animation Section */}
                 <section className="mb-8">
                     <h4 className="mb-2">Animation</h4>
@@ -149,27 +166,10 @@ export default function About() {
                     />
                 </section>
     
-                {/* Conversation Section */}
-                <section className="mb-12">
-                    <h4 className="mb-2">Start a conversation</h4>
-                    <p className="text-slate-700 mb-2">{aboutConversation.intro}</p>
-                    <ul className="text-slate-700 list-disc pl-5 space-y-2 marker:text-slate-600">
-                        {aboutConversation.topics.map((topic, index) => (
-                            <li key={index}>
-                                {typeof topic === 'string' ? (
-                                    topic
-                                ) : (
-                                    <>Just say <HighlightLink href={`mailto:${topic.email}`}>"Hi"!</HighlightLink></>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-
                 {/* Footer/Copyright */}
                 <section className="mb-8 text-center border-t pt-4 border-slate-200 ">
-                    <p className='text-slate-500 font-light tracking-widest'>Built with Next.js and Motion.dev | Typefaces -  Instrument Serif & Geist</p>
-                    <p className="mt-1 text-slate-500">© Tony Sebastian, 2025</p>
+                    <p className='text-slate-500 font-light tracking-widest'>Built with Next.js and Motion.dev | Typefaces - Libre Caslon Condensed & Figtree</p>
+                    <p className="mt-1 text-slate-500">© Tony Sebastian, 2026</p>
                 </section>
             </div>
         </div>
