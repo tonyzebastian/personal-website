@@ -53,18 +53,8 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <div className="relative">
-      {/* Hero Section - Sticky Background */}
-      <div className="sticky top-0 z-0">
-        <Hero/>
-      </div>
-
-      {/* Main Content - Overlays hero on scroll */}
-      <div className="relative z-10 bg-white min-h-screen rounded-3xl shadow-sm pt-4">
-
-        <div className=" mx-auto w-32 h-1.5 bg-slate-200/75 rounded-full"></div>
-
-        <div className="mx-auto max-w-2xl px-8  pb-16">
+    <div className="mx-auto max-w-2xl px-8 pt-8 pb-16">
+          <Hero />
           <div className='flex flex-col gap-6 pt-8'>
           {/* Experience Section */}
           <div className="my-6">
@@ -90,7 +80,7 @@ export default function HomePage() {
                     href={area.link}
                     target={area.isExternal ? "_blank" : "_self"}
                     rel={area.isExternal ? "noopener noreferrer" : ""}
-                    className="no-underline"
+                    className="group no-underline"
                   >
                     <Title 
                       title={area.title}
@@ -172,8 +162,6 @@ export default function HomePage() {
           </div>
 
           </div>
-        </div>
-      </div>
     </div>
   );
 }

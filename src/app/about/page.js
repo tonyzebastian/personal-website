@@ -1,6 +1,5 @@
-import ImageReveal from '@/components/ui/ImageReveal';
 import HighlightLink from '@/components/ui/HighlightLink';
-import { aboutBio, aboutFunThings, aboutPrinciples, aboutConversation, animation, photography, junymade, generativeArt, aiImages } from '@/lib/content';
+import { aboutBio, aboutFunThings, aboutPrinciples, aboutConversation, animation, photography, junymade } from '@/lib/content';
 import { galleryImages } from './config';
 import MasonryGridLightbox from '@/components/ui/MasonryGridLigthbox';
 
@@ -61,14 +60,7 @@ const renderTextWithLinks = (item) => {
 export default function About() {
 
     return (
-        <div className="flex flex-col items-center justify-center mx-auto max-w-2xl px-8 mb-16">
-            <div className='-ml-12'>  {/* Removed -ml-12 */}
-                <ImageReveal 
-                    leftImage="/images/about/left.jpg"
-                    middleImage="/images/about/middle.jpg"
-                    rightImage="/images/about/right.jpg"
-                />
-            </div>
+        <div className="flex flex-col items-center justify-center mx-auto max-w-2xl px-8 pt-16 mb-16">
     
             <div className="w-full gap-5 flex flex-col">
                 {/* Bio Section */}
@@ -121,24 +113,6 @@ export default function About() {
 
                     <MasonryGridLightbox
                         lightboxImages={galleryImages.animation.lightbox}
-                    />
-                </section>
-
-                {/* Generative Art Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Generative Art</h4>
-                    <p className="text-slate-700 mb-4">
-                        {generativeArt.map((item, index) => (
-                            <span key={index}>
-                                {renderTextWithLinks(item)}
-                                <br/>
-                            </span>
-                        ))}
-                    </p>
-
-                    <MasonryGridLightbox
-                        lightboxImages={aiImages.map(img => img.src)}
-                        height={390}
                     />
                 </section>
 

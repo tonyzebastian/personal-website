@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, Play, Volume2, VolumeX } from "lucide-react";
+import { ArrowsOutSimple, Play, SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
 import { useCallback, useState } from "react";
 import FilmLightbox from "./FilmLightbox";
 
@@ -44,8 +44,8 @@ export default function FilmWorkCard({ work, index }) {
               >
                 <Play
                   size={23}
-                  strokeWidth={1.5}
-                  className="ml-0.5 fill-current sm:size-6"
+                  weight="fill"
+                  className="ml-0.5 sm:size-6"
                 />
               </button>
 
@@ -58,9 +58,9 @@ export default function FilmWorkCard({ work, index }) {
                   className={controlClassName}
                 >
                   {isMuted ? (
-                    <VolumeX size={17} strokeWidth={1.75} />
+                    <SpeakerSlash size={17} />
                   ) : (
-                    <Volume2 size={17} strokeWidth={1.75} />
+                    <SpeakerHigh size={17} />
                   )}
                 </button>
                 <button
@@ -70,7 +70,7 @@ export default function FilmWorkCard({ work, index }) {
                   title="Expand video"
                   className={controlClassName}
                 >
-                  <Maximize2 size={17} strokeWidth={1.75} />
+                  <ArrowsOutSimple size={17} />
                 </button>
               </div>
             </>

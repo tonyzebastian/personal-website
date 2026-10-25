@@ -215,16 +215,6 @@
   display: none;
 }
 
-.hero-gradient {
-  background: linear-gradient(180deg, 
-    #FFF5E6 0%, 
-    rgba(255, 240, 235, 0.25) 50%, 
-    rgba(250, 235, 245, 0.5) 75%, 
-    rgba(245, 240, 255, 0.75) 87.5%, 
-    #FAFAFF 100%
-  );
-}
-
 /* Experience timeline. Each company draws the line from its own logo down to
    the next company's logo, so no script is needed. The last company has no
    segment: the line ends at its logo. */

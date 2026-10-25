@@ -2,7 +2,7 @@
 
 import { Masonry } from "react-plock";
 import { useState, useCallback } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
 
 // Move outside component to prevent recreation
 const isVideo = (src) => {
@@ -107,7 +107,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
                   className="p-2 hover:bg-slate-100 bg-slate-50 rounded-full transition-colors"
                   onClick={handleClose}
                 >
-                  <X size={20} className="text-slate-600" />
+                  <X size={20} weight="bold" className="text-slate-600" />
                 </button>
               </div>
               

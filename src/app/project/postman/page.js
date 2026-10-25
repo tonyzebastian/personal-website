@@ -2,7 +2,6 @@
 
 import { postmanData } from './content';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
 
 const isVideo = (src) => /\.(mp4|mov|webm|ogg|avi)$/i.test(src);
 const isGif = (src) => src.endsWith('.gif');

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, Volume2, VolumeX, X } from "lucide-react";
+import { Pause, Play, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -128,12 +128,12 @@ export default function FilmLightbox({
             }`}
           >
             {isPlaying ? (
-              <Pause size={24} strokeWidth={1.5} className="fill-current" />
+              <Pause size={24} weight="fill" />
             ) : (
               <Play
                 size={24}
-                strokeWidth={1.5}
-                className="ml-0.5 fill-current"
+                weight="fill"
+                className="ml-0.5"
               />
             )}
           </button>
@@ -147,9 +147,9 @@ export default function FilmLightbox({
               className={controlClassName}
             >
               {isMuted ? (
-                <VolumeX size={18} strokeWidth={1.75} />
+                <SpeakerSlash size={18} />
               ) : (
-                <Volume2 size={18} strokeWidth={1.75} />
+                <SpeakerHigh size={18} />
               )}
             </button>
             <button
@@ -160,7 +160,7 @@ export default function FilmLightbox({
               title="Close"
               className={controlClassName}
             >
-              <X size={19} strokeWidth={1.75} />
+              <X size={19} />
             </button>
           </div>
         </div>

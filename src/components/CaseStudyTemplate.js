@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useState, useCallback, useEffect, memo, useMemo, Suspense } from 'react';
-import { X, ArrowRight } from 'lucide-react';
+import { X, ArrowRight } from '@phosphor-icons/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // ============================================================================
@@ -66,7 +66,7 @@ const MediaOverlay = memo(({ selectedItem, onClose }) => {
           className="absolute top-2 right-2 p-2 hover:bg-slate-400 bg-slate-300 rounded-full transition-colors z-10"
           onClick={onClose}
         >
-          <X size={20} className="text-slate-900" />
+          <X size={20} weight="bold" className="text-slate-900" />
         </button>
 
         <div className="flex justify-center items-center">
@@ -131,7 +131,7 @@ const DialogWrapper = memo(({ isOpen, onClose, children }) => {
           onClick={onClose}
           className="absolute top-4 right-4 z-10 p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
         >
-          <X size={20} className="text-slate-900" />
+          <X size={20} weight="bold" className="text-slate-900" />
         </button>
 
         {/* Content */}
@@ -374,7 +374,7 @@ const ProjectSection = ({ project, index, isLast, showProjectTag }) => (
           className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-300 hover:border-slate-400 px-3 py-1.5 rounded-md transition-colors whitespace-nowrap"
         >
           View Details
-          <ArrowRight size={14} />
+          <ArrowRight size={14} weight="bold" />
         </a>
       )}
     </div>

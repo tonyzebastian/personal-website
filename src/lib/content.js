@@ -85,8 +85,7 @@ export const experience = [
         title: "Projects",
         description: "New Trial experiences, API Observability & more.",
         images: ["/images/projects/live_collections_1.png", "/images/projects/trial_02.mp4"],
-        link: "/project/postman",
-        requiresPassword: true
+        link: "/project/postman"
       }
     ]
   },
@@ -109,8 +108,7 @@ export const experience = [
         description: "0 to 1 projects, Design system, App studio & more.",
         
         images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
-        link: "/project/hypersonix",
-        requiresPassword: false
+        link: "/project/hypersonix"
       }
     ]
   },
@@ -129,18 +127,6 @@ export const designAreas = [
     image: "/icons/infosys.png",
     isExternal: true,
     link: 'https://www.infosys.com/',
-  },
-  {
-    title: "Chatwoot",
-    image: "/icons/chatwoot.png",
-    isExternal: true,
-    link: 'https://www.chatwoot.com/',
-  },
-  {
-    title: "Scribd",
-    image: "/icons/scribd.png",
-    isExternal: true,
-    link: 'https://www.scribd.com/',
   }
 ];
 
@@ -154,25 +140,6 @@ export const musings = [
   { name: 'Reviving a legacy system at Infosys', date: 'Nov 2018', link: '/musings/infosys_legacy'}
 ];
 
-
-export const generativeArt = [
-  {
-    text: "Some of my experiments with generative tools like Midjourney, Veo, Kling and more..",
-  }
-];
-
-export const aiImages = [
-  { src: '/images/AI/bangalore auto.png' },
-  { src: '/images/AI/rook.png' },
-  { src: '/images/AI/stellar_blends.gif' },
-  { src: '/images/AI/Claude.png' },
-  { src: '/images/AI/gemini.png' },
-  { src: '/images/AI/lovable.png' },
-  { src: '/images/AI/cyclist.png' },
-  { src: '/images/AI/elephant.png' },
-  { src: '/images/AI/lady.png' },
-  { src: '/images/AI/zebra crossing.png' },
-];
 
 export const bio = {
   intro: "I like to build things. I'm into design, art and cinematography. Believes in consistency, side projects and letting life shape my craft.",

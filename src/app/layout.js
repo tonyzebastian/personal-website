@@ -1,7 +1,6 @@
 import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import "./globals.css";
-import DockNavigation from '@/components/DockNavigation';
 
 // Body text. Variable font, so every weight comes from one file.
 const figtree = Figtree({
@@ -28,7 +27,6 @@ export default function RootLayout({ children }) {
               <main className="grow">
                   {children}
               </main>
-              <DockNavigation />
           </body>
       </html>
   );

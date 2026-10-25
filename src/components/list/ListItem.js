@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
 import Title from './Title';
 import SubText from './SubText';
-import Link from 'next/link';
 
 const ListItem = ({
   image,
@@ -13,45 +13,26 @@ const ListItem = ({
   secondaryText,
   href
 }) => {
+  // SubText measures its own width, so it needs the hover state as a prop.
   const [isHovered, setIsHovered] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    setIsDesktop(window.innerWidth >= 768);
-
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <Link
       href={href}
       {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="block"
+      className="group block"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* The side borders are always reserved (transparent) so hovering only
-          changes their colour; adding them on hover shifted the contents 1px. */}
-      <div
-        className="flex flex-col md:flex-row items-start md:items-center justify-between py-3 rounded -mx-4 px-[15px] border-l border-r border-transparent md:hover:bg-slate-50 md:hover:border-gray-200"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div className="md:group-hover:[&>*]:hover mb-2 md:mb-0">
-          <Title
-            image={image}
-            title={title}
-            isExternal={isExternal}
-            isHovered={isHovered && isDesktop}
-          />
+      <div className="-mx-4 flex flex-col items-start justify-between rounded px-4 py-3 md:flex-row md:items-center md:hover:bg-slate-50">
+        <div className="mb-2 md:mb-0">
+          <Title image={image} title={title} isExternal={isExternal} />
         </div>
-        <div className="md:group-hover:[&>*]:hover">
-          <SubText
-            primaryText={primaryText}
-            secondaryText={secondaryText}
-            isHovered={isHovered && isDesktop}
-          />
-        </div>
+        <SubText
+          primaryText={primaryText}
+          secondaryText={secondaryText}
+          isHovered={isHovered}
+        />
       </div>
     </Link>
   );
