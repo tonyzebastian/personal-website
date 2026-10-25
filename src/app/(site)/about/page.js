@@ -1,4 +1,5 @@
 import HighlightLink from '@/components/ui/HighlightLink';
+import PanelPage from '@/components/panel/PanelPage';
 import { aboutBio, aboutFunThings, aboutPrinciples, now, animation, photography, junymade } from '@/lib/content';
 import { galleryImages } from './config';
 import MasonryGridLightbox from '@/components/ui/MasonryGridLigthbox';
@@ -37,7 +38,7 @@ export const metadata = {
   },
 };
 
-// Move helper function outside component to prevent recreation on every render
+// Turns the `links` listed on a content item into green highlight links.
 const renderTextWithLinks = (item) => {
   if (!item.links) return item.text;
 
@@ -57,121 +58,75 @@ const renderTextWithLinks = (item) => {
   });
 };
 
+// Plain paragraphs from content items that may carry links.
+const Paragraphs = ({ items }) => items.map((item, index) => <p key={index}>{renderTextWithLinks(item)}</p>);
+
+function Section({ title, children }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h3>{title}</h3>
+      {children}
+    </section>
+  );
+}
+
+const List = ({ items }) => (
+  <ul className="list-disc space-y-1.5 pl-5 marker:text-ink/40">
+    {items.map((item, index) => (
+      <li key={index}>{typeof item === 'string' ? item : renderTextWithLinks(item)}</li>
+    ))}
+  </ul>
+);
+
 export default function About() {
+  return (
+    <PanelPage title="About me">
+      <div className="flex flex-col gap-3">
+        <Paragraphs items={aboutBio} />
+      </div>
 
-    return (
-        <div className="flex flex-col items-center justify-center mx-auto max-w-2xl px-8 pt-16 mb-16">
-    
-            <div className="w-full gap-5 flex flex-col">
-                {/* Bio Section */}
-                <section className="mb-8">
-                    <p className="text-slate-700">
-                        {aboutBio.map((item, index) => (
-                            <span key={index}>
-                                {renderTextWithLinks(item)}
-                                <br/>
-                            </span>
-                        ))}
-                    </p>
-                </section>
-    
-                {/* Fun Things Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">What I do for fun</h4>
-                    <ul className="text-slate-700 list-disc pl-5 space-y-2 marker:text-slate-600">
-                        {aboutFunThings.map((item, index) => (
-                            <li key={index}>
-                                {renderTextWithLinks(item)}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-    
-                {/* Principles Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Personal principles</h4>
-                    <ul className="text-slate-700 list-disc pl-5 space-y-2 marker:text-slate-600">
-                        {aboutPrinciples.map((principle, index) => (
-                            <li key={index}>
-                                {principle}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-    
-                {/* Now Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Now</h4>
-                    <div className="space-y-4">
-                        {now.map((item, index) => (
-                            <p key={index} className="text-slate-700">
-                                {Array.isArray(item.description)
-                                    ? item.description.map((part, i) =>
-                                        typeof part === 'string' ? part : (
-                                            <HighlightLink key={i} href={part.href}>{part.text}</HighlightLink>
-                                        ))
-                                    : item.description}
-                            </p>
-                        ))}
-                    </div>
-                </section>
+      <div className="mt-6 flex flex-col gap-10">
+        <Section title="What I do for fun">
+          <List items={aboutFunThings} />
+        </Section>
 
-                {/* Animation Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Animation</h4>
-                    <p className="text-slate-700 mb-4">
-                        {animation.map((item, index) => (
-                            <span key={index}>
-                                {renderTextWithLinks(item)}
-                                <br/>
-                            </span>
-                        ))}
-                    </p>
+        <Section title="Personal principles">
+          <List items={aboutPrinciples} />
+        </Section>
 
-                    <MasonryGridLightbox
-                        lightboxImages={galleryImages.animation.lightbox}
-                    />
-                </section>
+        <Section title="Now">
+          {now.map((item, index) => (
+            <p key={index}>
+              {Array.isArray(item.description)
+                ? item.description.map((part, i) =>
+                    typeof part === 'string' ? part : (
+                      <HighlightLink key={i} href={part.href}>{part.text}</HighlightLink>
+                    ))
+                : item.description}
+            </p>
+          ))}
+        </Section>
 
-                {/* Juny made Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Juny Made - Art studio</h4>
-                    <p className="text-slate-700 mb-4">
-                        {junymade.map((item, index) => (
-                            <span key={index}>
-                                {renderTextWithLinks(item)}
-                                <br/>
-                            </span>
-                        ))}
-                    </p>
-                    <MasonryGridLightbox
-                        lightboxImages={galleryImages.junyMade.lightbox}
-                    />
-                </section>
-    
-                {/* Photography Section */}
-                <section className="mb-8">
-                    <h4 className="mb-2">Photography</h4>
-                    <p className="text-slate-700 mb-4">
-                        {photography.map((item, index) => (
-                            <span key={index}>
-                                {renderTextWithLinks(item)}
-                                <br/>
-                            </span>
-                        ))}
-                    </p>
-                    <MasonryGridLightbox
-                        lightboxImages={galleryImages.photography.lightbox}
-                        height={580}
-                    />
-                </section>
-    
-                {/* Footer/Copyright */}
-                <section className="mb-8 text-center border-t pt-4 border-slate-200 ">
-                    <p className='text-slate-500 font-light tracking-widest'>Built with Next.js and Motion.dev | Typefaces - Libre Caslon Condensed & Figtree</p>
-                    <p className="mt-1 text-slate-500">© Tony Sebastian, 2026</p>
-                </section>
-            </div>
-        </div>
-    );
+        <Section title="Animation">
+          <Paragraphs items={animation} />
+          <MasonryGridLightbox lightboxImages={galleryImages.animation.lightbox} />
+        </Section>
+
+        <Section title="Juny Made, art studio">
+          <Paragraphs items={junymade} />
+          <MasonryGridLightbox lightboxImages={galleryImages.junyMade.lightbox} />
+        </Section>
+
+        <Section title="Photography">
+          <Paragraphs items={photography} />
+          <MasonryGridLightbox lightboxImages={galleryImages.photography.lightbox} height={580} />
+        </Section>
+      </div>
+
+      <footer className="mt-10 border-t border-border pt-4 text-center">
+        <p className="text-ink/55">Built with Next.js and Motion · Typefaces: Libre Caslon Condensed and Figtree</p>
+        <p className="text-ink/40">© Tony Sebastian, 2026</p>
+      </footer>
+    </PanelPage>
+  );
 }

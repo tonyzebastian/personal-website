@@ -1,0 +1,4 @@
+# Cloudflare Pages redirects for pages that moved in the 2026 refresh.
+/project/postman     /postman      301
+/project/hypersonix  /hypersonix   301
+/musings             /             301

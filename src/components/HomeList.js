@@ -31,7 +31,7 @@ export default function HomeList() {
         {experience.map((job) => (
           <Row
             key={job.slug}
-            href={job.link}
+            href={`/${job.slug}`}
             icon={job.image}
             title={job.name}
             meta={[job.period, job.role]}

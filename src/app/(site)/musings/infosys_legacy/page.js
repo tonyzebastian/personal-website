@@ -1,28 +1,23 @@
+import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
-    title: 'Musings',
-    description: 'A brief description of Tony Sebastian\'s work and interests.',
-    keywords: 'design, art, cinematography, photography, travel',
-  }
+  title: "Reviving a legacy system at Infosys \u2726 Tony Sebastian",
+  description: "Reviving a legacy system at Infosys",
+};
 
 export default function infosys_legacy() {
 
 
     return (
 
-        <div id="top" className="flex flex-col items-start justify-center mx-auto max-w-[648px] mt-12 mb-16">
-
-            <h1 className="mb-2 mx-6 text-slate-900">Reviving a legacy system at Infosys</h1>
-            <h6 className="mb-8 mx-6 text-slate-500">
-                7 min read . Nov 2018
-            </h6>
+        <PanelPage title="Reviving a legacy system at Infosys" meta={["7 min read", "Nov 2018"]}>
         
-            <section className="mb-8 mx-6">
+            <section>
                 <p>
                 As companies grow, asset management becomes crucial for smooth operations. Smaller firms manage with MS Excel or plug and play solutions, but multinational companies need dedicated systems due to their complexity. Large companies often build custom systems as off-the-shelf solutions fall short. This case study outlines how Infosys&apos; asset management team revamped their legacy system to boost efficiency, cut costs, and enhance control and accountability.
                 </p>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">Large company, larger complexity</h2>
                 <p>
                 Infosys, a multinational based in Bangalore, India, employs around 250,000 people across 46 countries. With over eight development centers in India and smaller offices globally, Infosys manages a diverse range of assets, including software, hardware, land, buildings, intellectual property, and facilities like vehicles and furniture.
@@ -58,7 +53,7 @@ export default function infosys_legacy() {
                 </ul>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">The Three Systems</h2>
                 <p>
                 The complexities and departments mentioned above evolved over time. Whenever a new requirement emerged, it was either added to the existing system or a new system was created. This resulted in three different systems to manage assets:
@@ -70,7 +65,7 @@ export default function infosys_legacy() {
                 </ul>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">Problems!! Pause - Taking a step back</h2>
                 <p>
                 Over time, as new features and processes were added, the systems began to show breakages, slowdowns, and other critical performance issues. It reached a point where further development of the existing systems could no longer resolve these issues.
@@ -79,7 +74,7 @@ export default function infosys_legacy() {
                 </p>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">Pain Areas</h2>
                 <p>
                 The Asset team identified all known internal issues and conducted one-on-one meetings and group discussions with various departments and hierarchies to uncover additional underlying issues. The major pain points were:
@@ -95,7 +90,7 @@ export default function infosys_legacy() {
                 </ul>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">The Crucial Decision</h2>
                 <p>
                 The Asset team shared their findings with top management and all relevant stakeholders. They highlighted the major pain points, emphasizing the integration issues, outdated workflows, lack of feedback mechanisms, data duplication, and system architecture problems.
@@ -108,7 +103,7 @@ export default function infosys_legacy() {
                 </p>
             </section>
 
-            <section className="mb-8 mx-6">
+            <section>
                 <h2 className="mb-2">The Plan and Execution</h2>
                 <p>
                 A step-by-step plan was created to achieve the proposal:
@@ -174,13 +169,13 @@ export default function infosys_legacy() {
                 </div>
             </section>
 
-            <section className="mb-6 mx-6">
+            <section>
                 <h2 className="mb-2">Conclusion</h2>
                 <p>
                 As of the end of 2019, the team had successfully completed 75% of the modules. A significant lesson learned from this project was navigating the complexities of revamping a product within a traditional organization with multiple layers of hierarchy and stakeholders.
                 </p>
             </section>
 
-        </div>
+        </PanelPage>
         )
     }

@@ -1,22 +1,18 @@
+import PanelPage from '@/components/panel/PanelPage';
 import Image from 'next/image';
 import Script from 'next/script';
 
 export const metadata = {
-    title: 'Musings',
-    description: 'A brief description of Tony Sebastian\'s work and interests.',
-    keywords: 'design, art, cinematography, photography, travel',
-  }
+  title: "Reduce perceived wait times through visual delight \u2726 Tony Sebastian",
+  description: "Reduce perceived wait times through visual delight",
+};
 
 export default function perceived_wait() {
 
     return (
-      <div id="top" className="flex flex-col items-start justify-center mx-auto max-w-[648px] mt-12 mb-16">
-        <h1 className="mb-2 mx-6 text-slate-900">Reduce perceived wait times through visual delight</h1>
-        <h6 className="mb-8 mx-6 text-slate-500">
-            4 min read . May 2024
-        </h6>
+      <PanelPage title="Reduce perceived wait times through visual delight" meta={["4 min read", "May 2024"]}>
 
-        <section className="mb-8 mx-6">
+        <section>
             <p>
                 Staring at a blank screen as an app slowly loads is a surefire way to lose user attention. Whether it&apos;s loading a webpage or launching an app, users expect speed and efficiency. However, the loading process can often be a point of frustration, especially when greeted with a blank screen or a mundane loading indicator.
             </p>
@@ -35,7 +31,7 @@ export default function perceived_wait() {
 
      </section>
 
-    <section className="mb-8 mx-6">
+    <section>
         <h2 className="mb-2">Current app launch experience of Postman</h2>
         
         <p>
@@ -66,7 +62,7 @@ export default function perceived_wait() {
 
     </section>
 
-    <section className="mb-8 mx-6">
+    <section>
         <h2 className="mb-2">Make waiting delightful through visual magic</h2>
         
         <p>
@@ -84,7 +80,7 @@ export default function perceived_wait() {
 
     </section>
 
-    <section className="mb-8 mx-6">
+    <section>
         <h2 className="mb-2">Design Considerations</h2>
         
         <p>
@@ -95,7 +91,7 @@ export default function perceived_wait() {
 
     </section>
 
-    <section className="mb-6 mx-6">
+    <section>
         <h2 className="mb-2">Implementation Challenges</h2>
         
         <p>
@@ -106,6 +102,6 @@ export default function perceived_wait() {
 
     </section>
 
-</div>
+</PanelPage>
 )
 }

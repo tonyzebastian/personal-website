@@ -1,19 +1,15 @@
+import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
-    title: 'Musings',
-    description: 'A brief description of Tony Sebastian\'s work and interests.',
-    keywords: 'design, art, cinematography, photography, travel',
-  }
+  title: "Drawing everyday for 365 days: Some Learnings \u2726 Tony Sebastian",
+  description: "Drawing everyday for 365 days: Some Learnings",
+};
 
 export default function day_drawing() {
 
     return (
-      <div id="top" className="flex flex-col items-start justify-center mx-auto max-w-[648px] mt-12 mb-16">
-        <h1 className="mb-2 mx-6 text-slate-900">Drawing everyday for 365 days: Some Learnings</h1>
-        <h6 className="mb-8 mx-6 text-slate-500">
-          3 min read . Jun 2021
-        </h6>
+      <PanelPage title="Drawing everyday for 365 days: Some Learnings" meta={["3 min read", "Jun 2021"]}>
 
-        <section className="mb-6 mx-6">
+        <section>
           <p>
             On 2nd May 2020, I decided to start a new project - draw something every day for a year. 365 days later, I completed the project, and these are some of my learnings and realizations.
           </p>
@@ -35,6 +31,6 @@ export default function day_drawing() {
           </p>
 
         </section>
-</div>
+</PanelPage>
 )
 }

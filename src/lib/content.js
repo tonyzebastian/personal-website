@@ -86,14 +86,6 @@ export const experience = [
         images: ["/images/projects/mini_project_02.mp4", "/images/projects/mini_proj_01.png"],
         link: "/project/miniprojects",
       },
-    ],
-    projects: [
-      {
-        title: "Projects",
-        description: "New Trial experiences, API Observability & more.",
-        images: ["/images/projects/live_collections_1.png", "/images/projects/trial_02.mp4"],
-        link: "/project/postman"
-      }
     ]
   },
   { 
@@ -105,19 +97,10 @@ export const experience = [
     period: "Oct'20 - May'22",
     description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
     caseStudy: {
-      link: "/project/hypersonix",
+      link: "/hypersonix",
       images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
     },
-    items: [],
-    projects: [
-      {
-        title: "A summary of my experience",
-        description: "0 to 1 projects, Design system, App studio & more.",
-        
-        images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
-        link: "/project/hypersonix"
-      }
-    ]
+    items: []
   },
   // Earlier roles: rows on the home page only, not on the /experience timeline.
   {
@@ -127,6 +110,9 @@ export const experience = [
     link: 'https://www.linkedin.com/company/advanced-voice-research-labs/',
     image: '/icons/avrl.png',
     period: null,
+    // Draft, from the remote work musing. Replace with your own words.
+    description: "My first design role. After moving from business analysis into design, I joined AVRL as a remote Visual Designer.",
+    related: [{ title: '15 Months of remote work: A Recap', href: '/musings/remote_work' }],
     timeline: false,
     items: [],
   },
@@ -137,6 +123,9 @@ export const experience = [
     link: 'https://www.infosys.com/',
     image: '/icons/infosys.png',
     period: null,
+    // Draft, from the about bio and the Infosys musing. Replace with your own words.
+    description: "Before design, I was a business analyst at Infosys. I wrote about how the asset management team revived its legacy system.",
+    related: [{ title: 'Reviving a legacy system at Infosys', href: '/musings/infosys_legacy' }],
     timeline: false,
     items: [],
   },

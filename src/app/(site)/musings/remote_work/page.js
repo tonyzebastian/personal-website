@@ -1,19 +1,15 @@
+import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
-    title: 'Musings',
-    description: 'A brief description of Tony Sebastian\'s work and interests.',
-    keywords: 'design, art, cinematography, photography, travel',
-  }
+  title: "15 Months of remote Work: A recap \u2726 Tony Sebastian",
+  description: "15 Months of remote Work: A recap",
+};
 
 export default function remote_work() {
 
     return (
-        <div id="top" className="flex flex-col items-start justify-center mx-auto max-w-[648px] mt-12 mb-16">
-            <h1 className="mb-2 mx-6 text-slate-900">15 Months of remote Work: A recap</h1>
-            <h6 className="mb-8 mx-6 text-slate-500">
-                7 min read . Nov 2020
-            </h6>
+        <PanelPage title="15 Months of remote Work: A recap" meta={["7 min read", "Nov 2020"]}>
         
-            <section className="mb-8 mx-6">
+            <section>
                 <blockquote className="pl-2 italic border-l-2 font-sans leading-loose tracking-wide text-sm text-slate-800 border-slate-400 quote">
                     &quot;So, where do you work from?&quot; <br/>
                     &quot;I work from home:&quot; <br/>
@@ -22,7 +18,7 @@ export default function remote_work() {
                 </blockquote>
             </section>
 
-            <section className="mb-10 mx-6">
+            <section>
                 <p>
                     This is a typical conversation I have with friends and family about my work situation. It wasn&apos;t a deliberate choice to go remote. Back in late 2018, I was looking to switch from being a senior business analyst at Infosys to trying my luck in the design field. I started applying for jobs.
                     <br/> <br/>
@@ -34,7 +30,7 @@ export default function remote_work() {
                 </p>
             </section>
 
-            <section className="mb-10 mx-6">
+            <section>
                 <h2 className="mb-2">Good Stuff</h2>
                 <h4 className="mb-2">The freedom to choose location</h4>
                 <p>
@@ -73,7 +69,7 @@ export default function remote_work() {
             </section>
 
         
-            <section className="mb-10 mx-6">
+            <section>
                 <h2 className="mb-2">Bad Stuff</h2>
                 <p>
                     Remote work is not everyone&apos;s cup of tea. If you love being around people with constant office chatter and conversations, you might find it difficult to work alone. Additionally, working from home can be challenging for certain types of jobs. For example, if your job requires a high level of collaboration and frequent meetings, remote work may not be ideal.
@@ -118,7 +114,7 @@ export default function remote_work() {
 
             </section>
 
-            <section className="mb-10 mx-6">
+            <section>
                 <h2 className="mb-4">Learnings</h2>
 
                 <h4 className="mt-6 mb-2">Self Discipline and Timetable</h4>
@@ -156,13 +152,13 @@ export default function remote_work() {
             </section>
 
 
-            <section className="mb-6 mx-6">
+            <section>
                 <h2 className="mb-2">Conclusion</h2>
                 <p>
                     Remote work is increasingly popular, especially among younger generations. However, it&apos;s important to recognize that both office and remote jobs have their pros and cons. Before diving in, take the time to research the company thoroughly and reflect on whether remote work aligns with your working style and preferences. <br/> Cheers to finding the right fit!
                 </p>
             </section>
 
-        </div>
+        </PanelPage>
 )
 }
