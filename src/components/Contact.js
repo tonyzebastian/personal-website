@@ -1,6 +1,6 @@
 import { GithubLogo, LinkedinLogo, XLogo } from '@phosphor-icons/react/ssr';
 import { aboutConversation, bio } from '@/lib/content';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import HighlightLink from '@/components/ui/HighlightLink';
 
 const LINKS = [
@@ -28,15 +28,16 @@ export default function Contact() {
       </ul>
       <div className="mt-2 flex flex-wrap gap-2">
         {LINKS.map(({ label, href, Icon }) => (
-          <Button
+          <a
             key={label}
-            variant="outline"
-            nativeButton={false}
-            render={<a href={href} target="_blank" rel="noopener noreferrer" />}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: 'outline' })}
           >
             <Icon weight="bold" aria-hidden />
             {label}
-          </Button>
+          </a>
         ))}
       </div>
     </section>

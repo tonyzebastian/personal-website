@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from '@phosphor-icons/react/ssr';
 
 // One list row for every section on the home page: an optional icon, the
-// title and an arrow on the left, the details on the right.
+// title and an arrow on the left, the details on the right. Rows stack when
+// their column is narrow (a container query, so it follows the list column,
+// not the window). Internal links open in the panel without scrolling the list.
 //   href      internal path, external URL, or nothing for a plain row
 //   meta      strings shown on the right; the last one reads strongest
 export default function Row({ href, icon, title, meta = [] }) {
@@ -37,14 +39,14 @@ export default function Row({ href, icon, title, meta = [] }) {
   );
 
   const className =
-    '-mx-3 flex flex-col items-start gap-1 rounded-md px-3 py-2.5 md:flex-row md:items-center md:justify-between md:gap-6';
+    '-mx-3 flex flex-col items-start gap-1 rounded-md px-3 py-2.5 @lg:flex-row @lg:items-center @lg:justify-between @lg:gap-6';
 
   if (!href) return <div className={className}>{body}</div>;
 
   return (
     <Link
       href={href}
-      {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : { scroll: false })}
       className={`group ${className} outline-none transition-colors hover:bg-ink/[0.03] focus-visible:bg-ink/[0.05]`}
     >
       {body}

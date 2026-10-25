@@ -2,6 +2,13 @@ import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import "./globals.css";
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  maximumScale: 1.0,
+  userScalable: false,
+};
+
 // Body text. Variable font, so every weight comes from one file.
 const figtree = Figtree({
   subsets: ['latin'],

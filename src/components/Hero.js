@@ -1,4 +1,7 @@
+import Link from 'next/link';
+import { ArrowRight } from '@phosphor-icons/react/ssr';
 import { bio } from '@/lib/content';
+import { buttonVariants } from '@/components/ui/button';
 
 // Placeholder hero: one image at the content width and the intro.
 // The final hero is still being designed.
@@ -18,6 +21,15 @@ export default function Hero() {
         <h1>Hello! I am Tony, a software designer.</h1>
         <p>{bio.intro}</p>
       </div>
+      {/* Temporary way into the About panel until the hero expand is designed. */}
+      <Link
+        href="/about"
+        scroll={false}
+        className={buttonVariants({ variant: 'link', className: '-ml-2.5 self-start px-2.5 text-ink/80' })}
+      >
+        More about me
+        <ArrowRight weight="bold" aria-hidden />
+      </Link>
     </header>
   );
 }
