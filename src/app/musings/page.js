@@ -35,7 +35,7 @@ export default function Musings() {
         return (
             <li key={itemLink}>
             <Link href={itemLink} className="flex flex-col items-start py-4 px-4 hover:bg-slate-100 rounded"> 
-                <span className="text-slate-300 font-sans font-medium text-sm tracking-wide overflow-hidden overflow-ellipsis whitespace-nowrap sm:block sm:truncate mb-1">{itemName}</span>
+                <span className="text-slate-300 font-sans font-medium text-sm tracking-wide overflow-hidden text-ellipsis whitespace-nowrap sm:block sm:truncate mb-1">{itemName}</span>
                 <span className="text-slate-500 font-sans font-light text-sm">{itemDate}</span>
             </Link>
             </li>

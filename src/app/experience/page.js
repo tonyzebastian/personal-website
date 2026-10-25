@@ -41,7 +41,7 @@ export default function ExperiencePage() {
     <section className="relative isolate w-full overflow-hidden px-4 pt-24 pb-20 lg:px-10 lg:pt-48">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[24rem] opacity-[0.06] lg:h-[26rem]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-96 opacity-[0.06] lg:h-104"
         style={{
           backgroundImage: 'url(/noise.png)',
           backgroundSize: '220px',
@@ -53,10 +53,10 @@ export default function ExperiencePage() {
 
       <div className="relative z-10 mx-auto flex w-full max-w-[756px] flex-col gap-12">
         <header className="mx-auto w-full max-w-[600px] pl-8">
-          <h1 className="!text-5xl !mb-0">Case Studies</h1>
+          <h1 className="text-5xl! mb-0!">Case Studies</h1>
         </header>
 
-        <section aria-label="Case studies timeline" className="relative mx-auto w-full max-w-[600px] lg:pb-[8rem]">
+        <section aria-label="Case studies timeline" className="relative mx-auto w-full max-w-[600px] lg:pb-32">
           <div className="relative">
             <TimelineBranches />
             <div className="relative z-10 flex flex-col gap-16">

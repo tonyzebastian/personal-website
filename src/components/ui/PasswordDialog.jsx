@@ -46,7 +46,7 @@ export default function PasswordDialog({ isOpen, onClose, onSuccess, projectTitl
 
   return (
     <div
-      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/25 backdrop-blur-xs flex items-center justify-center z-50"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-xl p-8 w-full max-w-sm mx-4">
@@ -58,7 +58,7 @@ export default function PasswordDialog({ isOpen, onClose, onSuccess, projectTitl
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 pr-10 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-slate-600 focus:border-transparent"
+              className="w-full px-3 py-2 pr-10 border border-slate-300 rounded focus:outline-hidden focus:ring-1 focus:ring-slate-600 focus:border-transparent"
               autoComplete="off"
               data-1p-ignore
               data-lpignore="true"

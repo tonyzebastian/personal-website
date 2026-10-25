@@ -78,7 +78,7 @@ export default function Hero() {
       <div className="max-w-[862px] 2xl:max-w-[1200px] w-full flex flex-col items-center gap-12 2xl:gap-16 relative z-10">
         
         {/* Video/Image Container - 16:9 aspect ratio */}
-        <div className="w-full aspect-[16/9] max-w-4xl 2xl:max-w-5xl bg-white/50 rounded-3xl p-2 flex items-center justify-center">
+        <div className="w-full aspect-video max-w-4xl 2xl:max-w-5xl bg-white/50 rounded-3xl p-2 flex items-center justify-center">
           <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center">
             <div 
               className="relative w-full h-full rounded-2xl overflow-hidden group"
@@ -114,7 +114,7 @@ export default function Hero() {
                 <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
                   <button
                     onClick={togglePlay}
-                    className="p-4 bg-white/20 hover:bg-white/30 rounded-full transition-colors backdrop-blur-sm"
+                    className="p-4 bg-white/20 hover:bg-white/30 rounded-full transition-colors backdrop-blur-xs"
                   >
                     {isPlaying ? (
                       <Pause size={32} className="text-white" />
@@ -130,7 +130,7 @@ export default function Hero() {
                 <div className="absolute bottom-2 right-2">
                   <button
                     onClick={toggleMute}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors backdrop-blur-sm group"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors backdrop-blur-xs group"
                   >
                     {isMuted ? (
                       <VolumeX size={20} className="text-slate-400 group-hover:text-slate-800" />

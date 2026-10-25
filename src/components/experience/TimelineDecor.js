@@ -16,7 +16,7 @@ const LEAVES = [
 export function TimelineBranches() {
   return (
     <svg
-      className="pointer-events-none absolute left-[-253px] top-[-370px] z-0 hidden h-[24rem] w-[430px] lg:block"
+      className="pointer-events-none absolute left-[-253px] top-[-370px] z-0 hidden h-96 w-[430px] lg:block"
       viewBox="-260 0 430 384"
       fill="none"
       aria-hidden

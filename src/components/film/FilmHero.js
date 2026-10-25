@@ -9,7 +9,7 @@ export default function FilmHero({ src, poster }) {
   return (
     <section
       aria-label="Featured film"
-      className="relative h-[78svh] w-full overflow-hidden bg-slate-950 md:h-auto md:min-h-[100svh]"
+      className="relative h-[78svh] w-full overflow-hidden bg-slate-950 md:h-auto md:min-h-svh"
     >
       <Image
         src={poster}

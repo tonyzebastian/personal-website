@@ -60,7 +60,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Content - Overlays hero on scroll */}
-      <div className="relative z-10 bg-white min-h-screen rounded-3xl shadow pt-4">
+      <div className="relative z-10 bg-white min-h-screen rounded-3xl shadow-sm pt-4">
 
         <div className=" mx-auto w-32 h-1.5 bg-slate-200/75 rounded-full"></div>
 

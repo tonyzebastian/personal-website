@@ -12,7 +12,7 @@ export default function CompanyHeader({ name, description, image, tail = false, 
     <>
       <div className="flex min-h-6 items-center gap-3">
         <h4
-          className={`!font-semibold ${href ? 'shrink-0 transition-all group-hover:!font-extrabold group-focus-visible:!font-extrabold' : ''}`}
+          className={`font-semibold! ${href ? 'shrink-0 transition-all group-hover:font-extrabold! group-focus-visible:font-extrabold!' : ''}`}
         >
           {name}
         </h4>

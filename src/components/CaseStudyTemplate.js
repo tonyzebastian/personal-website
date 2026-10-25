@@ -55,7 +55,7 @@ const MediaOverlay = memo(({ selectedItem, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/25 backdrop-blur-xs flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
@@ -119,7 +119,7 @@ const DialogWrapper = memo(({ isOpen, onClose, children }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 bg-black/25 backdrop-blur-xs flex items-center justify-center z-100 p-4"
       onClick={onClose}
     >
       <div
@@ -217,7 +217,7 @@ const BulletPoints = memo(({ items }) => (
   <ul className="text-slate-900 mb-8 text-sm leading-relaxed space-y-2">
     {items.map((item, index) => (
       <li key={index} className="flex items-start">
-        <span className="w-1 h-1 bg-slate-500 rounded-full mt-3 mr-2 flex-shrink-0" />
+        <span className="w-1 h-1 bg-slate-500 rounded-full mt-3 mr-2 shrink-0" />
         <span>{item}</span>
       </li>
     ))}

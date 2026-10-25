@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import FilmLightbox from "./FilmLightbox";
 
 const controlClassName =
-  "flex size-9 items-center justify-center rounded-full bg-white/70 text-black transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40";
+  "flex size-9 items-center justify-center rounded-full bg-white/70 text-black transition-colors hover:bg-white/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40";
 
 export default function FilmWorkCard({ work, index }) {
   const [isMuted, setIsMuted] = useState(false);
@@ -40,7 +40,7 @@ export default function FilmWorkCard({ work, index }) {
                 onClick={openLightbox}
                 aria-label="Open video"
                 title="Play video"
-                className="absolute left-1/2 top-1/2 z-20 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-black opacity-100 transition-[background-color,opacity] duration-300 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:size-16 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                className="absolute left-1/2 top-1/2 z-20 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-black opacity-100 transition-[background-color,opacity] duration-300 hover:bg-white/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:size-16 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
               >
                 <Play
                   size={23}
@@ -108,10 +108,10 @@ export default function FilmWorkCard({ work, index }) {
 function FilmCaption({ work }) {
   return (
     <div>
-      <h2 className="!text-xl !font-normal !tracking-tight !text-black">
+      <h2 className="text-xl! font-normal! tracking-tight! text-black!">
         {work.title}
       </h2>
-      <p className="!mt-1 max-w-md !text-sm !leading-snug !tracking-normal !text-black/65">
+      <p className="mt-1! max-w-md text-sm! leading-snug! tracking-normal! text-black/65!">
         {work.description}
       </p>
     </div>

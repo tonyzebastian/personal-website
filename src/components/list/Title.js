@@ -18,7 +18,7 @@ const Title = ({ image, title, isExternal, isHovered: parentIsHovered, fromFontW
       style={hasParentHover ? { pointerEvents: 'none' } : undefined}
     >
       {image && (
-        <div className="mr-2 w-6 h-6 flex-shrink-0">
+        <div className="mr-2 w-6 h-6 shrink-0">
           <Image
             src={image}
             alt={`${title} icon`}

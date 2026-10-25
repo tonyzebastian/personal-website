@@ -34,11 +34,11 @@ export default function MasonryGridLightbox({lightboxImages = [], height}) {
             {/* Masonry Lightbox */}
             {showMasonryLightbox && (
                 <div
-                    className="fixed inset-0 bg-black/25 backdrop-blur-sm flex flex-col items-center justify-center z-50"
+                    className="fixed inset-0 bg-black/25 backdrop-blur-xs flex flex-col items-center justify-center z-50"
                     onClick={() => setShowMasonryLightbox(false)}
                 >
                     <div
-                        className="relative max-w-7xl w-full max-h-[85vh] bg-white rounded-xl p-2 mb-16 2xl:mb-0 2xl:max-w-screen-2xl"
+                        className="relative max-w-7xl w-full max-h-[85vh] bg-white rounded-xl p-2 mb-16 2xl:mb-0 2xl:max-w-(--breakpoint-2xl)"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Close Button - Top right side */}

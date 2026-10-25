@@ -8,5 +8,6 @@ const gasoekOne = Gasoek_One({
 });
 
 export default function FilmLayout({ children }) {
-  return <div className={gasoekOne.variable}>{children}</div>;
+  // data-no-grain turns off the site-wide grain overlay for the film pages.
+  return <div className={gasoekOne.variable} data-no-grain>{children}</div>;
 }

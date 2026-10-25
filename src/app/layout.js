@@ -1,21 +1,31 @@
-import { Instrument_Serif } from 'next/font/google';
-import { GeistSans } from 'geist/font/sans';
+import { Figtree } from 'next/font/google';
+import localFont from 'next/font/local';
 import "./globals.css";
 import DockNavigation from '@/components/DockNavigation';
 
-
-const instrumentSerif = Instrument_Serif({
+// Body text. Variable font, so every weight comes from one file.
+const figtree = Figtree({
   subsets: ['latin'],
-  weight: ['400'],
-  variable: '--font-instrument-serif',
+  variable: '--font-figtree',
+  display: 'swap',
+});
+
+// Headings. Self-hosted because next/font/google does not list it yet
+// (SIL Open Font License, see src/fonts/OFL-LibreCaslonCondensed.txt).
+const caslon = localFont({
+  src: [
+    { path: '../fonts/LibreCaslonCondensed-Variable.woff2', weight: '400 700', style: 'normal' },
+    { path: '../fonts/LibreCaslonCondensed-Italic-Variable.woff2', weight: '400 700', style: 'italic' },
+  ],
+  variable: '--font-caslon',
   display: 'swap',
 });
 
 export default function RootLayout({ children }) {
   return (
-      <html lang="en" className={`${instrumentSerif.variable} ${GeistSans.variable}`}>
+      <html lang="en" className={`${figtree.variable} ${caslon.variable}`}>
           <body className="flex flex-col min-h-screen">
-              <main className="flex-grow">
+              <main className="grow">
                   {children}
               </main>
               <DockNavigation />
