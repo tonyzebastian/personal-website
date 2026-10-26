@@ -100,10 +100,10 @@ export default function SiteShell({ list, panelPaths, children }) {
 
   return (
     <LazyMotion features={loadFeatures} strict>
-      <div className="bg-noise min-h-dvh xl:flex xl:h-dvh xl:overflow-hidden" onClickCapture={onClickCapture}>
-        {/* The list carries the noise itself: as a container it is its own
+      <div className="surface-canvas min-h-dvh xl:flex xl:h-dvh xl:overflow-hidden" onClickCapture={onClickCapture}>
+        {/* The list carries the surface itself: as a container it is its own
             layer, so the hero image can only blend with what is inside it. */}
-        <div className="@container bg-noise scrollbar-minimal min-w-0 flex-1 xl:h-full xl:overflow-y-auto">{list}</div>
+        <div className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 xl:h-full xl:overflow-y-auto">{list}</div>
 
         {/* Side panel. Rendered on the server too (hidden below xl by CSS), so
             each page's HTML carries its content. */}

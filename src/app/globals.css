@@ -11,6 +11,8 @@
      text-ink (100) · text-ink/80 · text-ink/55 · text-ink/40 · text-ink/25 */
   --ink: #32404f;
   --paper: #ffffff;
+  /* A light warm stone page colour (buffmotion.com's #f2ece7, three quarters of the way to white). Panels stay on paper. */
+  --canvas: #fcfaf8;
 
   /* Your green, used for highlight links and accents. */
   --highlight: var(--color-green-100);
@@ -44,6 +46,7 @@
 
   --color-ink: var(--ink);
   --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
   --color-highlight: var(--highlight);
   --color-highlight-strong: var(--highlight-strong);
 
@@ -183,12 +186,16 @@
   filter: grayscale(0%);
 }
 
-/* The page noise: public/noise.png baked in at 2% strength, so it works as a
-   plain background with no extra layer. The site shell carries it; anything
-   that blends images into it (mix-blend-multiply) needs it on its own box too. */
-.bg-noise {
-  background-image: url("/noise-soft.png");
-  background-size: 220px;
+/* The page surface: the warm canvas colour with a fine warm grain on top.
+   The grain is an SVG noise tinted brown, with alpha = 0.8 x noise - 0.48, so
+   only the brighter half of the noise leaves a speck (at most ~9% darker) and
+   the average colour stays the canvas colour. The site shell carries it;
+   anything that blends images into it (mix-blend-multiply) needs it on its
+   own box too. */
+.surface-canvas {
+  background-color: var(--canvas);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.26 0 0 0 0 0.19 0.8 0 0 0 -0.48'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
   background-repeat: repeat;
 }
 

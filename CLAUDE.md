@@ -21,7 +21,7 @@ Tokens are defined in `src/app/globals.css`. Type scale and ink colours follow r
 - **Ink**: one text colour, `#32404f`. Hierarchy comes from opacity: `text-ink`, `text-ink/80`, `text-ink/55`, `text-ink/40`, `text-ink/25`
 - **Highlight**: the green link style, `bg-highlight` / `bg-highlight-strong` (`HighlightLink`, or the Button `highlight` variant)
 - **Type**: body 15px with 1.5 line height; serif headings h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
-- **Noise**: `.bg-noise` tiles `public/noise-soft.png` (the noise at 2% strength) as a plain background. The site shell and the list column carry it, so home and panels are covered; the hero image uses `mix-blend-multiply` so its white backdrop takes on the noise. `/experience` keeps its own fading band (`NoiseBand`)
+- **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8, a lighter take on buffmotion.com's #f2ece7), with a fine warm SVG grain; both come from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
 - **shadcn tokens** (`--background`, `--primary`, `--border`, ...) are mapped onto ink and paper
 
 ## How pages and the panel work
