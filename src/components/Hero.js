@@ -1,19 +1,20 @@
 import Link from 'next/link';
 import { ArrowRight } from '@phosphor-icons/react/ssr';
-import { bio } from '@/lib/content';
+import { bio, storybook } from '@/lib/content';
 import { buttonVariants } from '@/components/ui/button';
-import HeroVideo from '@/components/HeroVideo';
+import HeroBook from '@/components/HeroBook';
 
-// Hero: the intro video at the full column width (672px) and the intro text
+// Hero: the storybook at the full column width (672px) and the intro text
 // at the reading width (512px).
 export default function Hero() {
   return (
     <header className="flex flex-col gap-6">
-      <HeroVideo />
+      <HeroBook book={storybook} />
       {/* The text keeps the narrower reading width of the rest of the page. */}
       <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h1>Tony Sebastian, a builder who designs, codes and tells stories.</h1>
+          {/* The book's cover carries the title; this keeps it for search and screen readers. */}
+          <h1 className="sr-only">Tony Sebastian, a builder who designs, codes and tells stories.</h1>
           <p>{bio.intro}</p>
         </div>
         {/* Temporary way into the About panel until the hero expand is designed. */}

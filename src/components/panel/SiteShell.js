@@ -280,7 +280,7 @@ export default function SiteShell({
             ref={listRef}
             tabIndex={-1}
             data-panel-open={listNarrow ? '' : undefined}
-            className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 outline-none lg:my-4 lg:overflow-y-auto"
+            className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 overflow-x-clip outline-none lg:my-4 lg:overflow-y-auto"
           >
             <ActivePathContext value={activePath}>{list}</ActivePathContext>
           </div>

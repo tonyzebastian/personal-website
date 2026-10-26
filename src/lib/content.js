@@ -289,3 +289,88 @@ export const aboutConversation = {
     }
   ]
 };
+
+// The storybook in the hero: a cover, one spread per side of me, and an end
+// spread. `word` is the big lettering across the spread; `motif` picks the
+// placeholder drawing in book/Motifs.js. Add `image` (a 2:1.12 WebP spanning
+// both pages, e.g. '/images/book/designer.webp') to replace the placeholder
+// scene with a real illustration.
+export const storybook = {
+  cover: {
+    title: 'Tony Sebastian',
+    subtitle: 'a builder who designs, codes and tells stories.',
+    note: 'A simple illustrated story',
+  },
+  chapters: [
+    {
+      id: 'designer',
+      kicker: 'The',
+      word: 'Designer',
+      title: 'The Designer',
+      body: 'Seven years of shaping products, from Infosys to Hypersonix to Postman. I care about systems, craft and things that feel right.',
+      motif: 'designer',
+      paper: '#dde8d6',
+      ink: '#2f4a32',
+      accent: '#9fc394',
+    },
+    {
+      id: 'coder',
+      kicker: 'The',
+      word: 'Coder',
+      title: 'The Coder',
+      body: 'Writing more code, and trying to write it better. Motion, interactions and the systems that run underneath them.',
+      motif: 'coder',
+      paper: '#d8e1ee',
+      ink: '#26364f',
+      accent: '#8fa7cc',
+    },
+    {
+      id: 'illustrator',
+      kicker: 'The',
+      word: 'Illustrator',
+      title: 'The Illustrator',
+      body: 'An illustrator at heart. In 2022 I drew something every single day for 365 days.',
+      motif: 'illustrator',
+      paper: '#f5d9c6',
+      ink: '#5a3322',
+      accent: '#e6a17c',
+    },
+    {
+      id: 'cinematographer',
+      kicker: 'The',
+      word: 'Lens',
+      title: 'Behind the Lens',
+      body: 'Chasing light in nature, movement and abstract forms. Someday, a cinematographer.',
+      motif: 'cinematographer',
+      paper: '#26323f',
+      ink: '#f3ead9',
+      accent: '#e7b75f',
+    },
+    {
+      id: 'maker',
+      kicker: 'The',
+      word: 'Maker',
+      title: 'The Maker',
+      body: 'Juny Made is the art studio I run with my partner: handmade, embroidered gifts, one stitch at a time.',
+      motif: 'maker',
+      paper: '#f2d5da',
+      ink: '#5b2734',
+      accent: '#d98a9a',
+    },
+    {
+      id: 'runner',
+      kicker: 'The',
+      word: 'Runner',
+      title: 'The Runner',
+      body: 'Picked up running in 2025. A half marathon is next, because it is never too late to start something new.',
+      motif: 'runner',
+      paper: '#f3e3b3',
+      ink: '#4d3d14',
+      accent: '#d9b44a',
+    },
+  ],
+  end: {
+    word: 'To be continued',
+    body: 'Consistency beats talent, and side projects keep the passion alive.',
+  },
+};
