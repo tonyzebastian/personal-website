@@ -5,7 +5,7 @@ export const postminidata = {
     description: "A collection of mini projects I worked on during my time at Postman that made a huge impact.",
     role: "Lead Product Designer",
     company: "Postman",
-    logo: "/icons/postman.png",
+    logo: "/icons/postman.webp",
   },
 
   // Projects data

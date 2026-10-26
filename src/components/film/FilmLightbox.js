@@ -1,11 +1,11 @@
 "use client";
 
-import { Pause, Play, Volume2, VolumeX, X } from "lucide-react";
+import { Pause, Play, SpeakerHigh, SpeakerSlash, X } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 const controlClassName =
-  "flex size-10 items-center justify-center rounded-full bg-slate-100 text-black transition-colors hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+  "flex size-10 items-center justify-center rounded-full bg-slate-100 text-black transition-colors hover:bg-slate-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 export default function FilmLightbox({
   work,
@@ -82,7 +82,7 @@ export default function FilmLightbox({
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="fixed inset-0 z-[100] bg-white p-3 sm:p-6 lg:p-8"
+      className="fixed inset-0 z-100 bg-white p-3 sm:p-6 lg:p-8"
     >
       <div className="mx-auto flex h-full w-full max-w-[1600px] flex-col">
         <div
@@ -121,19 +121,19 @@ export default function FilmLightbox({
               showPlaybackTemporarily();
             }}
             aria-label={isPlaying ? "Pause video" : "Play video"}
-            className={`absolute left-1/2 top-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-black transition-[background-color,opacity] duration-150 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:size-16 ${
+            className={`absolute left-1/2 top-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-black transition-[background-color,opacity] duration-150 hover:bg-white/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:size-16 ${
               showPlaybackControl || isPlaybackHovered
                 ? "opacity-100"
                 : "pointer-events-none opacity-0"
             }`}
           >
             {isPlaying ? (
-              <Pause size={24} strokeWidth={1.5} className="fill-current" />
+              <Pause size={24} weight="fill" />
             ) : (
               <Play
                 size={24}
-                strokeWidth={1.5}
-                className="ml-0.5 fill-current"
+                weight="fill"
+                className="ml-0.5"
               />
             )}
           </button>
@@ -147,9 +147,9 @@ export default function FilmLightbox({
               className={controlClassName}
             >
               {isMuted ? (
-                <VolumeX size={18} strokeWidth={1.75} />
+                <SpeakerSlash size={18} />
               ) : (
-                <Volume2 size={18} strokeWidth={1.75} />
+                <SpeakerHigh size={18} />
               )}
             </button>
             <button
@@ -160,7 +160,7 @@ export default function FilmLightbox({
               title="Close"
               className={controlClassName}
             >
-              <X size={19} strokeWidth={1.75} />
+              <X size={19} />
             </button>
           </div>
         </div>
@@ -168,11 +168,11 @@ export default function FilmLightbox({
         <div className="shrink-0 bg-white px-4 py-4 text-center sm:px-6 sm:py-5">
           <h2
             id={`lightbox-title-${work.id}`}
-            className="!text-xl !font-normal !tracking-tight !text-black"
+            className="text-xl! font-normal! tracking-tight! text-black!"
           >
             {work.title}
           </h2>
-          <p className="!mt-1 !text-sm !leading-snug !tracking-normal !text-black/65">
+          <p className="mt-1! text-sm! leading-snug! tracking-normal! text-black/65!">
             {work.description}
           </p>
         </div>

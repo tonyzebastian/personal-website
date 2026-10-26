@@ -8,13 +8,13 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'Tony Sebastian ✦ designer',
     description: 'A visual product designer | Love to code | always tinkering with a side project',
-    image: 'https://tonyzeb.design/preview.png',
+    image: 'https://www.tonyzeb.com/preview.png',
   },
   og: {
     title: 'Tony Sebastian ✦ designer',
     description: 'A visual product designer | Love to code | always tinkering with a side project',
-    url: 'https://tonyzeb.design/',
-    image: 'https://tonyzeb.design/preview.png',
+    url: 'https://www.tonyzeb.com/',
+    image: 'https://www.tonyzeb.com/preview.png',
     locale: 'en_EN',
   },
 };
@@ -22,21 +22,28 @@ export const metadata = {
 export const projects = [
   {
     name: 'UX Nudges',
-    date: 'A collection of nudges from apps',
+    description: 'A collection of nudges from apps',
     link: 'https://ux-nudge.web.app/',
-    image: '/icons/nudges.png',
+    image: '/icons/nudges.webp',
   },
   {
     name: 'Resume Builder',
-    date: 'The simplest resumer builder',
+    description: 'The simplest resumer builder',
     link: 'https://resume-builder-dun-rho.vercel.app/',
-    image: '/icons/resume.png',
+    image: '/icons/resume.webp',
   },
   {
     name: 'Abstract Illustration Library',
-    date: 'A library of free to use illustrations',
+    description: 'A library of free to use illustrations',
     link: 'https://abstract-library.framer.website/',
-    image: '/icons/abstract.png',
+    image: '/icons/abstract.webp',
+  },
+  {
+    // Details and its own panel to come.
+    name: 'Juny Made',
+    description: 'Studio, details soon',
+    link: null,
+    image: null,
   },
 ];
 
@@ -45,20 +52,20 @@ export const experience = [
   {
     name: 'Sundial',
     slug: 'sundial',
-    date: 'Lead Designer',
+    role: 'Lead Designer',
     link: 'https://sundial.so/',
-    image: '/icons/sundial.png',
-    secondaryText: "Oct'25 - Oct'26",
+    image: '/icons/sundial.webp',
+    period: "Oct'25 - Oct'26",
     description: "A Sequoia-backed AI analytics startup founded by Meta executives, including Julie Zhuo, Meta's former VP of Design. I lead design across the product.",
     items: [],
   },
   {
     name: 'Postman',
     slug: 'postman',
-    date: 'Senior Product Designer',
+    role: 'Senior Product Designer',
     link: 'https://www.postman.com/',
-    image: '/icons/postman.png',
-    secondaryText: "Jun'22 - Jun'25",
+    image: '/icons/postman.webp',
+    period: "Jun'22 - Jun'25",
     description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
     items: [
       {
@@ -79,72 +86,48 @@ export const experience = [
         images: ["/images/projects/mini_project_02.mp4", "/images/projects/mini_proj_01.png"],
         link: "/project/miniprojects",
       },
-    ],
-    projects: [
-      {
-        title: "Projects",
-        description: "New Trial experiences, API Observability & more.",
-        images: ["/images/projects/live_collections_1.png", "/images/projects/trial_02.mp4"],
-        link: "/project/postman",
-        requiresPassword: true
-      }
     ]
   },
   { 
     name: 'Hypersonix', 
     slug: 'hypersonix',
-    date: 'Lead Product Designer', 
+    role: 'Lead Product Designer', 
     link: 'https://hypersonix.ai/',
-    image: '/icons/hypersonix.png',
-    secondaryText: "Oct'20 - May'22",
+    image: '/icons/hypersonix.webp',
+    period: "Oct'20 - May'22",
     description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
     caseStudy: {
-      link: "/project/hypersonix",
+      link: "/hypersonix",
       images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
     },
-    items: [],
-    projects: [
-      {
-        title: "A summary of my experience",
-        description: "0 to 1 projects, Design system, App studio & more.",
-        
-        images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
-        link: "/project/hypersonix",
-        requiresPassword: false
-      }
-    ]
+    items: []
   },
-];
-
-/* More experience Section */
-export const designAreas = [
+  // Earlier roles: rows on the home page only, not on the /experience timeline.
   {
-    title: "AVRL",
-    image: '/icons/avrl.png',
-    isExternal: true,
+    name: 'AVRL',
+    slug: 'avrl',
+    role: 'Visual Designer',
     link: 'https://www.linkedin.com/company/advanced-voice-research-labs/',
+    image: '/icons/avrl.webp',
+    period: null,
+    description: "My first job as a designer. In late 2018 I made the switch from business analysis to design and joined AVRL (Advanced Voice Research Labs) as a Visual Designer. The role was fully remote, so I moved back to my hometown, Thodupuzha, and worked from there.",
+    related: [{ title: '15 Months of remote work: A Recap', href: '/musings/remote_work' }],
+    timeline: false,
+    items: [],
   },
   {
-    title: "Infosys",
-    image: "/icons/infosys.png",
-    isExternal: true,
+    name: 'Infosys',
+    slug: 'infosys',
+    role: 'Senior Associate Consultant',
     link: 'https://www.infosys.com/',
+    image: '/icons/infosys.webp',
+    period: null,
+    description: "Where my career started. After a master's in marketing, I joined Infosys as a business analyst and grew into a Senior Associate Consultant. Working close to how products get built made me curious about design, which I went on to teach myself. I also wrote about how the asset management team revived its legacy system.",
+    related: [{ title: 'Reviving a legacy system at Infosys', href: '/musings/infosys_legacy' }],
+    timeline: false,
+    items: [],
   },
-  {
-    title: "Chatwoot",
-    image: "/icons/chatwoot.png",
-    isExternal: true,
-    link: 'https://www.chatwoot.com/',
-  },
-  {
-    title: "Scribd",
-    image: "/icons/scribd.png",
-    isExternal: true,
-    link: 'https://www.scribd.com/',
-  }
 ];
-
-
 
 export const musings = [
   { name: 'Reduce perceived wait times through visual delight', date: 'May 2024', link: '/musings/perceived_wait'},
@@ -155,30 +138,12 @@ export const musings = [
 ];
 
 
-export const generativeArt = [
-  {
-    text: "Some of my experiments with generative tools like Midjourney, Veo, Kling and more..",
-  }
-];
-
-export const aiImages = [
-  { src: '/images/AI/bangalore auto.png' },
-  { src: '/images/AI/rook.png' },
-  { src: '/images/AI/stellar_blends.gif' },
-  { src: '/images/AI/Claude.png' },
-  { src: '/images/AI/gemini.png' },
-  { src: '/images/AI/lovable.png' },
-  { src: '/images/AI/cyclist.png' },
-  { src: '/images/AI/elephant.png' },
-  { src: '/images/AI/lady.png' },
-  { src: '/images/AI/zebra crossing.png' },
-];
-
 export const bio = {
   intro: "I like to build things. I'm into design, art and cinematography. Believes in consistency, side projects and letting life shape my craft.",
   social: {
+    x: "https://x.com/tonyzebastian",
     linkedin: "https://www.linkedin.com/in/tonyzebastian/",
-    twitter: "https://x.com/tonyzebastian"
+    github: "https://github.com/tonyzebastian"
   }
 };
 

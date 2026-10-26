@@ -7,7 +7,7 @@ export default function FilmName() {
       >
         <h1
           id="film-title"
-          className="!mb-0 w-full whitespace-nowrap text-center ![font-family:var(--font-gasoek-one)] !text-[10.5vw] !font-normal !uppercase !leading-[0.76] !tracking-[-0.025em] !text-slate-950"
+          className="mb-0! w-full whitespace-nowrap text-center [font-family:var(--font-gasoek-one)]! text-[10.5vw]! font-normal! uppercase! leading-[0.76]! tracking-tight! text-slate-950!"
         >
           Tony Sebastian
         </h1>

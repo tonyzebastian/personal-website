@@ -2,7 +2,8 @@
 
 import { Masonry } from "react-plock";
 import { useState, useCallback } from "react";
-import { X } from "lucide-react";
+import { X } from "@phosphor-icons/react";
+import AutoVideo from '@/components/ui/AutoVideo';
 
 // Move outside component to prevent recreation
 const isVideo = (src) => {
@@ -25,7 +26,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
   const renderMediaItem = useCallback((item, idx) => {
     const hoverClassName = hoverEffects ? "hover:scale-[99%] hover:rounded-3xl cursor-pointer" : "";
     const baseClassName = `rounded transition-all ease-in-out ${hoverClassName}`;
-    const specialClassName = item.specialStyling ? "p-2 shadow" : "";
+    const specialClassName = item.specialStyling ? "p-2 shadow-sm" : "";
 
     const commonProps = {
       className: `${baseClassName} ${specialClassName}`,
@@ -35,15 +36,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
 
     if (isVideo(item.src)) {
       return (
-        <video
-          key={idx}
-          {...commonProps}
-          src={item.src}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
+        <AutoVideo key={idx} {...commonProps} src={item.src} />
       );
     }
 
@@ -53,6 +46,8 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
         {...commonProps}
         src={item.src}
         alt={item.alt}
+        loading="lazy"
+        decoding="async"
       />
     );
   }, [hoverEffects, handleItemClick]);
@@ -70,7 +65,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
       {/* Spotlight Overlay */}
       {spotlight.enabled && selectedItem && (
         <div
-          className="fixed inset-0 bg-black/25 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/25 backdrop-blur-xs flex items-center justify-center z-50"
           onClick={handleClose}
         >
           <div
@@ -100,14 +95,14 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
             </div>
 
             {/* Content Container */}
-            <div className="w-full md:w-96 flex flex-col flex-shrink-0">
+            <div className="w-full md:w-96 flex flex-col shrink-0">
               <div className="flex items-center justify-between mb-1">
                 <h2>{selectedItem.alt}</h2>
                 <button
                   className="p-2 hover:bg-slate-100 bg-slate-50 rounded-full transition-colors"
                   onClick={handleClose}
                 >
-                  <X size={20} className="text-slate-600" />
+                  <X size={20} weight="bold" className="text-slate-600" />
                 </button>
               </div>
               

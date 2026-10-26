@@ -1,59 +1,181 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-body {
-  background-color: #FFFFFF; 
-  margin: 0;
-  padding: 0;
-  overflow-y: scroll;
+/* ==========================================================================
+   Design tokens
+   Type scale and ink colours follow rachelchen.tech. Light mode only.
+   ========================================================================== */
+
+:root {
+  /* One ink colour; hierarchy comes from opacity:
+     text-ink (100) · text-ink/80 · text-ink/55 · text-ink/40 · text-ink/25 */
+  --ink: #32404f;
+  --paper: #ffffff;
+  /* A light warm stone page colour (buffmotion.com's #f2ece7, three quarters of the way to white). Panels stay on paper. */
+  --canvas: #fcfaf8;
+
+  /* Your green, used for highlight links and accents. */
+  --highlight: var(--color-green-100);
+  --highlight-strong: var(--color-green-200);
+
+  /* shadcn tokens, mapped onto the ink system. */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in srgb, var(--ink) 4%, var(--paper));
+  --muted-foreground: color-mix(in srgb, var(--ink) 55%, transparent);
+  --accent: color-mix(in srgb, var(--ink) 6%, var(--paper));
+  --accent-foreground: var(--ink);
+  --destructive: var(--color-red-600);
+  --border: color-mix(in srgb, var(--ink) 12%, transparent);
+  --input: color-mix(in srgb, var(--ink) 16%, transparent);
+  --ring: color-mix(in srgb, var(--ink) 40%, transparent);
+  --radius: 0.5rem;
 }
 
-html {
-  scroll-behavior: smooth;
+@theme inline {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-caslon), ui-serif, Georgia, serif;
+
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
+  --color-highlight: var(--highlight);
+  --color-highlight-strong: var(--highlight-strong);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Used to main heading like the hero text in home page*/
-h1 {
-  @apply font-serif text-3xl text-slate-950  mb-1 tracking-wide;
+/* ==========================================================================
+   Base styles. Kept in the base layer so utility classes can override them.
+   ========================================================================== */
+
+@layer base {
+  /* Tailwind v4 borders default to currentColor; keep the old soft grey. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Serif headings */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    line-height: 1.3;
+  }
+
+  @media (min-width: 1200px) {
+    h1 {
+      font-size: 2.25rem;
+    }
+  }
+
+  /* Sans text */
+  h4,
+  h5,
+  h6,
+  p,
+  li,
+  a {
+    font-size: 15px;
+  }
+
+  h4 {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  h5,
+  h6 {
+    font-weight: 400;
+    color: color-mix(in srgb, var(--ink) 55%, transparent);
+  }
+
+  p,
+  li {
+    line-height: 1.5;
+    color: color-mix(in srgb, var(--ink) 80%, transparent);
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  ::selection {
+    background: var(--highlight-strong);
+  }
 }
 
-/* Used for section headings*/
-h2 {
-  @apply font-sans text-lg font-medium text-slate-800  tracking-wide;
-}
-
-/* Used for heading or smaller paragraphs without bold*/
-h3 {
-  @apply font-sans text-base text-slate-700 tracking-wide leading-relaxed;
-}
-
-/* Used for heading or smaller paragraphs with bold*/
-h4 {
-  @apply font-sans text-sm font-medium text-slate-900  tracking-wide;
-}
-
-/* Used for secondary texts*/
-h5 {
-  @apply font-sans text-slate-600 ;
-}
-
-h6 {
-  @apply font-sans font-light text-slate-500 text-sm tracking-wide;
-}
-
-/* Used for normal paragraphs*/
-p {
-  @apply font-sans text-sm font-normal text-slate-800 tracking-wider leading-loose;
-}
-
-strong {
-  @apply text-slate-300;
-}
-
-li {
-  @apply font-sans text-sm font-normal text-slate-800 tracking-wider leading-loose;
-}
+/* ==========================================================================
+   Page specific helpers
+   ========================================================================== */
 
 .grayscale {
   filter: grayscale(100%);
@@ -64,6 +186,50 @@ li {
   filter: grayscale(0%);
 }
 
+/* The page surface: the warm canvas colour with a fine warm grain on top.
+   The grain is an SVG noise tinted brown, with alpha = 0.8 x noise - 0.48, so
+   only the brighter half of the noise leaves a speck (at most ~9% darker) and
+   the average colour stays the canvas colour. The site shell carries it;
+   anything that blends images into it (mix-blend-multiply) needs it on its
+   own box too. */
+.surface-canvas {
+  background-color: var(--canvas);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.26 0 0 0 0 0.19 0.8 0 0 0 -0.48'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
+  background-repeat: repeat;
+}
+
+/* A thin scrollbar that stays out of sight until the area is hovered or
+   focused, then shows in a faint ink. */
+.scrollbar-minimal {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-minimal:hover,
+.scrollbar-minimal:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--ink) 18%, transparent) transparent;
+}
+
+/* Safari and older Chromium use these instead. */
+.scrollbar-minimal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.scrollbar-minimal:hover::-webkit-scrollbar-thumb,
+.scrollbar-minimal:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
 .scrollbar-hide {
  -ms-overflow-style: none;
  scrollbar-width: none;
@@ -71,16 +237,6 @@ li {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
-}
-
-.hero-gradient {
-  background: linear-gradient(180deg, 
-    #FFF5E6 0%, 
-    rgba(255, 240, 235, 0.25) 50%, 
-    rgba(250, 235, 245, 0.5) 75%, 
-    rgba(245, 240, 255, 0.75) 87.5%, 
-    #FAFAFF 100%
-  );
 }
 
 /* Experience timeline. Each company draws the line from its own logo down to

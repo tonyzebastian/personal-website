@@ -1,13 +1,14 @@
+// Your green highlight link, for links inside running text.
 export default function HighlightLink({ href, children, onClick }) {
-    return (
-      <a 
-        href={href}
-        onClick={onClick}
-        className="bg-green-100 hover:bg-green-200 cursor-pointer px-1 rounded inline-block font-sans text-sm tracking-wider leading-loose"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {children}
-      </a>
-    );
-  }
+  return (
+    <a
+      href={href}
+      onClick={onClick}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-sm bg-highlight px-1 text-ink transition-colors hover:bg-highlight-strong"
+    >
+      {children}
+    </a>
+  );
+}

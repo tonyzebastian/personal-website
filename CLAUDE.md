@@ -1,241 +1,91 @@
 # CLAUDE.md - Tony Sebastian Portfolio Website
 
-## Project Overview
+## Project overview
 
-This is a personal portfolio website for Tony Sebastian, a visual product designer. Built with Next.js 14, it showcases projects, experience, musings, and personal information through a modern, interactive interface.
+Personal portfolio of Tony Sebastian, a visual product designer. One home page lists experience, pet projects and musings; every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The URL always matches what is on screen.
 
-## Technology Stack
+## Technology stack
 
-### Core Framework
-- **Next.js 14.2.18** - React framework with App Router
-- **React 18** - UI library
-- **JavaScript** - Primary language (no TypeScript)
+- **Next.js 15** (App Router) with **React 19**, JavaScript (no TypeScript)
+- **Tailwind CSS v4**: CSS-first config in `src/app/globals.css` (`@theme`), PostCSS via `@tailwindcss/postcss`, animations from `tw-animate-css`
+- **shadcn/ui on Base UI** (`@base-ui/react`): components live in `src/components/ui/`. Compose with `render={<el />}`, not `asChild`. To style a link like a button, use `buttonVariants()` on the link itself (rendering a link through `Button` gives it a button role)
+- **Phosphor icons** (`@phosphor-icons/react`): the only icon set. Import from `@phosphor-icons/react/ssr` in server components. Use `weight="bold"` for UI icons
+- **Motion** (`motion/react`): panel animations, loaded through `LazyMotion` with `m.` components; features load on demand from `src/lib/motion-features.js`
+- **Fonts**: Figtree (body, `next/font/google`) and Libre Caslon Condensed (headings, self-hosted in `src/fonts/` via `next/font/local`, SIL OFL)
+- **react-plock**: masonry layout for the about galleries
 
-### Styling & UI
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **Tailwind CSS Animate** - Animation utilities
-- **CSS Variables** - Custom design system colors and spacing
-- **Progressive Blur** - Custom blur effects
-- **Geist Font** - Sans-serif typography
-- **Instrument Serif** - Serif typography for headings
+## Design system
 
-### UI Components & Libraries
-- **@headlessui/react** - Unstyled accessible components
-- **@radix-ui/react-slot** - Component composition utilities
-- **Lucide React** - Icon library
-- **React Feather** - Additional icons
-- **Class Variance Authority** - Component variant management
-- **clsx & tailwind-merge** - Conditional class utilities
+Tokens are defined in `src/app/globals.css`. Type scale and ink colours follow rachelchen.tech. Light mode only.
 
-### Interactions & Animations
-- **Motion (Framer Motion v12)** - Animation library
-- **Progressive Blur** - Custom blur effects for navigation
-- **React Plock** - Masonry layout for image grids
+- **Ink**: one text colour, `#32404f`. Hierarchy comes from opacity: `text-ink`, `text-ink/80`, `text-ink/55`, `text-ink/40`, `text-ink/25`
+- **Highlight**: the green link style, `bg-highlight` / `bg-highlight-strong` (`HighlightLink`, or the Button `highlight` variant)
+- **Type**: body 15px with 1.5 line height; serif headings h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
+- **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8, a lighter take on buffmotion.com's #f2ece7), with a fine warm SVG grain; both come from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
+- **shadcn tokens** (`--background`, `--primary`, `--border`, ...) are mapped onto ink and paper
 
-### Development Tools
-- **ESLint** - Code linting (warnings ignored in builds)
-- **Autoprefixer** - CSS vendor prefixing
-- **PostCSS** - CSS processing
-
-### Performance & Analytics
-- **Next.js Image Optimization** - Built-in image optimization
-
-## Project Structure
+## How pages and the panel work
 
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── layout.js          # Root layout with fonts and navigation
-│   ├── page.js            # Homepage with projects, experience, musings
-│   ├── globals.css        # Global styles and CSS variables
-│   ├── about/             # About page route
-│   ├── craft/             # Craft/design work showcase
-│   ├── AI/                # AI-related projects
-│   └── musings/           # Blog-style content pages
-├── components/            # Reusable UI components
-│   ├── DockNavigation.js  # Bottom navigation with blur effect
-│   ├── Hero.js            # Hero section with video
-│   ├── CaseStudyTemplate.js # Reusable case study page template
-│   ├── list/              # List components (ListItem, Title, SubText)
-│   ├── ui/                # UI primitives and utilities
-│   ├── fancy/             # Advanced interactive components
-│   └── unused/            # Archived unused components
-├── lib/                   # Utilities and content
-│   ├── content.js         # All site content and data
-│   └── utils.js           # Utility functions
-└── public/                # Static assets
-    ├── images/            # Organized by category (AI, Craft, about, etc.)
-    ├── icons/             # Company/project icons
-    └── hero.gif           # Hero animation
+src/app/
+├── layout.js              # Root: fonts, viewport, globals
+├── (site)/                # Everything that shares the home list
+│   ├── layout.js          # SiteShell: home list + panel for the current route
+│   ├── page.js            # "/": metadata only, renders nothing (no panel)
+│   ├── [company]/page.js  # /sundial, /postman, /hypersonix, /avrl, /infosys
+│   ├── about/             # About me panel
+│   └── musings/*          # One folder per musing
+├── experience/            # Standalone timeline page (unlisted, noindex)
+├── project/*              # Postman sub case studies, full pages
+├── film/                  # Standalone film site (own font)
+└── craft/                 # Old craft page (to be replaced)
 ```
 
-## Key Features
+- `src/components/panel/SiteShell.js` draws the home list and, for any route other than `/`, a panel. From 1280px wide the panel opens beside the list and pushes it aside; below that `PanelSheet.js` shows it as a bottom sheet (Base UI Dialog, drag to close, loaded only on small screens)
+- Split, breakpoint and spring live in `src/components/panel/config.js`
+- `FrozenRouter.js` keeps the outgoing page rendered while a panel closes or swaps. It relies on a Next.js internal (`LayoutRouterContext`); recheck it after Next upgrades
+- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (title, details line, actions), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
 
-### Content Management
-- **Centralized Content**: All site content managed in `src/lib/content.js`
-- **Structured Data**: Projects, experience, musings, and bio information
-- **Dynamic Rendering**: Content rendered dynamically throughout the site
+## Content
 
-### Navigation & UX
-- **Sticky Bottom Navigation**: Modern mobile-first navigation pattern
-- **Progressive Blur**: Advanced blur effect behind navigation
-- **Active State Management**: Automatic route-based active states
-- **Responsive Design**: Mobile-first approach with desktop enhancements
+All copy lives in `src/lib/content.js`:
 
-### Performance Optimizations
-- **Next.js Image Optimization**: Automatic image optimization and lazy loading
-- **React Memoization**: Extensive use of React.memo(), useMemo(), and useCallback() in client components
-- **Suspense Boundaries**: Proper Suspense wrapping for useSearchParams() to enable static generation
-- **Static Helper Functions**: Helper functions moved outside components to prevent recreation
-- **Client-side Mounting**: Prevents hydration issues with proper SSR handling
-- **ESLint Bypass**: Build optimization (errors ignored during builds)
+- `experience`: rows and the `[company]` pages (`role`, `period`, `description`, optional `related` links). Entries with `timeline: false` are left off `/experience`
+- `projects`: pet projects (external links, or `link: null` for a plain row)
+- `musings`: home list of articles (the article itself is its own route)
+- `bio`, `aboutBio`, `aboutFunThings`, `aboutPrinciples`, `now`, `animation`, `junymade`, `photography`, `aboutConversation`
 
-## Available Scripts
+Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and rendered by `src/components/CaseStudy.js`. The three Postman sub case studies under `src/app/project/` still use `CaseStudyTemplate.js`.
 
-```bash
-# Development
-npm run dev          # Start development server on localhost:3000
+## Key components
 
-# Production
-npm run build        # Build for production
-npm run start        # Start production server
+- `Row`: every home list row (icon, title, hover arrow, details). Stacks when its column is narrow, using container queries (`@lg:`) rather than the window width
+- `ShowMore`: folds extra rows behind "View more" (Base UI Collapsible)
+- `Contact`: "Start a conversation" with X, LinkedIn and GitHub buttons
+- `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip
+- `MediaGrid`: media side by side in a row
 
-# Code Quality
-npm run lint         # Run ESLint (currently configured to ignore errors in builds)
-```
+## Performance
 
-## Development Setup
-
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Start Development**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Environment**: 
-   - Development server runs on `http://localhost:3000`
-   - Hot reload enabled for all file changes
-
-## Content Structure
-
-### Main Sections
-- **Projects**: Personal projects and side ventures
-- **Experience**: Professional work history with company details
-- **Musings**: Blog-style articles and thoughts
-- **About**: Personal information and philosophy
-- **Now**: Current activities and learning
-
-### Data Organization
-All content is exported from `src/lib/content.js`:
-- `projects` - Project showcase data
-- `experience` - Work experience
-- `designAreas` - Additional experience areas
-- `musings` - Blog posts/articles
-- `bio` - Personal information
-- `now` - Current status updates
-
-## Design System
-
-### Typography
-- **Geist Sans**: Primary sans-serif font
-- **Instrument Serif**: Headings and emphasis
-
-### Color Palette
-- Uses Tailwind CSS default color system
-- Primary colors: Slate for text and borders
-- Accent colors: Green for highlights and active states
-- Background colors: Default white with slate hover states
-
-### Component Patterns
-- **ListItem**: Consistent item display pattern
-- **HighlightLink**: Styled external/internal links
-- **Badge**: Status indicators
-- **ImageGridWithLightbox**: Gallery components
-
-## Image Management
-
-### Organization
-- `public/images/AI/` - AI-related project images
-- `public/images/Craft/` - Design craft showcase
-- `public/images/about/` - Personal/about section images
-- `public/images/musings/` - Blog article images
-- `public/images/visuals/` - General visual content
-- `public/icons/` - Company and project icons
-
-### Optimization
-- Next.js automatic image optimization
-- WebP conversion where supported
-- Responsive image sizing
-- Lazy loading by default
+- Static export (`output: 'export'`), so there is no image server: images are served as they are in `public/`. Convert them to WebP and size them before adding
+- Keep pages as server components; client code is limited to the panel shell, `ShowMore`, `AutoVideo` and the galleries
+- Lazy-load anything below the fold (`loading="lazy"` on images and iframes); the hero image uses `fetchPriority="high"`
+- Do not autoplay video with a plain `<video autoPlay>`; use `AutoVideo`
 
 ## Deployment
 
-### Cloudflare Pages
-- Deployed to Cloudflare Pages (project `tonyzebdesign`); pushes to Git trigger builds and pull requests get preview deployments
-- Static export: `output: 'export'` in `next.config.mjs`, so `npm run build` writes the site to `out/`, which is the build output directory
-- Images are unoptimized (`images.unoptimized: true`) because there is no Next.js image server on a static host
-- Static export rules out server features: API routes, middleware, ISR and on-demand image optimization
-- Node.js 22 or newer (see `engines` in `package.json` and `.nvmrc`)
-- Vercel is no longer used; Vercel Speed Insights and Analytics were removed
+- Cloudflare Pages (project `tonyzebdesign`); pushes build automatically and pull requests get preview deployments
+- `npm run build` writes the static site to `out/`
+- `public/_redirects` holds redirects for moved URLs (Cloudflare format); keep `public/sitemap.xml` in step with the routes
+- Static export rules out API routes, middleware, ISR and on-demand image optimisation
+- Node.js 22 or newer (`engines` in `package.json` and `.nvmrc`)
 
-### Build Configuration
-- ESLint errors ignored during builds for flexibility
-- PostCSS processing for Tailwind CSS
-- Next.js optimization features enabled
+## Scripts
 
-## SEO & Meta
+```bash
+npm run dev     # Development server on localhost:3000
+npm run build   # Production build to out/
+npm run lint    # ESLint (errors do not block builds)
+```
 
-### Homepage SEO
-- Comprehensive meta tags
-- Open Graph integration
-- Twitter Card support
-- Structured data for social sharing
-
-### Performance
-- Core Web Vitals optimization
-- Progressive loading strategies
-
-## Future Considerations
-
-### Potential Improvements
-- Add TypeScript for better type safety
-- Implement proper error handling
-- Add automated testing
-- Consider adding a CMS for content management
-- Implement proper loading states
-- Add more interactive animations
-
-### Content Management
-- Currently all content is hardcoded in `content.js`
-- Consider migrating to a headless CMS for easier updates
-- Implement dynamic content loading for better performance
-
-## Performance Best Practices
-
-### Component Optimization
-- **Server Components by Default**: Most pages are server components for optimal performance
-- **Client Components**: Only use 'use client' when needed for interactivity
-- **React.memo()**: Applied to frequently re-rendered components (CaseStudyTemplate child components, list items)
-- **useMemo()**: Used for expensive calculations and static arrays in client components
-- **useCallback()**: Applied to event handlers passed as props
-- **Static Data**: Helper functions and data arrays moved outside components
-
-### Build Optimizations
-- **Suspense Boundaries**: useSearchParams() wrapped in Suspense for proper static generation
-- **Viewport Export**: Separate viewport export (not in metadata) for Next.js 14 compatibility
-- **Image Optimization**: All images use Next.js Image component with proper sizing
-- **Code Splitting**: Components lazy loaded where appropriate
-
-## Notes for Development
-
-- The project uses JavaScript instead of TypeScript
-- ESLint is configured to allow builds with warnings/errors
-- All animations use Framer Motion v12 (latest major version)
-- Navigation uses client-side routing with Next.js App Router
-- Images are manually optimized and organized by content type
-- The site follows a mobile-first responsive design approach
-- Node.js version: >=22.0.0 (specified in package.json)
+Running `npm run build` while the dev server is running overwrites its `.next` cache; restart the dev server afterwards.

@@ -2,4 +2,4 @@ User-agent: *
 Disallow: /private/
 Disallow: /temp/
 
-Sitemap: https://tonyzeb.design/sitemap.xml
+Sitemap: https://www.tonyzeb.com/sitemap.xml
