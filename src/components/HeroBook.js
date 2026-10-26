@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
-import { BookOpen, HandGrabbing } from '@phosphor-icons/react';
+import { HandGrabbing } from '@phosphor-icons/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 
 // The storybook hero: a WebGL board book lying on the page, seen from above
@@ -23,7 +23,6 @@ export default function HeroBook({ book }) {
   const sceneRef = useRef(null);
   const [status, setStatus] = useState('loading'); // loading | ready | failed
   const [spread, setSpread] = useState(0);
-  const [hover, setHover] = useState(false);
   const [dragged, setDragged] = useState(false);
   const lastSpread = chapters.length + 1;
 
@@ -67,7 +66,6 @@ export default function HeroBook({ book }) {
           pages,
           reduceMotion,
           onSpread: setSpread,
-          onHover: setHover,
         });
         sceneRef.current = scene;
         setStatus('ready');
@@ -117,7 +115,7 @@ export default function HeroBook({ book }) {
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerDown={() => open && setDragged(true)}
-        className="group/book relative aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:outline-1 focus-visible:outline-offset-[12px] focus-visible:outline-ink/20"
+        className="group/book relative mb-5 aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:outline-1 focus-visible:outline-offset-[12px] focus-visible:outline-ink/20"
       >
         {/* The canvas runs well past the frame, so the book's shadows are
             never cut off; it takes no clicks, the frame does. */}
@@ -135,25 +133,11 @@ export default function HeroBook({ book }) {
           </p>
         )}
 
-        {/* Hovering the closed book shows how to open it (always shown on
-            touch screens, which cannot hover). */}
-        {status === 'ready' && !open && (
-          <span
-            aria-hidden
-            className={`pointer-events-none absolute bottom-[9%] left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1 text-xs font-medium text-paper shadow-sm backdrop-blur-sm transition-all duration-300 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100 ${
-              hover ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0'
-            }`}
-          >
-            <BookOpen weight="bold" size={14} />
-            Open book
-          </span>
-        )}
-
         {/* With no buttons, say once how to turn pages; gone after the first drag. */}
         {status === 'ready' && open && (
           <span
             aria-hidden
-            className={`pointer-events-none absolute -bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-1.5 text-xs text-ink/45 transition-opacity duration-500 ${
+            className={`pointer-events-none absolute -bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1.5 text-xs text-ink/45 transition-opacity duration-500 ${
               dragged ? 'opacity-0' : 'opacity-100'
             }`}
           >

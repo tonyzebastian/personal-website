@@ -31,6 +31,12 @@ const D = PAGE_ASPECT; // page depth, along the spine
 const PAGE_T = 0.005;
 const COVER_T = 0.008;
 const RADIUS = 0.07;
+// Hard covers overhang the pages by this much on the three outer sides, so
+// an open book shows a rim of cover around each page block.
+const OVERHANG = 0.035;
+const WC = W + OVERHANG; // cover board width
+const DC = D + 2 * OVERHANG; // cover board depth
+const COVER_RADIUS = RADIUS * (WC / W);
 // A long lens from far away: the book looks flat and top-down, and a page
 // standing up mid-turn grows only a little, so it stays inside the canvas.
 const FOV = 12;
@@ -42,16 +48,16 @@ const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
-// A board: rounded on the outer (x = W) corners, square at the spine.
+// A board w x d: rounded on the outer (x = w) corners, square at the spine.
 // Material slots: 0 back face (y = 0), 1 front face (y = t), 2 edges.
-function boardGeometry(t) {
+function boardGeometry(t, w = W, d = D, r = RADIUS) {
   const shape = new THREE.Shape();
-  shape.moveTo(0, -D / 2);
-  shape.lineTo(W - RADIUS, -D / 2);
-  shape.quadraticCurveTo(W, -D / 2, W, -D / 2 + RADIUS);
-  shape.lineTo(W, D / 2 - RADIUS);
-  shape.quadraticCurveTo(W, D / 2, W - RADIUS, D / 2);
-  shape.lineTo(0, D / 2);
+  shape.moveTo(0, -d / 2);
+  shape.lineTo(w - r, -d / 2);
+  shape.quadraticCurveTo(w, -d / 2, w, -d / 2 + r);
+  shape.lineTo(w, d / 2 - r);
+  shape.quadraticCurveTo(w, d / 2, w - r, d / 2);
+  shape.lineTo(0, d / 2);
   shape.closePath();
   const geometry = new THREE.ExtrudeGeometry(shape, { depth: t, bevelEnabled: false, curveSegments: 10 });
   geometry.rotateX(-Math.PI / 2); // extrude upwards; the shape's y becomes -z
@@ -63,8 +69,9 @@ function boardGeometry(t) {
   geometry.addGroup(caps.start + half, half, 1);
   geometry.addGroup(sides.start, sides.count, 2);
 
-  // Page UVs: u runs from the spine (0) out to the edge (1); v from the
-  // bottom of the art (near the reader) to the top.
+  // Page UVs: u runs from the spine (0) out to the page edge (1); v from the
+  // bottom of the art (near the reader) to the top. On a cover board the
+  // overhang falls outside 0..1, which is how the shader finds the rim.
   const pos = geometry.attributes.position;
   const uv = geometry.attributes.uv;
   for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / W, (D / 2 - pos.getZ(i)) / D);
@@ -143,6 +150,9 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   };
   const roughMap = surface(paper.rough);
   const normalMap = surface(paper.normal);
+  // The covers are bookcloth: matte, with a finer, deeper weave.
+  const clothNormal = surface(paper.normal);
+  clothNormal.repeat.set(9, 9);
 
   // Shared uniforms: the crease shade near the spine, and one parallax
   // offset per illustration.
@@ -161,44 +171,145 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     return texture;
   };
 
-  function pageMaterial(page, onBack) {
+  // `board` is set for the two cover boards: { cloth, mirror } where cloth is
+  // the cover's own texture, shown on the rim around the inside pages.
+  function pageMaterial(page, onBack, board = null) {
     // The base layer carries this face's slice of the art: front faces run
     // from the spine outwards to the right; back faces end up mirrored on
     // the left, so their u runs right to left.
     const map = track(canvasTexture(page.layers[0]).clone());
     map.needsUpdate = true;
     if (page.part === 'whole') {
-      map.repeat.set(onBack ? -1 : 1, 1);
-      map.offset.set(onBack ? 1 : 0, 0);
+      // A cover face spans the whole board, overhang included.
+      map.repeat.set(((onBack ? -1 : 1) * W) / WC, D / DC);
+      map.offset.set(onBack ? 1 : 0, OVERHANG / DC);
     } else {
       map.repeat.set(onBack ? -0.5 : 0.5, 1);
       map.offset.set(0.5, 0);
     }
+    const cloth = board && page.part === 'whole';
     const material = track(
-      new THREE.MeshStandardMaterial({
-        map,
-        roughness: 0.45,
-        metalness: 0.07,
-        roughnessMap: roughMap,
-        metalnessMap: roughMap,
-        normalMap,
-        normalScale: new THREE.Vector2(0.3, 0.3),
-      })
+      new THREE.MeshStandardMaterial(
+        cloth
+          ? {
+              map,
+              roughness: 0.92,
+              metalness: 0,
+              roughnessMap: roughMap,
+              normalMap: clothNormal,
+              normalScale: new THREE.Vector2(0.75, 0.75),
+            }
+          : {
+              map,
+              roughness: 0.45,
+              metalness: 0.07,
+              roughnessMap: roughMap,
+              metalnessMap: roughMap,
+              normalMap,
+              normalScale: new THREE.Vector2(0.3, 0.3),
+            }
+      )
     );
     const layers = page.layers.slice(1).map(canvasTexture);
     if (!offsets.has(page.layers)) offsets.set(page.layers, { value: new THREE.Vector2() });
     const offset = offsets.get(page.layers);
     const spine = page.part !== 'whole';
+    const insidePage = board && spine; // a page printed on a cover board, with a rim around it
+    const f = (n) => n.toFixed(5);
+    const boardCode = board
+      ? `{
+            vec2 pu = vPageUv;
+            float cu = pu.x * ${f(W / WC)};
+            if (uMirror > 0.5) cu = 1.0 - cu;
+            vec2 clothUv = vec2(cu, pu.y * ${f(D / DC)} + ${f(OVERHANG / DC)});
+            ${
+              insidePage
+                ? `// Outside the page block, show the cover cloth turned in, darkened
+            // where the pages sit on it.
+            if (pu.x > 1.0 || pu.y < 0.0 || pu.y > 1.0 || art.a < 0.5) {
+              vec4 cloth = texture2D(uCloth, clothUv);
+              art = vec4(cloth.rgb / max(cloth.a, 0.0001), 1.0);
+              // The turn-in catches more light than the outside of the cover.
+              art.rgb = mix(art.rgb, vec3(0.36, 0.38, 0.4), 0.38) * 1.12;
+
+              // Board coordinates in world units: x from the spine, y from
+              // the bottom edge of the board.
+              vec2 bp = vec2(pu.x * ${f(W)}, (pu.y + ${f(OVERHANG / D)}) * ${f(D)});
+              float toOuter = ${f(WC)} - bp.x;
+              float toEnd = min(bp.y, ${f(DC)} - bp.y);
+
+              // Soft scuffs across the cloth.
+              float blot = (texture2D(roughnessMap, vRoughnessMapUv * 0.35).g - 0.75) / 0.25;
+              art.rgb *= 0.93 + 0.14 * smoothstep(0.55, 0.95, blot);
+
+              // Fine wrinkles running along each edge of the turn-in.
+              float alongX = texture2D(roughnessMap, vec2(bp.x * 1.3, bp.y * 26.0)).g;
+              float alongY = texture2D(roughnessMap, vec2(bp.x * 26.0, bp.y * 1.3)).g;
+              // (The map's green runs 0.75 to 1; spread it to 0..1.)
+              float wrinkle = ((toEnd < toOuter ? alongX : alongY) - 0.75) / 0.25;
+              art.rgb *= 1.0 + 0.16 * smoothstep(0.75, 0.95, wrinkle) - 0.14 * (1.0 - smoothstep(0.05, 0.2, wrinkle));
+
+              // Mitre folds: where the cloth folds over each outer corner it
+              // leaves a diagonal crease, light on one side and dark on the other.
+              float mitre = toOuter - toEnd;
+              float nearCorner = 1.0 - smoothstep(${f(OVERHANG * 0.9)}, ${f(OVERHANG * 1.6)}, min(toOuter, toEnd));
+              art.rgb *= 1.0 - 0.32 * exp(-pow(mitre / 0.0028, 2.0)) * nearCorner;
+              art.rgb *= 1.0 + 0.18 * exp(-pow((mitre - 0.0045) / 0.0025, 2.0)) * nearCorner;
+
+              // The hinge: a groove where the cover bends at the spine.
+              float hinge = exp(-pow((bp.x - 0.014) / 0.004, 2.0));
+              art.rgb *= 1.0 - 0.35 * hinge;
+              art.rgb *= 1.0 + 0.12 * exp(-pow((bp.x - 0.022) / 0.003, 2.0));
+
+              // Shadow where the page block sits on the board.
+              vec2 gap = max(vec2(max(-pu.x, pu.x - 1.0) * ${f(W)}, max(-pu.y, pu.y - 1.0) * ${f(D)}), 0.0);
+              art.rgb *= 1.0 - 0.5 * (1.0 - smoothstep(0.0, 0.03, length(gap)));
+            }`
+                : ''
+            }
+            // Worn edges and corners: pale specks along the board's outer
+            // edges and a soft fold line just inside them.
+            float edgeDist = min((${f(WC / W)} - pu.x) * ${f(W)}, min((pu.y + ${f(OVERHANG / D)}) * ${f(D)}, (${f(1 + OVERHANG / D)} - pu.y) * ${f(D)}));
+            vec2 fromEdge = vec2((${f(WC / W)} - pu.x) * ${f(W)}, min(pu.y + ${f(OVERHANG / D)}, ${f(1 + OVERHANG / D)} - pu.y) * ${f(D)});
+            // Corners wear most: the outer ones, and (outside only) the ends
+            // of the spine.
+            float toEnds = min(pu.y + ${f(OVERHANG / D)}, ${f(1 + OVERHANG / D)} - pu.y) * ${f(D)};
+            float corner = max(
+              1.0 - smoothstep(0.0, 0.14, length(fromEdge)),
+              ${cloth ? '1.0' : '0.0'} * (1.0 - smoothstep(0.0, 0.1, length(vec2(pu.x * ${f(W)}, toEnds))))
+            );
+            ${cloth ? `edgeDist = min(edgeDist, mix(1.0, length(vec2(pu.x * ${f(W)}, toEnds)), step(pu.x * ${f(W)}, 0.06)));` : ''}
+            float grain = (texture2D(roughnessMap, vRoughnessMapUv * 2.7).g - 0.75) / 0.25;
+            float wear = (1.0 - smoothstep(0.0, 0.02 + 0.02 * corner, edgeDist))
+              * smoothstep(0.42 - 0.35 * corner, 0.8 - 0.35 * corner, grain);
+            art.rgb = mix(art.rgb, vec3(0.8, 0.78, 0.74), wear * (0.65 + 0.25 * corner));
+            art.rgb *= 1.0 - 0.18 * exp(-pow((edgeDist - 0.011) / 0.0035, 2.0));
+            ${
+              cloth
+                ? `// The hinge: a groove pressed in beside the spine, a lit ridge
+            // next to it, and the cloth turning away into the spine.
+            float sx = pu.x * ${f(W)};
+            art.rgb *= 1.0 - 0.34 * exp(-pow((sx - 0.034) / 0.0045, 2.0));
+            art.rgb *= 1.0 + 0.16 * exp(-pow((sx - 0.045) / 0.0035, 2.0));
+            art.rgb *= 0.82 + 0.18 * smoothstep(0.0, 0.026, sx);`
+                : ''
+            }
+          }`
+      : '';
 
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCrease = crease;
       shader.uniforms.uOffset = offset;
+      if (board) {
+        shader.uniforms.uCloth = { value: board.cloth };
+        shader.uniforms.uMirror = { value: board.mirror ? 1 : 0 };
+      }
       layers.forEach((texture, i) => {
         shader.uniforms[`uLayer${i}`] = { value: texture };
       });
       shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying float vPageU;')
-        .replace('#include <uv_vertex>', '#include <uv_vertex>\nvPageU = uv.x;');
+        .replace('#include <common>', '#include <common>\nvarying vec2 vPageUv;')
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\nvPageUv = uv;');
       const samplers = layers.map((_, i) => `uniform sampler2D uLayer${i};`).join('\n');
       const mixes = layers
         .map(
@@ -211,7 +322,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
-          `#include <common>\nvarying float vPageU;\nuniform float uCrease;\nuniform vec2 uOffset;\n${samplers}`
+          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${samplers}`
         )
         .replace(
           '#include <map_fragment>',
@@ -219,17 +330,18 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
             vec4 art = texture2D(map, vMapUv);
             art.rgb /= max(art.a, 0.0001);
             ${mixes}
+            ${boardCode}
             diffuseColor *= art;
           #endif
           ${
             spine
               ? `// The fold: a hint when the book lies still, deeper while pages turn.
-          diffuseColor.rgb *= 1.0 - (0.05 + 0.3 * uCrease) * (1.0 - smoothstep(0.0, 0.09 + 0.06 * uCrease, vPageU));`
+          diffuseColor.rgb *= 1.0 - (0.05 + 0.3 * uCrease) * (1.0 - smoothstep(0.0, 0.09 + 0.06 * uCrease, vPageUv.x));`
               : ''
           }`
         );
     };
-    material.customProgramCacheKey = () => `page-${layers.length}-${spine}`;
+    material.customProgramCacheKey = () => `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}`;
     return material;
   }
 
@@ -246,12 +358,24 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const isCover = k === 0 || k === leafCount - 1;
     const edge = track(
       new THREE.MeshStandardMaterial({
-        color: new THREE.Color(isCover ? '#1d2024' : pages[2 * k].edge).multiplyScalar(isCover ? 1 : 0.93),
-        roughness: 0.7,
-        metalness: 0.05,
+        color: new THREE.Color(isCover ? '#26292d' : pages[2 * k].edge).multiplyScalar(isCover ? 1 : 0.93),
+        roughness: isCover ? 0.95 : 0.7,
+        metalness: isCover ? 0 : 0.05,
+        roughnessMap: isCover ? roughMap : null,
+        normalMap: isCover ? clothNormal : null,
+        normalScale: new THREE.Vector2(0.9, 0.9),
       })
     );
-    const mesh = new THREE.Mesh(track(boardGeometry(t)), [pageMaterial(pages[2 * k + 1], true), pageMaterial(pages[2 * k], false), edge]);
+    // Covers are bigger boards; their rim shows the cover's own texture.
+    const board = isCover
+      ? { cloth: canvasTexture(pages[k === 0 ? 0 : pages.length - 1].layers[0]), mirror: k !== 0 }
+      : null;
+    const geometry = isCover ? boardGeometry(t, WC, DC, COVER_RADIUS) : boardGeometry(t);
+    const mesh = new THREE.Mesh(track(geometry), [
+      pageMaterial(pages[2 * k + 1], true, board),
+      pageMaterial(pages[2 * k], false, board),
+      edge,
+    ]);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     const pivot = new THREE.Group();
@@ -337,11 +461,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
     // The book slides right as the cover opens, so the spread is centred.
     const open = clamp(progress, 0, 1);
-    book.position.x = (-W / 2) * (1 - open);
+    book.position.x = (-WC / 2) * (1 - open);
     // The shadow reaches left only as the cover comes down onto the table.
     const landed = Math.pow(clamp((open - 0.55) / 0.45, 0, 1), 2);
-    contactShadow.scale.set(W * (1 + landed) * contact.scaleX, D * contact.scaleY, 1);
-    contactShadow.position.x = book.position.x + (W * (1 - landed)) / 2;
+    contactShadow.scale.set(WC * (1 + landed) * contact.scaleX, DC * contact.scaleY, 1);
+    contactShadow.position.x = book.position.x + (WC * (1 - landed)) / 2;
 
     // The sheen follows the mouse.
     graze.position.x = -0.2 * mouse.ex;
@@ -352,7 +476,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const tan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
     const frameW = 1 - 2 * inset.x;
     const frameH = 1 - 2 * inset.y;
-    const distance = Math.max((D / 2 + 0.03) / (tan * frameH), (W + 0.03) / (tan * aspect * frameW));
+    const distance = Math.max((DC / 2 + 0.03) / (tan * frameH), (WC + 0.03) / (tan * aspect * frameW));
     camera.position.set(0, distance, 0);
     camera.lookAt(0, 0, 0);
     camera.aspect = aspect;

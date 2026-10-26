@@ -120,6 +120,12 @@ function layer(w, h, draw) {
   return c;
 }
 
+// Serif lettering as the site sets its headings: tight, -0.02em.
+function serif(ctx, size, family, style = '') {
+  ctx.font = `${style} 400 ${size}px ${family}`.trim();
+  ctx.letterSpacing = `${-0.02 * size}px`;
+}
+
 // A chapter spread in three layers, like a pop-up picture book: the paper
 // and caption (still), the motif and big word (drift a little), and the
 // character (drifts most). The scene slides the upper layers with the mouse
@@ -158,12 +164,14 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
   ctx.fillStyle = chapter.ink;
   ctx.textBaseline = 'alphabetic';
   ctx.font = `${width * 0.04}px ${fonts.sans}`;
+  ctx.letterSpacing = '0px';
   const lines = wrapText(ctx, chapter.body, width * 0.64);
   const lineHeight = width * 0.058;
   let y = h * 0.93 - lines.length * lineHeight;
-  ctx.font = `${width * 0.07}px ${fonts.serif}`;
+  serif(ctx, width * 0.07, fonts.serif);
   ctx.fillText(chapter.title, x, y - width * 0.035);
   ctx.font = `${width * 0.04}px ${fonts.sans}`;
+  ctx.letterSpacing = '0px';
   ctx.globalAlpha = 0.85;
   for (const line of lines) {
     y += lineHeight;
@@ -182,10 +190,10 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
   }
   const word = layer(w, h, (l) => {
     let size = Math.min(width * 0.56, (w * 0.84) / (chapter.word.length * 0.44));
-    l.font = `${size}px ${fonts.serif}`;
+    serif(l, size, fonts.serif);
     while (l.measureText(chapter.word).width > w * 0.86) {
       size *= 0.95;
-      l.font = `${size}px ${fonts.serif}`;
+      serif(l, size, fonts.serif);
     }
     l.textAlign = 'center';
     l.textBaseline = 'alphabetic';
@@ -193,7 +201,7 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
     l.globalAlpha = 0.92;
     l.fillText(chapter.word, w / 2, h * 0.52);
     const wordWidth = l.measureText(chapter.word).width;
-    l.font = `italic ${width * 0.12}px ${fonts.serif}`;
+    serif(l, width * 0.12, fonts.serif, 'italic');
     l.globalAlpha = 0.75;
     l.textAlign = 'left';
     l.fillText(chapter.kicker, w / 2 - wordWidth * 0.5, h * 0.52 - size * 0.86);
@@ -300,7 +308,7 @@ function drawEnd(end, { width, fonts }) {
 
   ctx.fillStyle = '#32404f';
   ctx.textAlign = 'center';
-  ctx.font = `italic ${width * 0.065}px ${fonts.serif}`;
+  serif(ctx, width * 0.065, fonts.serif, 'italic');
   ctx.globalAlpha = 0.75;
   const lines = wrapText(ctx, end.body, width * 0.7);
   lines.forEach((line, i) => ctx.fillText(line, width / 2, h * 0.45 + i * width * 0.09));
@@ -309,7 +317,7 @@ function drawEnd(end, { width, fonts }) {
   const title = layer(w, h, (l) => {
     l.fillStyle = '#32404f';
     l.textAlign = 'left';
-    l.font = `${width * 0.13}px ${fonts.serif}`;
+    serif(l, width * 0.13, fonts.serif);
     l.fillText(end.word, width * 1.14, h * 0.4);
     l.strokeStyle = '#32404f';
     l.lineWidth = width * 0.006;
@@ -358,7 +366,7 @@ function drawCover(cover, { width, fonts, back = false }) {
       l.fillStyle = '#f2ede4';
       l.strokeStyle = '#f2ede4';
       l.textAlign = 'center';
-      l.font = `${w * 0.15}px ${fonts.serif}`;
+      serif(l, w * 0.15, fonts.serif);
       const [first, ...rest] = cover.title.split(' ');
       l.fillText(first, w / 2, h * 0.3);
       l.fillText(rest.join(' '), w / 2, h * 0.3 + w * 0.15);
@@ -378,13 +386,13 @@ function drawCover(cover, { width, fonts, back = false }) {
       l.moveTo(w * 0.78, h * 0.19);
       l.lineTo(w * 0.84, h * 0.19);
       l.stroke();
-      l.font = `italic ${w * 0.068}px ${fonts.serif}`;
+      serif(l, w * 0.068, fonts.serif, 'italic');
       l.globalAlpha = 0.78;
       wrapText(l, cover.subtitle, w * 0.68).forEach((line, i) => {
         l.fillText(line, w / 2, h * 0.3 + w * 0.3 + i * w * 0.085);
       });
       l.globalAlpha = 0.45;
-      l.font = `${w * 0.035}px ${fonts.serif}`;
+      serif(l, w * 0.035, fonts.serif);
       l.fillText(cover.note, w / 2, h * 0.86);
       chalkify(l, w, h, 0.5);
     });
@@ -458,10 +466,17 @@ export function drawEdges(colors) {
 export async function drawPages(book, { width, motifs, icons }) {
   const fonts = fontFamilies();
   await Promise.all([
-    document.fonts.load(`64px ${fonts.serif}`),
-    document.fonts.load(`italic 64px ${fonts.serif}`),
-    document.fonts.load(`32px ${fonts.sans}`),
+    document.fonts.load(`400 64px ${fonts.serif}`),
+    document.fonts.load(`italic 400 64px ${fonts.serif}`),
+    document.fonts.load(`400 32px ${fonts.sans}`),
   ]).catch(() => {});
+  // Make sure the site's own faces are in, not just their fallbacks: load
+  // every face of the serif and sans families outright, then wait for all.
+  const families = [fonts.serif, fonts.sans].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
+  await Promise.all(
+    [...document.fonts].filter((face) => families.includes(face.family)).map((face) => face.load().catch(() => {}))
+  );
+  await document.fonts.ready;
 
   const options = { width, fonts, motifs, icons };
   const pages = [{ layers: [drawCover(book.cover, options)], part: 'whole', edge: '#1d2024' }];
