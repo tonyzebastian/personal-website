@@ -1,16 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useReducedMotion } from 'motion/react';
-import { ArrowCounterClockwise, ArrowRight, BookOpen, CaretLeft, CaretRight, X } from '@phosphor-icons/react';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { BookOpen, HandGrabbing } from '@phosphor-icons/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 
 // The storybook hero: a WebGL board book lying on the page, seen from above
 // (see book/scene.js). It lies closed until opened; then each spread is one
-// side of me. Turn pages by clicking or dragging them, with the controller
-// below the book, or the arrow keys while the book has focus.
+// side of me. Dragging is the whole interface: drag left to open and turn
+// forward, right to turn back, and flick right fast to close. Keyboard: the
+// arrow keys turn pages, Enter opens and Escape closes.
 //
 // three.js and the page drawings load only after the page itself has loaded,
 // so the book never holds up the first paint.
@@ -25,6 +24,7 @@ export default function HeroBook({ book }) {
   const [status, setStatus] = useState('loading'); // loading | ready | failed
   const [spread, setSpread] = useState(0);
   const [hover, setHover] = useState(false);
+  const [dragged, setDragged] = useState(false);
   const lastSpread = chapters.length + 1;
 
   // The scene owns the reading position; it reports every change back.
@@ -97,6 +97,9 @@ export default function HeroBook({ book }) {
     } else if (event.key === 'ArrowLeft' && spread > 1) {
       event.preventDefault();
       go(spread - 1);
+    } else if (event.key === 'Escape' && spread > 0) {
+      event.preventDefault(); // keep the side panel open
+      go(0);
     }
   };
 
@@ -110,16 +113,18 @@ export default function HeroBook({ book }) {
         role="region"
         aria-roledescription="book"
         aria-label={`${cover.title}, ${cover.subtitle}`}
+        aria-describedby="book-help"
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="group/book relative aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ink/20"
+        onPointerDown={() => open && setDragged(true)}
+        className="group/book relative aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:outline-1 focus-visible:outline-offset-[12px] focus-visible:outline-ink/20"
       >
         {/* The canvas runs well past the frame, so the book's shadows are
             never cut off; it takes no clicks, the frame does. */}
         <canvas
           ref={canvasRef}
           aria-hidden
-          className="pointer-events-none absolute -inset-x-[4%] -inset-y-[12%] h-[124%] w-[108%] sm:-inset-x-[14%] sm:w-[128%]"
+          className="pointer-events-none absolute -inset-x-[4%] -inset-y-[18%] h-[136%] w-[108%] sm:-inset-x-[14%] sm:w-[128%]"
         />
         {status === 'loading' && (
           <p className="absolute inset-0 flex items-center justify-center font-serif italic text-ink/40">Loading…</p>
@@ -143,60 +148,24 @@ export default function HeroBook({ book }) {
             Open book
           </span>
         )}
-      </div>
 
-      {/* The controller: the only controls, below the book once it is open. */}
-      <div className="relative flex h-8 items-center justify-center">
+        {/* With no buttons, say once how to turn pages; gone after the first drag. */}
         {status === 'ready' && open && (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-sm" onClick={() => go(spread - 1)} disabled={spread <= 1} aria-label="Previous page" className="text-ink/55">
-              <CaretLeft weight="bold" />
-            </Button>
-
-            {spread === lastSpread ? (
-              <div className="flex items-center gap-1 px-1">
-                <Button variant="ghost" size="sm" onClick={() => go(1)} className="text-ink/55 hover:text-ink">
-                  <ArrowCounterClockwise weight="bold" aria-hidden /> Read again
-                </Button>
-                <Link href="/about" scroll={false} className={buttonVariants({ variant: 'ghost', size: 'sm', className: 'text-ink/80' })}>
-                  More about me <ArrowRight weight="bold" aria-hidden />
-                </Link>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2.5 px-2">
-                {chapters.map((c, i) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => go(i + 1)}
-                    aria-label={c.title}
-                    aria-current={spread === i + 1 ? 'page' : undefined}
-                    className={`size-2 rounded-full transition-transform hover:scale-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 ${
-                      spread === i + 1 ? 'scale-150 ring-1 ring-ink/30 ring-offset-2 ring-offset-canvas' : ''
-                    }`}
-                    style={{ background: c.accent }}
-                  />
-                ))}
-                <button
-                  type="button"
-                  onClick={() => go(lastSpread)}
-                  aria-label={end.word}
-                  className="size-2 rounded-full bg-ink/25 transition-transform hover:scale-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
-                />
-              </div>
-            )}
-
-            <Button variant="ghost" size="icon-sm" onClick={() => go(spread + 1)} disabled={spread >= lastSpread} aria-label="Next page" className="text-ink/55">
-              <CaretRight weight="bold" />
-            </Button>
-            <span aria-hidden className="mx-1 h-4 w-px bg-ink/15" />
-            <Button variant="ghost" size="icon-sm" onClick={() => go(0)} aria-label="Close book" className="text-ink/55">
-              <X weight="bold" />
-            </Button>
-          </div>
+          <span
+            aria-hidden
+            className={`pointer-events-none absolute -bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-1.5 text-xs text-ink/45 transition-opacity duration-500 ${
+              dragged ? 'opacity-0' : 'opacity-100'
+            }`}
+          >
+            <HandGrabbing weight="bold" size={14} />
+            Drag to turn the pages
+          </span>
         )}
       </div>
 
+      <p id="book-help" className="sr-only">
+        Use the left and right arrow keys to turn pages, Enter to open the book and Escape to close it.
+      </p>
       <p className="sr-only" aria-live="polite">
         {chapter ? `${chapter.title}. ${chapter.body}` : open ? end.word : 'The book is closed.'}
       </p>

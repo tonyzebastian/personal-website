@@ -13,10 +13,12 @@
 //   spread-centred.
 // - Paper is a slightly glossy standard material with roughness and normal
 //   maps. A low light grazes from the top of the page and follows the
-//   mouse, so the sheen moves; the camera drifts with the mouse and slowly
-//   on its own.
-// - Each illustration is layered; upper layers slide with the mouse and
-//   while their page turns.
+//   mouse, so the sheen moves. The book itself stays still.
+// - Each illustration is layered; upper layers slide while their page
+//   turns.
+// - Dragging is the only control: drag left to open and turn forward, right
+//   to turn back. A fast flick to the right closes the book. Hovering the
+//   closed book opens the cover a little, showing the first page.
 //
 // On top of that, for a light page: a soft contact shadow under the book
 // (a pre-blurred texture that widens as the book opens) and a
@@ -29,8 +31,12 @@ const D = PAGE_ASPECT; // page depth, along the spine
 const PAGE_T = 0.005;
 const COVER_T = 0.008;
 const RADIUS = 0.07;
-const FOV = 36;
-const LAYER_DEPTH = [0, 0.5, 1.6]; // how far each art layer drifts
+// A long lens from far away: the book looks flat and top-down, and a page
+// standing up mid-turn grows only a little, so it stays inside the canvas.
+const FOV = 12;
+const LAYER_DEPTH = [0, 0.5, 1.6]; // how far each art layer slides while turning
+const HOVER_LIFT = 0.42; // radians the cover opens while hovered
+const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book
 
 const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
@@ -265,7 +271,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   let drag = null;
   let hover = false;
   let hoverLift = 0;
-  let hoverSince = 0;
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
   let width = 1;
   let height = 1;
@@ -292,26 +297,15 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     tweenTo(next, 1.5, easeInOutCubic);
   }
 
-  // A little nudge of the cover every few seconds while hovered.
-  function wiggle(t) {
-    if (reduceMotion || t < 2) return 0;
-    const phase = (t - 2) % 4.75;
-    return phase < 0.75 ? 0.075 * Math.abs(Math.sin((phase / 0.25) * Math.PI * 0.5)) : 0;
-  }
-
   function layout(time, dt) {
-    // Mouse, eased, plus a slow drift of its own.
+    // Mouse, eased: it only moves the light's sheen across the paper.
     const k = 1 - Math.exp(-dt * 3);
     mouse.ex += (mouse.x - mouse.ex) * k;
-    mouse.ey += (mouse.y - mouse.ey) * k;
-    const drift = reduceMotion
-      ? { x: 0, y: 0 }
-      : { x: 0.04 * Math.sin((time / 60) * Math.PI * 2), y: 0.03 * Math.sin((time / 120) * Math.PI * 2) };
 
     // Leaf angles from the timeline, plus the cover lifting under the mouse.
     const closed = progress < 0.001;
-    const liftTarget = hover && closed ? Math.PI / 32 + wiggle(time - hoverSince) : 0;
-    hoverLift += (liftTarget - hoverLift) * (1 - Math.exp(-dt * 7));
+    const liftTarget = hover && closed && !reduceMotion ? HOVER_LIFT : 0;
+    hoverLift += (liftTarget - hoverLift) * (1 - Math.exp(-dt * 6));
     leaves.forEach((leaf, i) => {
       leaf.theta = Math.PI * clamp(progress - i, 0, 1);
     });
@@ -333,12 +327,12 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     // The fold darkens while any page is in the air.
     crease.value = leaves.reduce((m, leaf, i) => (i === 0 ? m : Math.max(m, Math.sin(leaf.theta))), 0);
 
-    // Art layers drift with the mouse, and slide while their page turns.
+    // Art layers slide while their page turns.
     for (let s = 1; s < leafCount; s++) {
       const turning = leaves[s].theta - (Math.PI - leaves[s - 1].theta);
       offsets
         .get(spreadLayers[s])
-        ?.value.set(-0.02 * mouse.ex + drift.x * 0.5 + 0.1 * turning, -0.02 * mouse.ey + drift.y * 0.5);
+        ?.value.set(0.1 * turning, 0);
     }
 
     // The book slides right as the cover opens, so the spread is centred.
@@ -350,7 +344,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     contactShadow.position.x = book.position.x + (W * (1 - landed)) / 2;
 
     // The sheen follows the mouse.
-    graze.position.x = -0.2 * mouse.ex + drift.x;
+    graze.position.x = -0.2 * mouse.ex;
 
     // Straight down, framing the open spread inside the frame element (the
     // canvas runs past it so shadows are never cut off).
@@ -359,10 +353,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const frameW = 1 - 2 * inset.x;
     const frameH = 1 - 2 * inset.y;
     const distance = Math.max((D / 2 + 0.03) / (tan * frameH), (W + 0.03) / (tan * aspect * frameW));
-    const panX = -0.03 * mouse.ex + drift.x * 0.4;
-    const panZ = 0.03 * mouse.ey + drift.y * 0.4;
-    camera.position.set(panX, distance, panZ);
-    camera.lookAt(panX, 0, panZ);
+    camera.position.set(0, distance, 0);
+    camera.lookAt(0, 0, 0);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
   }
@@ -398,7 +390,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     if (event.button !== 0 || event.target.closest('a, button')) return;
     tween = null;
     drag = { startX: event.clientX, startProgress: progress, moved: false, samples: [[performance.now(), progress]] };
-    eventTarget.setPointerCapture?.(event.pointerId);
+    try {
+      eventTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Synthetic or already-released pointers cannot be captured.
+    }
   }
 
   function onPointerMove(event) {
@@ -408,10 +404,15 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
     if (drag) {
       const dx = event.clientX - drag.startX;
-      if (!drag.moved && Math.abs(dx) > 6 && target > 0) drag.moved = true;
+      if (!drag.moved && Math.abs(dx) > 6) drag.moved = true;
       if (drag.moved) {
-        progress = clamp(drag.startProgress - dx / rect.width, 0, lastSpread);
-        drag.samples.push([performance.now(), progress]);
+        // Once open, a slow drag cannot shut the book; only a flick can.
+        const min = drag.startProgress >= 1 ? 1 : 0;
+        const raw = drag.startProgress - dx / rect.width;
+        progress = clamp(raw, min, lastSpread);
+        // Speed comes from the hand, not the clamped page, so a flick on the
+        // first spread still registers.
+        drag.samples.push([performance.now(), raw]);
         if (drag.samples.length > 6) drag.samples.shift();
       }
       return;
@@ -421,10 +422,9 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const over = inside && progress < 0.001 && !!hitsBook(event);
     if (over !== hover) {
       hover = over;
-      hoverSince = (performance.now() - startTime) / 1000;
       onHover?.(over);
     }
-    eventTarget.style.cursor = progress < 0.001 ? (over ? 'pointer' : '') : 'grab';
+    eventTarget.style.cursor = progress < 0.001 && !over ? '' : 'grab';
   }
 
   function onPointerUp(event) {
@@ -432,18 +432,20 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     drag = null;
     if (!d) return;
     if (!d.moved) {
-      // A click: open the book, or turn the page that was clicked.
-      const point = hitsBook(event);
-      if (!point) return;
-      if (target === 0) goTo(1);
-      else goTo(point.x > 0 ? target + 1 : target - 1);
+      // A click on the closed book opens it.
+      if (target === 0 && hitsBook(event)) goTo(1);
       return;
     }
     // Let go: carry on a little with the drag's speed, then settle on a page.
     const [t0, p0] = d.samples[0];
     const [t1, p1] = d.samples[d.samples.length - 1];
     const velocity = t1 > t0 ? ((p1 - p0) / (t1 - t0)) * 1000 : 0;
-    const next = clamp(Math.round(progress + velocity * 0.25), 0, lastSpread);
+    if (d.startProgress >= 1 && velocity < CLOSE_FLICK) {
+      hover = false;
+      goTo(0);
+      return;
+    }
+    const next = clamp(Math.round(progress + velocity * 0.25), d.startProgress >= 1 ? 1 : 0, lastSpread);
     target = next;
     onSpread?.(next);
     tweenTo(next, 0.7, easeOutCubic);
