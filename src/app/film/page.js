@@ -8,17 +8,17 @@ export const metadata = {
   description:
     "Films and moving-image stories by Tony Sebastian — moments shaped through motion, light, and atmosphere.",
   alternates: {
-    canonical: "https://tonyzeb.design/film",
+    canonical: "https://www.tonyzeb.com/film",
   },
   openGraph: {
     title: "Film — Tony Sebastian",
     description:
       "Films and moving-image stories by Tony Sebastian — moments shaped through motion, light, and atmosphere.",
-    url: "https://tonyzeb.design/film",
+    url: "https://www.tonyzeb.com/film",
     siteName: "Tony Sebastian",
     images: [
       {
-        url: "https://tonyzeb.design/images/film/hero.png",
+        url: "https://www.tonyzeb.com/images/film/hero.png",
         width: 1200,
         height: 675,
         alt: "Tony Sebastian film portfolio",

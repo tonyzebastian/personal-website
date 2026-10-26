@@ -13,7 +13,7 @@ const LINKS = [
 export default function Contact() {
   return (
     <section aria-labelledby="contact" className="flex flex-col gap-3">
-      <h2 id="contact">Start a conversation</h2>
+      <h2 id="contact" className="font-sans text-base font-semibold tracking-normal">Start a conversation</h2>
       <p>{aboutConversation.intro}</p>
       <ul className="list-disc space-y-1 pl-5 marker:text-ink/40">
         {aboutConversation.topics.map((topic) =>

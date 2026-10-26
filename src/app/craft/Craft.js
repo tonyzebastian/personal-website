@@ -30,7 +30,7 @@ const CRAFT_ITEMS = [
     src: '../images/Craft/6.gif',
     alt: 'Postman Loading',
     description: 'Custom loading animation designed for Postman, balancing functionality with brand identity.',
-    projectLink: 'https://www.tonyzeb.design/musings/perceived_wait'
+    projectLink: 'https://www.tonyzeb.com/musings/perceived_wait'
   },
   {
     src: '../images/Craft/image_sphere.mp4',

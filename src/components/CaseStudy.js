@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import { ArrowRight } from '@phosphor-icons/react/ssr';
+import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 import MediaGrid from '@/components/experience/MediaGrid';
 import { buttonVariants } from '@/components/ui/button';
 
@@ -14,10 +13,16 @@ export default function CaseStudy({ projects }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2>{project.title}</h2>
             {project.link && (
-              <Link href={project.link} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              // Full write-ups live outside the panel, so they open in a new tab.
+              <a
+                href={project.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+              >
                 View details
-                <ArrowRight weight="bold" aria-hidden />
-              </Link>
+                <ArrowUpRight weight="bold" aria-hidden />
+              </a>
             )}
           </div>
           {project.sections.map((section, index) => (

@@ -2,7 +2,6 @@
 
 import { Dialog } from '@base-ui/react/dialog';
 import { AnimatePresence, m, useDragControls } from 'motion/react';
-import FrozenRouter from './FrozenRouter';
 import PanelHeader from './PanelHeader';
 import { CONTENT_FADE, PANEL_SPRING } from './config';
 
@@ -13,7 +12,8 @@ const CLOSE_VELOCITY = 600;
 // The panel on narrow screens: a sheet that slides up over the list. Base UI
 // handles focus, Esc and scroll locking; Motion handles the slide and the
 // drag-to-close on the handle.
-export default function PanelSheet({ open, pathname, onClose, children }) {
+// `children` is the panel content (the page, or a placeholder while it loads).
+export default function PanelSheet({ open, contentKey, onClose, children }) {
   const drag = useDragControls();
 
   return (
@@ -61,15 +61,15 @@ export default function PanelSheet({ open, pathname, onClose, children }) {
               <div className="relative min-h-0 flex-1">
                 <AnimatePresence initial={false}>
                   <m.div
-                    key={pathname}
+                    key={contentKey}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={CONTENT_FADE}
-                    className="absolute inset-0 overflow-y-auto overscroll-contain"
+                    className="scrollbar-minimal absolute inset-0 overflow-y-auto overscroll-contain"
                   >
                     <PanelHeader onClose={onClose} />
-                    <FrozenRouter>{children}</FrozenRouter>
+                    {children}
                   </m.div>
                 </AnimatePresence>
               </div>

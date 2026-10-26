@@ -3,7 +3,7 @@
 
 /* ==========================================================================
    Design tokens
-   Type scale, ink colours and grain follow rachelchen.tech. Light mode only.
+   Type scale and ink colours follow rachelchen.tech. Light mode only.
    ========================================================================== */
 
 :root {
@@ -36,10 +36,6 @@
   --input: color-mix(in srgb, var(--ink) 16%, transparent);
   --ring: color-mix(in srgb, var(--ink) 40%, transparent);
   --radius: 0.5rem;
-
-  /* Grain overlay */
-  --grain-opacity: 0.3;
-  --grain-size: 240px;
 }
 
 @theme inline {
@@ -117,13 +113,13 @@
   }
 
   h1 {
-    font-size: 2.75rem;
+    font-size: 2rem;
     line-height: 1.15;
   }
 
   h2 {
-    font-size: 1.75rem;
-    line-height: 1.2;
+    font-size: 1.25rem;
+    line-height: 1.3;
   }
 
   h3 {
@@ -133,7 +129,7 @@
 
   @media (min-width: 1200px) {
     h1 {
-      font-size: 3.25rem;
+      font-size: 2.25rem;
     }
   }
 
@@ -172,24 +168,6 @@
   ::selection {
     background: var(--highlight-strong);
   }
-
-  /* Grain over the whole page, as on rachelchen.tech. Pages that opt out
-     (the film site) mark a wrapper with data-no-grain. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: var(--grain-opacity);
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: var(--grain-size) auto;
-  }
-
-  body:has([data-no-grain])::after {
-    content: none;
-  }
 }
 
 /* ==========================================================================
@@ -203,6 +181,46 @@
 
 .grayscale:hover {
   filter: grayscale(0%);
+}
+
+/* The page noise: public/noise.png baked in at 2% strength, so it works as a
+   plain background with no extra layer. The site shell carries it; anything
+   that blends images into it (mix-blend-multiply) needs it on its own box too. */
+.bg-noise {
+  background-image: url("/noise-soft.png");
+  background-size: 220px;
+  background-repeat: repeat;
+}
+
+/* A thin scrollbar that stays out of sight until the area is hovered or
+   focused, then shows in a faint ink. */
+.scrollbar-minimal {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-minimal:hover,
+.scrollbar-minimal:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--ink) 18%, transparent) transparent;
+}
+
+/* Safari and older Chromium use these instead. */
+.scrollbar-minimal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.scrollbar-minimal:hover::-webkit-scrollbar-thumb,
+.scrollbar-minimal:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
 }
 
 .scrollbar-hide {

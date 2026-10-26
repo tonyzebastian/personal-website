@@ -32,8 +32,8 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description: job.description,
-    alternates: { canonical: `https://tonyzeb.design/${job.slug}` },
-    openGraph: { title, description: job.description, url: `https://tonyzeb.design/${job.slug}` },
+    alternates: { canonical: `https://www.tonyzeb.com/${job.slug}` },
+    openGraph: { title, description: job.description, url: `https://www.tonyzeb.com/${job.slug}` },
   };
 }
 

@@ -11,7 +11,7 @@ export const metadata = {
   author: 'Tony Sebastian',
   robots: 'index,follow',
   alternates: {
-    canonical: 'https://tonyzeb.design/about',
+    canonical: 'https://www.tonyzeb.com/about',
   },
   twitter: {
     card: 'summary_large_image',
@@ -19,16 +19,16 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'About ✦ Tony Sebastian',
     description: 'Learn more about Tony Sebastian - visual product designer, photographer, animator, and creative storyteller with a passion for craftsmanship',
-    image: 'https://tonyzeb.design/preview.png',
+    image: 'https://www.tonyzeb.com/preview.png',
     imageAlt: 'About Tony Sebastian - Designer, Photographer, and Creative Storyteller',
   },
   openGraph: {
     title: 'About ✦ Tony Sebastian',
     description: 'Learn more about Tony Sebastian - visual product designer, photographer, animator, and creative storyteller with a passion for craftsmanship',
-    url: 'https://tonyzeb.design/about',
+    url: 'https://www.tonyzeb.com/about',
     siteName: 'Tony Sebastian',
     images: [{
-      url: 'https://tonyzeb.design/preview.png',
+      url: 'https://www.tonyzeb.com/preview.png',
       alt: 'About Tony Sebastian - Designer, Photographer, and Creative Storyteller',
       width: 1200,
       height: 630,

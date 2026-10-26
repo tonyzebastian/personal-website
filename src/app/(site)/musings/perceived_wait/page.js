@@ -1,6 +1,5 @@
 import PanelPage from '@/components/panel/PanelPage';
 import Image from 'next/image';
-import Script from 'next/script';
 
 export const metadata = {
   title: "Reduce perceived wait times through visual delight \u2726 Tony Sebastian",
@@ -56,9 +55,8 @@ export default function perceived_wait() {
         </a>
 
         <div style={{ padding: '64.74% 0 0 0', position: 'relative', marginTop: '16px' }}>
-            <iframe src="https://player.vimeo.com/video/967616311?h=ce700b5065&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} title="Postman Initial Loading"></iframe>
+            <iframe loading="lazy" src="https://player.vimeo.com/video/967616311?h=ce700b5065&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} title="Postman Initial Loading"></iframe>
         </div>
-        <Script src="https://player.vimeo.com/api/player.js"/>
 
     </section>
 
@@ -74,9 +72,8 @@ export default function perceived_wait() {
         <Image src="/images/musings/postman_new_loading.gif" alt="Postman Loading Illustration" className="w-full" width={600} height={300} />
 
         <div style={{ padding: '64.74% 0 0 0', position: 'relative', marginTop: '16px' }}>
-            <iframe src="https://player.vimeo.com/video/967628802?h=8ffce8e111&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} title="Postman Initial Loading"></iframe>
+            <iframe loading="lazy" src="https://player.vimeo.com/video/967628802?h=8ffce8e111&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} title="Postman Initial Loading"></iframe>
             </div>
-            <Script src="https://player.vimeo.com/api/player.js"/>
 
     </section>
 

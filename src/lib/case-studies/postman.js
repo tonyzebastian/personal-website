@@ -6,7 +6,7 @@ export const postmanData = {
     role: "Senior Product Designer",
     duration: "Jun'22 - Jun'25",
     company: "Postman",
-    logo: "/icons/postman.png",
+    logo: "/icons/postman.webp",
   },
 
   projects: [

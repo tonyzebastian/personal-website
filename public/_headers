@@ -1,0 +1,4 @@
+# Cloudflare Pages headers. Next.js puts a content hash in every file name
+# under /_next/static, so those files can be cached for a year.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -3,6 +3,7 @@
 import { Masonry } from "react-plock";
 import { useState, useCallback } from "react";
 import { X } from "@phosphor-icons/react";
+import AutoVideo from '@/components/ui/AutoVideo';
 
 // Move outside component to prevent recreation
 const isVideo = (src) => {
@@ -35,15 +36,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
 
     if (isVideo(item.src)) {
       return (
-        <video
-          key={idx}
-          {...commonProps}
-          src={item.src}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
+        <AutoVideo key={idx} {...commonProps} src={item.src} />
       );
     }
 
@@ -53,6 +46,8 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
         {...commonProps}
         src={item.src}
         alt={item.alt}
+        loading="lazy"
+        decoding="async"
       />
     );
   }, [hoverEffects, handleItemClick]);

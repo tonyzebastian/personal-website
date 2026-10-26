@@ -6,7 +6,7 @@ export const hypersonixData = {
     role: "Lead Product Designer",
     duration: "Oct'20 - May'22",
     company: "Hypersonix AI",
-    logo: "/icons/hypersonix.png",
+    logo: "/icons/hypersonix.webp",
   },
 
 

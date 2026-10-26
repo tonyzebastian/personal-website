@@ -9,7 +9,7 @@ export const metadata = {
   'apple-mobile-web-app-status-bar-style': 'black-translucent',
   manifest: '/manifest.json',
   alternates: {
-    canonical: 'https://tonyzeb.design',
+    canonical: 'https://www.tonyzeb.com',
   },
   twitter: {
     card: 'summary_large_image',
@@ -17,16 +17,16 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'Tony Sebastian ✦ designer',
     description: 'A visual product designer | Love to code | always tinkering with a side project',
-    image: 'https://tonyzeb.design/preview.png',
+    image: 'https://www.tonyzeb.com/preview.png',
     imageAlt: 'Tony Sebastian - Visual Product Designer',
   },
   openGraph: {
     title: 'Tony Sebastian ✦ designer',
     description: 'A visual product designer | Love to code | always tinkering with a side project',
-    url: 'https://tonyzeb.design/',
+    url: 'https://www.tonyzeb.com/',
     siteName: 'Tony Sebastian',
     images: [{
-      url: 'https://tonyzeb.design/preview.png',
+      url: 'https://www.tonyzeb.com/preview.png',
       alt: 'Tony Sebastian - Visual Product Designer',
       width: 1200,
       height: 630,

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useCallback, useEffect, memo, useMemo, Suspense } from 'react';
 import { X, ArrowRight } from '@phosphor-icons/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AutoVideo from '@/components/ui/AutoVideo';
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -24,15 +25,7 @@ const MediaItem = memo(({ src, alt, width, height, onClick, className = "" }) =>
 
   if (isVideo(src)) {
     return (
-      <video
-        src={src}
-        className={combinedClasses}
-        autoPlay
-        muted
-        loop
-        playsInline
-        onClick={onClick}
-      />
+      <AutoVideo src={src} className={combinedClasses} onClick={onClick} />
     );
   }
 

@@ -4,8 +4,6 @@ import { CaseStudyPage } from '@/components/CaseStudyTemplate';
 export const viewport = {
   width: 'device-width',
   initialScale: 1.0,
-  maximumScale: 1.0,
-  userScalable: false,
 };
 
 export const metadata = {
@@ -15,7 +13,7 @@ export const metadata = {
   author: 'Tony Sebastian',
   robots: 'index,follow',
   alternates: {
-    canonical: 'https://tonyzeb.design/project/newtrialexp',
+    canonical: 'https://www.tonyzeb.com/project/newtrialexp',
   },
   twitter: {
     card: 'summary_large_image',
@@ -23,16 +21,16 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'New Trial Experiences',
     description: 'Redesigning trial experiences at Postman to make them more timely, contextual, and value-driven.',
-    image: 'https://tonyzeb.design/preview.png',
+    image: 'https://www.tonyzeb.com/preview.png',
     imageAlt: 'New Trial Experiences Case Study',
   },
   openGraph: {
     title: 'New Trial Experiences',
     description: 'Redesigning trial experiences at Postman to make them more timely, contextual, and value-driven.',
-    url: 'https://tonyzeb.design/project/newtrialexp',
+    url: 'https://www.tonyzeb.com/project/newtrialexp',
     siteName: 'Tony Sebastian',
     images: [{
-      url: 'https://tonyzeb.design/preview.png',
+      url: 'https://www.tonyzeb.com/preview.png',
       alt: 'New Trial Experiences Case Study',
       width: 1200,
       height: 630,

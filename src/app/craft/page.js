@@ -7,7 +7,7 @@ export const metadata = {
   author: 'Tony Sebastian',
   robots: 'index,follow',
   alternates: {
-    canonical: 'https://tonyzeb.design/craft',
+    canonical: 'https://www.tonyzeb.com/craft',
   },
   twitter: {
     card: 'summary_large_image',
@@ -15,16 +15,16 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'Crafts ✦ Tony Sebastian',
     description: 'Visual explorations and design experiments - showcasing creative process and craft work',
-    image: 'https://tonyzeb.design/preview.png',
+    image: 'https://www.tonyzeb.com/preview.png',
     imageAlt: 'Tony Sebastian - Design Crafts and Visual Experiments',
   },
   openGraph: {
     title: 'Crafts ✦ Tony Sebastian',
     description: 'Visual explorations and design experiments - showcasing creative process and craft work',
-    url: 'https://tonyzeb.design/craft',
+    url: 'https://www.tonyzeb.com/craft',
     siteName: 'Tony Sebastian',
     images: [{
-      url: 'https://tonyzeb.design/preview.png',
+      url: 'https://www.tonyzeb.com/preview.png',
       alt: 'Tony Sebastian - Design Crafts and Visual Experiments',
       width: 1200,
       height: 630,
