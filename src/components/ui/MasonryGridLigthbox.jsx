@@ -1,11 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import MasonryGrid from './MasonryGrid';
 import { X } from "@phosphor-icons/react";
 
 export default function MasonryGridLightbox({lightboxImages = [], height}) {
     const [showMasonryLightbox, setShowMasonryLightbox] = useState(false);
+
+    // Esc closes the lightbox only. Marking the key as handled stops the
+    // panel behind it from closing too.
+    useEffect(() => {
+        if (!showMasonryLightbox) return undefined;
+        const onKey = (event) => {
+            if (event.key !== 'Escape') return;
+            event.preventDefault();
+            setShowMasonryLightbox(false);
+        };
+        window.addEventListener('keydown', onKey, true);
+        return () => window.removeEventListener('keydown', onKey, true);
+    }, [showMasonryLightbox]);
 
 
     return (

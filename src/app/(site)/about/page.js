@@ -8,8 +8,6 @@ export const metadata = {
   title: 'About ✦ Tony Sebastian',
   description: 'Learn more about Tony Sebastian - visual product designer, photographer, animator, and creative storyteller with a passion for craftsmanship',
   keywords: 'about tony sebastian, product designer, photographer, animator, creative process, design philosophy, juny made, visual storytelling',
-  author: 'Tony Sebastian',
-  robots: 'index,follow',
   alternates: {
     canonical: 'https://www.tonyzeb.com/about',
   },
@@ -19,20 +17,13 @@ export const metadata = {
     creator: '@tonyzebastian',
     title: 'About ✦ Tony Sebastian',
     description: 'Learn more about Tony Sebastian - visual product designer, photographer, animator, and creative storyteller with a passion for craftsmanship',
-    image: 'https://www.tonyzeb.com/preview.png',
-    imageAlt: 'About Tony Sebastian - Designer, Photographer, and Creative Storyteller',
   },
   openGraph: {
     title: 'About ✦ Tony Sebastian',
     description: 'Learn more about Tony Sebastian - visual product designer, photographer, animator, and creative storyteller with a passion for craftsmanship',
     url: 'https://www.tonyzeb.com/about',
     siteName: 'Tony Sebastian',
-    images: [{
-      url: 'https://www.tonyzeb.com/preview.png',
-      alt: 'About Tony Sebastian - Designer, Photographer, and Creative Storyteller',
-      width: 1200,
-      height: 630,
-    }],
+    images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'About Tony Sebastian' }],
     locale: 'en_US',
     type: 'website',
   },
@@ -71,7 +62,7 @@ function Section({ title, children }) {
 }
 
 const List = ({ items }) => (
-  <ul className="list-disc space-y-1.5 pl-5 marker:text-ink/40">
+  <ul className="list-disc space-y-1.5 pl-5 marker:text-body/40">
     {items.map((item, index) => (
       <li key={index}>{typeof item === 'string' ? item : renderTextWithLinks(item)}</li>
     ))}
@@ -124,8 +115,8 @@ export default function About() {
       </div>
 
       <footer className="mt-10 border-t border-border pt-4 text-center">
-        <p className="text-ink/55">Built with Next.js and Motion · Typefaces: Libre Caslon Condensed and Figtree</p>
-        <p className="text-ink/40">© Tony Sebastian, 2026</p>
+        <p className="text-body/55">Built with Next.js and Motion · Typefaces: Libre Caslon Condensed and Figtree</p>
+        <p className="text-body/40">© Tony Sebastian, 2026</p>
       </footer>
     </PanelPage>
   );

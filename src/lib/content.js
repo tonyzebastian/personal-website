@@ -21,6 +21,13 @@ export const metadata = {
 
 export const projects = [
   {
+    // Details, logo and link to come.
+    name: 'Dalal Prints',
+    description: 'Details soon',
+    link: null,
+    image: null,
+  },
+  {
     name: 'UX Nudges',
     description: 'A collection of nudges from apps',
     link: 'https://ux-nudge.web.app/',
@@ -37,13 +44,6 @@ export const projects = [
     description: 'A library of free to use illustrations',
     link: 'https://abstract-library.framer.website/',
     image: '/icons/abstract.webp',
-  },
-  {
-    // Details and its own panel to come.
-    name: 'Juny Made',
-    description: 'Studio, details soon',
-    link: null,
-    image: null,
   },
 ];
 

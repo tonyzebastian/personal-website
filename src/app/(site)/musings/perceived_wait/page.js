@@ -4,6 +4,7 @@ import Image from 'next/image';
 export const metadata = {
   title: "Reduce perceived wait times through visual delight \u2726 Tony Sebastian",
   description: "Reduce perceived wait times through visual delight",
+  alternates: { canonical: "https://www.tonyzeb.com/musings/perceived_wait" },
 };
 
 export default function perceived_wait() {

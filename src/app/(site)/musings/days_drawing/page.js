@@ -2,6 +2,7 @@ import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
   title: "Drawing everyday for 365 days: Some Learnings \u2726 Tony Sebastian",
   description: "Drawing everyday for 365 days: Some Learnings",
+  alternates: { canonical: "https://www.tonyzeb.com/musings/days_drawing" },
 };
 
 export default function day_drawing() {

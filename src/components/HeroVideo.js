@@ -7,7 +7,7 @@ const VIDEO = '/hero_video.mp4';
 const POSTER = '/hero_image.jpg';
 
 const controlClass =
-  'flex items-center justify-center rounded-full backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40';
+  'flex items-center justify-center rounded-full backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-body/40';
 
 // The hero video. The still image shows first (it is the page's main image,
 // so it loads with priority); the video only starts downloading once the page
@@ -19,6 +19,9 @@ export default function HeroVideo() {
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  // Autoplay once. canplay fires again after seeking or buffering, and must
+  // not restart a video the visitor paused.
+  const started = useRef(false);
 
   // Wait for the page load so the video never competes with the first paint.
   useEffect(() => {
@@ -30,6 +33,8 @@ export default function HeroVideo() {
 
   const handleReady = () => {
     setReady(true);
+    if (started.current) return;
+    started.current = true;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     videoRef.current?.play().catch(() => {});
   };
@@ -98,7 +103,7 @@ export default function HeroVideo() {
             type="button"
             onClick={toggleMute}
             aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
-            className={`${controlClass} absolute right-2 bottom-2 size-9 bg-paper/80 text-ink/55 hover:bg-paper hover:text-ink`}
+            className={`${controlClass} absolute right-2 bottom-2 size-9 bg-paper/80 text-body/55 hover:bg-paper hover:text-ink`}
           >
             {muted ? <SpeakerSimpleSlash size={18} weight="bold" /> : <SpeakerSimpleHigh size={18} weight="bold" />}
           </button>

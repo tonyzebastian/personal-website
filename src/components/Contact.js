@@ -15,7 +15,7 @@ export default function Contact() {
     <section aria-labelledby="contact" className="flex flex-col gap-3">
       <h2 id="contact" className="font-sans text-base font-semibold tracking-normal">Start a conversation</h2>
       <p>{aboutConversation.intro}</p>
-      <ul className="list-disc space-y-1 pl-5 marker:text-ink/40">
+      <ul className="list-disc space-y-1 pl-5 marker:text-body/40">
         {aboutConversation.topics.map((topic) =>
           typeof topic === 'string' ? (
             <li key={topic}>{topic}</li>

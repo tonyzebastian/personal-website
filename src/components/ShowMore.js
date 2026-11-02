@@ -17,7 +17,7 @@ export default function ShowMore({ children, more, moreLabel = 'View more', less
         {more}
       </CollapsibleContent>
       <CollapsibleTrigger
-        render={<Button variant="ghost" size="sm" className="-ml-2.5 mt-2 text-ink/55 hover:text-ink" />}
+        render={<Button variant="ghost" size="sm" className="-ml-2.5 mt-2 text-body/55 hover:text-ink" />}
       >
         {open ? lessLabel : moreLabel}
         <CaretDown

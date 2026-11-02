@@ -1,7 +1,7 @@
 // Placeholder shown the moment a panel link is clicked, until the page
 // arrives. Shaped like PanelPage so the swap is calm.
 export default function PanelSkeleton() {
-  const bar = 'rounded-md bg-ink/[0.06] animate-pulse';
+  const bar = 'rounded-md bg-body/[0.06] animate-pulse';
 
   return (
     <div aria-busy="true" aria-label="Loading" className="mx-auto w-full max-w-2xl px-6 pb-20 md:px-10">

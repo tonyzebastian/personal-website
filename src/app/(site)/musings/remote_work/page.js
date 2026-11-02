@@ -2,6 +2,7 @@ import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
   title: "15 Months of remote Work: A recap \u2726 Tony Sebastian",
   description: "15 Months of remote Work: A recap",
+  alternates: { canonical: "https://www.tonyzeb.com/musings/remote_work" },
 };
 
 export default function remote_work() {

@@ -42,7 +42,7 @@ function Section({ section, title }) {
       {heading && <h3>{heading}</h3>}
       {description && <p>{description}</p>}
       {bulletPoints?.length > 0 && (
-        <ul className="list-disc space-y-1.5 pl-5 marker:text-ink/40">
+        <ul className="list-disc space-y-1.5 pl-5 marker:text-body/40">
           {bulletPoints.map((point) => (
             <li key={point}>{point}</li>
           ))}

@@ -2,6 +2,7 @@ import PanelPage from '@/components/panel/PanelPage';
 export const metadata = {
   title: "Reviving a legacy system at Infosys \u2726 Tony Sebastian",
   description: "Reviving a legacy system at Infosys",
+  alternates: { canonical: "https://www.tonyzeb.com/musings/infosys_legacy" },
 };
 
 export default function infosys_legacy() {

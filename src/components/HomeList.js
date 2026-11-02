@@ -26,7 +26,7 @@ export default function HomeList() {
   return (
     // The column is 672px so the hero image can run wider; everything else
     // sits at a 512px reading width (max-w-lg) centred inside it.
-    <div className="mx-auto flex max-w-2xl flex-col gap-16 px-6 pt-8 pb-24 md:px-8">
+    <div className="mx-auto flex max-w-2xl flex-col gap-16 px-6 pt-8 pb-24 md:px-8 lg:pt-4 lg:pb-20">
       <Hero />
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-16">

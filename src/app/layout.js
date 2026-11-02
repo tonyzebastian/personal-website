@@ -2,6 +2,16 @@ import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import "./globals.css";
 
+// Defaults for every page. Pages set their own title, description and
+// canonical; link-preview images come from opengraph-image.png and
+// twitter-image.png in src/app/(site)/.
+export const metadata = {
+  metadataBase: new URL('https://www.tonyzeb.com'),
+  authors: [{ name: 'Tony Sebastian', url: 'https://www.tonyzeb.com' }],
+  appleWebApp: { capable: true, title: 'Tony Sebastian', statusBarStyle: 'black-translucent' },
+  twitter: { card: 'summary_large_image', site: '@tonyzebastian', creator: '@tonyzebastian' },
+};
+
 export const viewport = {
   width: 'device-width',
   initialScale: 1.0,
@@ -19,10 +29,12 @@ const figtree = Figtree({
 const caslon = localFont({
   src: [
     { path: '../fonts/LibreCaslonCondensed-Variable.woff2', weight: '400 700', style: 'normal' },
-    { path: '../fonts/LibreCaslonCondensed-Italic-Variable.woff2', weight: '400 700', style: 'italic' },
   ],
   variable: '--font-caslon',
   display: 'swap',
+  // Match the fallback to a serif, so headings barely shift when it loads.
+  fallback: ['Georgia', 'serif'],
+  adjustFontFallback: 'Times New Roman',
 });
 
 export default function RootLayout({ children }) {

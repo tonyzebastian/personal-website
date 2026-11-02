@@ -1,7 +1,7 @@
 // Panel settings in one place, so the split and the feel are easy to tune.
 
 // From this width the panel opens beside the list; below it, as a sheet.
-export const SPLIT_FROM = 1280;
+export const SPLIT_FROM = 1024; // Tailwind lg: keep the lg: classes in SiteShell in step
 
 // Share of the screen the panel takes when open (the list keeps the rest).
 export const PANEL_SHARE = 60;

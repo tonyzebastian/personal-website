@@ -20,7 +20,7 @@ export default function Hero() {
         <Link
           href="/about"
           scroll={false}
-          className={buttonVariants({ variant: 'link', className: '-ml-2.5 self-start px-2.5 text-ink/80' })}
+          className={buttonVariants({ variant: 'link', className: '-ml-2.5 self-start px-2.5 text-body/80' })}
         >
           More about me
           <ArrowRight weight="bold" aria-hidden />

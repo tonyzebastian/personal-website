@@ -16,12 +16,12 @@ Personal portfolio of Tony Sebastian, a visual product designer. One home page l
 
 ## Design system
 
-Tokens are defined in `src/app/globals.css`. Type scale and ink colours follow rachelchen.tech. Light mode only.
+Tokens are defined in `src/app/globals.css`. Type scale follows rachelchen.tech; text colours and the paper texture follow flowjam.com. Light mode only.
 
-- **Ink**: one text colour, `#32404f`. Hierarchy comes from opacity: `text-ink`, `text-ink/80`, `text-ink/55`, `text-ink/40`, `text-ink/25`
+- **Ink**: `#160216`, a plum-tinted near-black for headings and titles (`text-ink`). Body copy is `--body` `#363636` (`text-body`); faded text, hover fills and lines are built from it so greys stay neutral: `text-body/80`, `text-body/55`, `text-body/40`, `text-body/25`
 - **Highlight**: the green link style, `bg-highlight` / `bg-highlight-strong` (`HighlightLink`, or the Button `highlight` variant)
 - **Type**: body 15px with 1.5 line height; serif headings h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
-- **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8, a lighter take on buffmotion.com's #f2ece7), with a fine warm SVG grain; both come from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
+- **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8), from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). A paper texture (fine grain plus soft fibre, SVG noise tuned to flowjam.com) sits over the whole screen on `html::before`/`::after`, fixed and click-through. The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
 - **shadcn tokens** (`--background`, `--primary`, `--border`, ...) are mapped onto ink and paper
 
 ## How pages and the panel work
@@ -41,10 +41,12 @@ src/app/
 └── craft/                 # Old craft page (to be replaced)
 ```
 
-- `src/components/panel/SiteShell.js` draws the home list and, for any route other than `/`, a panel. From 1280px wide the panel opens beside the list and pushes it aside; below that `PanelSheet.js` shows it as a bottom sheet (Base UI Dialog, drag to close, loaded only on small screens)
+- `src/components/panel/SiteShell.js` draws the home list and, for any route other than `/`, a panel. From 1024px wide the panel opens beside the list and pushes it aside; below that `PanelSheet.js` shows it as a bottom sheet (Base UI Dialog, drag to close, loaded only on small screens)
+- Arriving straight on a page (shared link, new tab, the panel's expand button) shows it full width on its own with a link home; once the visitor reaches `/`, the list and panel take over for the rest of the visit (`fullPage` in `SiteShell.js`)
+- The panel is one layer over home: switching panels replaces the history entry, and closing steps back when the panel was opened from home, so Back always returns home
 - Split, breakpoint and spring live in `src/components/panel/config.js`
-- `FrozenRouter.js` keeps the outgoing page rendered while a panel closes or swaps. It relies on a Next.js internal (`LayoutRouterContext`); recheck it after Next upgrades
-- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (title, details line, actions), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
+- `FrozenRouter.js` keeps the outgoing page rendered while a panel closes or swaps. It relies on a Next.js internal (`LayoutRouterContext`), which is why `next` is pinned to 15.5.x; recheck it before upgrading
+- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (logo and title on one line, details line split by pipes, with an optional `href` shown at its end as a "Website" link), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
 
 ## Content
 

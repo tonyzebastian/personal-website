@@ -1,12 +1,10 @@
 import { notFound } from 'next/navigation';
-import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 import { experience } from '@/lib/content';
 import { postmanData } from '@/lib/case-studies/postman';
 import { hypersonixData } from '@/lib/case-studies/hypersonix';
 import PanelPage from '@/components/panel/PanelPage';
 import CaseStudy from '@/components/CaseStudy';
 import Row from '@/components/Row';
-import { buttonVariants } from '@/components/ui/button';
 
 // One summary page per experience entry: /sundial, /postman, /hypersonix,
 // /avrl and /infosys. Only those are built; any other path is a 404.
@@ -33,7 +31,13 @@ export async function generateMetadata({ params }) {
     title,
     description: job.description,
     alternates: { canonical: `https://www.tonyzeb.com/${job.slug}` },
-    openGraph: { title, description: job.description, url: `https://www.tonyzeb.com/${job.slug}` },
+    openGraph: {
+      title,
+      description: job.description,
+      url: `https://www.tonyzeb.com/${job.slug}`,
+      // Setting openGraph here replaces the inherited preview image, so name it.
+      images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'Tony Sebastian, visual product designer' }],
+    },
   };
 }
 
@@ -48,20 +52,8 @@ export default async function CompanyPage({ params }) {
     <PanelPage
       icon={job.image}
       title={job.name}
+      href={job.link}
       meta={[job.role, job.period]}
-      actions={
-        job.link && (
-          <a
-            href={job.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
-          >
-            Visit website
-            <ArrowUpRight weight="bold" aria-hidden />
-          </a>
-        )
-      }
     >
       {job.description && <p>{job.description}</p>}
 

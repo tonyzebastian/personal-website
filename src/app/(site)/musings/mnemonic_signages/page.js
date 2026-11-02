@@ -4,6 +4,7 @@ import Image from 'next/image';
 export const metadata = {
   title: "Mnemonic Signages \u2726 Tony Sebastian",
   description: "Mnemonic Signages",
+  alternates: { canonical: "https://www.tonyzeb.com/musings/mnemonic_signages" },
 };
 
 
