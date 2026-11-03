@@ -24,7 +24,7 @@ export default function ShowMore({ children, more, moreLabel = 'View more', less
       <div className="mt-3 -mb-8 flex justify-center">
         <CollapsibleTrigger
           aria-label={open ? lessLabel : moreLabel}
-          className="group/more relative grid h-6 w-9 place-items-center rounded-md bg-body/5 text-body/80 outline-none transition-colors duration-200 hover:bg-body/10 hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="group/more relative grid h-6 w-9 place-items-center rounded-md border border-body/15 text-body/80 outline-none transition-colors duration-200 hover:border-body/25 hover:bg-body/5 hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <DotsThree
             weight="bold"
