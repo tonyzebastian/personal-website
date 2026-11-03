@@ -48,6 +48,9 @@
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-caslon), ui-serif, Georgia, serif;
 
+  /* Strong ease-out for UI motion (ease-snappy) */
+  --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
+
   --color-ink: var(--ink);
   --color-body: var(--body);
   --color-paper: var(--paper);
@@ -323,4 +326,24 @@ html::after {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ShowMore: rows revealed by "View more" fade and settle in one after
+   another while the panel grows; on close they fade out together, quickly. */
+.reveal-rows > * {
+  transition:
+    opacity 300ms var(--ease-snappy),
+    translate 300ms var(--ease-snappy);
+}
+.reveal-rows > :nth-child(2) { transition-delay: 40ms; }
+.reveal-rows > :nth-child(3) { transition-delay: 80ms; }
+.reveal-rows > :nth-child(n + 4) { transition-delay: 120ms; }
+[data-starting-style] > .reveal-rows > *,
+[data-ending-style] > .reveal-rows > * {
+  opacity: 0;
+  translate: 0 -6px;
+}
+[data-ending-style] > .reveal-rows > * {
+  transition-duration: 150ms;
+  transition-delay: 0ms;
 }

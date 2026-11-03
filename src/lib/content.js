@@ -57,6 +57,14 @@ export const experience = [
     image: '/icons/sundial.webp',
     period: "Oct'25 - Oct'26",
     description: "A Sequoia-backed AI analytics startup founded by Meta executives, including Julie Zhuo, Meta's former VP of Design. I lead design across the product.",
+    // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
+    overview: [
+      "I joined Sundial, an AI analytics company, wanting more responsibility and a wider range of work. I was excited about the people I would work with and keen to move further into design engineering. The role gave me room to do all of that.",
+      "I worked on the Context Engine, where people explored the data and context behind the analytics product. My contributions included search, multi-tab navigation, and a split-pane workspace for inspecting assets without losing your place. I also built working prototypes for agent experiences, exploring how people could review changes and stay in control of what an agent did.",
+      "Over time, more of my design work happened directly in code. I contributed production frontend changes and led the design and implementation of Gnomon's first foundation, working closely with engineering. The work extended beyond the application too. I rebuilt the website in code, worked on the documentation platform, and made product videos and other material to explain what we were building.",
+      "I loved that breadth. The team encouraged us to use AI, try things, and show working ideas. I learned a lot from the people around me and grew into a design engineering role, taking on more responsibility for building what I designed.",
+      "Sundial also helped me understand the kind of team I work best in. I like knowing the people I am building with, being able to talk through an idea directly, and having room to contribute wherever my skills are useful. I want to keep that range in whatever I do next.",
+    ],
     items: [],
   },
   {
@@ -67,6 +75,13 @@ export const experience = [
     image: '/icons/postman.webp',
     period: "Jun'22 - Jun'25",
     description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
+    // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
+    overview: [
+      "At Postman, I worked on an API platform with a large developer audience and an established design team. I joined through a friend's referral, wanting to learn from more designers and understand how to design at that scale.",
+      "That scale changed how I thought about everyday decisions. A small change to some text or the placement of a dropdown could affect workflows people already depended on. I learned to work through those implications with product managers, engineers, and other designers, and to get people aligned around a change.",
+      "My work included API observability and Live Collections, exploring how collections could stay connected to what was happening in running services. I spent some time in the design system team too, working on consistency and contributing a few PRs as I began learning to code. Later, in Growth, I worked on trial experiences: helping teams discover premium features, understand what they were using, and decide whether a paid plan made sense for them.",
+      "Being part of a larger design team gave me more ways of looking at a problem. We shared explorations and taught each other things beyond our immediate projects. I ran sessions on video editing, visual design, and photography, and made good friends along the way. The company trip to Barcelona for Postman's tenth anniversary is another memory I keep from that time.",
+    ],
     items: [
       {
         title: "New Trial Experiences",
@@ -94,8 +109,15 @@ export const experience = [
     role: 'Lead Product Designer', 
     link: 'https://hypersonix.ai/',
     image: '/icons/hypersonix.webp',
-    period: "Oct'20 - May'22",
+    period: "Nov'20 - May'22",
     description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
+    // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
+    overview: [
+      "Hypersonix was where I moved into a full product design role. It was a data analytics company working mainly with retail businesses, helping people explore their business data and get useful answers from it. I joined a small design team and worked closely with product managers and engineers.",
+      "Much of the work was about making complex data easier to work with. I redesigned parts of Documents, where people created and compared analytical reports. That included bringing card controls together and making it easier to organize reports. I also worked on onboarding, where a preview showed people how their choices would shape the insights they received.",
+      "There was room to explore new ideas too. I worked on voice interactions for the analytics assistant and a no-code App Studio concept that let customers customize analytical applications through connected modules. Alongside that, I helped build Sonic, our first design system, so the team could work with more consistent components and guidelines.",
+      "I began taking on more responsibility for the team. I hired two designers, mentored them, and helped them grow in their roles. The work was fluid enough that conversations could move from a product flow to what we should explain on the website or how we should market it.",
+    ],
     caseStudy: {
       link: "/hypersonix",
       images: ["/images/projects/hx_onboarding.mp4", "/images/projects/hx_hawk.mp4"],
@@ -109,8 +131,17 @@ export const experience = [
     role: 'Visual Designer',
     link: 'https://www.linkedin.com/company/advanced-voice-research-labs/',
     image: '/icons/avrl.webp',
-    period: null,
+    period: "Jan'19 - Oct'20",
     description: "My first job as a designer. In late 2018 I made the switch from business analysis to design and joined AVRL (Advanced Voice Research Labs) as a Visual Designer. The role was fully remote, so I moved back to my hometown, Thodupuzha, and worked from there.",
+    // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
+    overview: [
+      "AVRL was where I changed careers, moving from consulting into visual design. It felt like a big bet. Design wasn't what I had studied in college, and I was taking on work I had been teaching myself to do. Freelance projects helped me build a portfolio, and a contract with AVRL became my way into the profession.",
+      "AVRL was a small US-based company, and I worked remotely from India. My early work included presentation decks and storyboards explaining the product. I also made one of my first explainer videos in After Effects. I enjoyed having different things to make and figuring out how to explain what the company was building.",
+      { youtube: 'u88Qmw-XpeI', title: 'AVRL explainer video' },
+      "The product started as a voice assistant for inventory management. Someone checking stock could say what was left, and the system would update it. I designed interfaces for that experience and later worked on the company's move towards fleet management. Alongside AVRL, I continued taking on other freelance projects.",
+      "Working on those interfaces helped me understand what UX and product designers did. I became more interested in how a product behaved and the workflows behind it. I wanted to learn more about users and work more closely with the people building the product.",
+      "One memory I still carry from AVRL is our company trip to Bali. It was my first international trip.",
+    ],
     related: [{ title: '15 Months of remote work: A Recap', href: '/musings/remote_work' }],
     timeline: false,
     items: [],
@@ -121,8 +152,15 @@ export const experience = [
     role: 'Senior Associate Consultant',
     link: 'https://www.infosys.com/',
     image: '/icons/infosys.webp',
-    period: null,
+    period: "Apr'16 - Dec'18",
     description: "Where my career started. After a master's in marketing, I joined Infosys as a business analyst and grew into a Senior Associate Consultant. Working close to how products get built made me curious about design, which I went on to teach myself. I also wrote about how the asset management team revived its legacy system.",
+    // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
+    overview: [
+      "My first job started at Infosys, and the Mysore campus felt a lot like going back to college. I had studied marketing and systems, and joined the team responsible for the company's internal applications.",
+      "I worked on asset management, in a role that was closer to a product owner. The system tracked everything from laptops and software to vehicles and buildings. Behind something as ordinary as assigning a laptop were purchase records, approvals, and several departments that needed the same information. I worked with the team on bringing three separate systems into a more connected asset management platform.",
+      "It was my first experience of working on a product with that many moving parts. Understanding the workflows meant understanding the people and departments behind them, including where the software had stopped matching how they actually worked.",
+      "I was also interested in design. I knew Photoshop, liked visual work, and had imagined doing something around branding or marketing. Towards the end of my time at Infosys, I started learning Figma and taking on freelance design work to see where it could go.",
+    ],
     related: [{ title: 'Reviving a legacy system at Infosys', href: '/musings/infosys_legacy' }],
     timeline: false,
     items: [],

@@ -52,7 +52,7 @@ src/app/
 
 All copy lives in `src/lib/content.js`:
 
-- `experience`: rows and the `[company]` pages (`role`, `period`, `description`, optional `related` links). Entries with `timeline: false` are left off `/experience`
+- `experience`: rows and the `[company]` pages (`role`, `period`, `description` for metadata, `overview` paragraphs for the page, where an object like `{ youtube, title }` embeds a video, optional `related` links). Hypersonix folds its case studies behind "More about my work here" (`Expandable`); Postman's live on the full-width `/postman/work` page (listed in `FULL_PAGE_PATHS` in the `(site)` layout). Entries with `timeline: false` are left off `/experience`. The overview copy is drafted in the wiki (`areas/career/overview/website-experience-drafts.md`)
 - `projects`: pet projects (external links, or `link: null` for a plain row)
 - `musings`: home list of articles (the article itself is its own route)
 - `bio`, `aboutBio`, `aboutFunThings`, `aboutPrinciples`, `now`, `animation`, `junymade`, `photography`, `aboutConversation`
@@ -61,9 +61,11 @@ Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and ren
 
 ## Key components
 
-- `Row`: every home list row (icon, title, hover arrow, details). Stacks when its column is narrow, using container queries (`@lg:`) rather than the window width
-- `ShowMore`: folds extra rows behind "View more" (Base UI Collapsible)
+- `Row`: every home list row (icon, title, details). External links get an ↗ on hover; internal ones have no arrow. On links, the dates (every detail but the last) fade in on hover with a pipe before the role. Stacks when its column is narrow, using container queries (`@lg:`) rather than the window width
+- `ShowMore`: folds extra rows (experience after 3, musings after 3) behind a small centred button: "•••" when closed, an up caret when open (text labels for screen readers only). Rows fade in with a stagger (`.reveal-rows` in globals.css); curve token `ease-snappy`
 - `Contact`: "Start a conversation" with X, LinkedIn and GitHub buttons
+- `YouTubeEmbed`: a YouTube video that shows only its thumbnail until played, then loads the privacy-enhanced player
+- `Expandable`: a button that unfolds a server-rendered section below it
 - `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip
 - `MediaGrid`: media side by side in a row
 

@@ -50,8 +50,9 @@ function useIsDesktop() {
 // Arriving straight on a page (a shared link, a new tab, the panel's expand
 // button) shows that page on its own, full width, with a link home. Once the
 // visitor reaches "/", the list and panel take over for the rest of the visit.
-// `panelPaths` lists the routes that open in the panel.
-export default function SiteShell({ list, panelPaths, children }) {
+// `panelPaths` lists the routes that open in the panel; `fullPagePaths` lists
+// routes that always show full width.
+export default function SiteShell({ list, panelPaths, fullPagePaths = [], children }) {
   const pathname = usePathname();
   const router = useRouter();
   const isDesktop = useIsDesktop();
@@ -82,6 +83,7 @@ export default function SiteShell({ list, panelPaths, children }) {
   // visitor reaches home.
   const [fullPage, setFullPage] = useState(pathname !== '/');
   if (fullPage && pathname === '/') setFullPage(false);
+  const showFullPage = fullPage || fullPagePaths.includes(pathname);
 
   const loading = pendingPath !== null;
   const open = loading || (pathname !== '/' && !closing);
@@ -138,13 +140,13 @@ export default function SiteShell({ list, panelPaths, children }) {
 
   // Esc closes the side panel (the sheet gets this from its dialog).
   useEffect(() => {
-    if (!open || !isDesktop || fullPage) return undefined;
+    if (!open || !isDesktop || showFullPage) return undefined;
     const onKey = (event) => {
       if (event.key === 'Escape' && !event.defaultPrevented) close();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open, isDesktop, fullPage, close]);
+  }, [open, isDesktop, showFullPage, close]);
 
   // Full-page view: a clicked link starts the next page at the top (list links
   // ask Next not to scroll, which suits the panel but not a full page).
@@ -166,7 +168,7 @@ export default function SiteShell({ list, panelPaths, children }) {
     node.focus({ preventScroll: true });
   }, []);
 
-  if (fullPage) {
+  if (showFullPage) {
     return (
       <div className="min-h-dvh bg-paper" onClickCapture={onFullPageClick}>
         <div className="mx-auto max-w-2xl px-6 pt-6 pb-10 md:px-10">

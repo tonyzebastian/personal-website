@@ -1,8 +1,9 @@
-import { ArrowRight, ArrowUpRight } from '@phosphor-icons/react/ssr';
+import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 import { PanelLink } from '@/components/panel/ActivePath';
 
-// One list row for every section on the home page. Wide column: icon, title
-// and arrow on the left, details on the right, all on one line. Narrow column
+// One list row for every section on the home page. Wide column: icon and title
+// (plus an arrow on hover for external links) on the left, details on the
+// right, all on one line; the dates show on hover. Narrow column
 // (a container query, so it follows the list column, not the window): rows
 // with an icon show it as a tile, with the title above the details, which
 // read in reverse ("Lead Designer | Oct'25 - Oct'26"). Long titles are cut
@@ -12,7 +13,6 @@ import { PanelLink } from '@/components/panel/ActivePath';
 //   meta      strings shown on the right; the last one reads strongest
 export default function Row({ href, icon, title, meta = [] }) {
   const isExternal = href?.startsWith('http');
-  const Arrow = isExternal ? ArrowUpRight : ArrowRight;
   const details = meta.filter(Boolean);
   const hasIcon = icon !== undefined;
 
@@ -25,9 +25,9 @@ export default function Row({ href, icon, title, meta = [] }) {
         <span className="truncate font-medium text-ink" title={title}>
           {title}
         </span>
-        {href && (
-          <span className="w-0 shrink-0 overflow-hidden transition-[width] duration-200 ease-out md:group-hover:w-5 md:group-focus-visible:w-5 md:group-data-active:w-5">
-            <Arrow size={14} weight="bold" className="ml-1 text-body/40" aria-hidden />
+        {isExternal && (
+          <span className="w-0 shrink-0 overflow-hidden transition-[width] duration-200 ease-out md:group-hover:w-5 md:group-focus-visible:w-5">
+            <ArrowUpRight size={14} weight="bold" className="ml-1 text-body/40" aria-hidden />
           </span>
         )}
       </span>
@@ -50,18 +50,30 @@ export default function Row({ href, icon, title, meta = [] }) {
               ))}
             </span>
           </span>
-          {/* Wide: on the right of the same line. */}
+          {/* Wide: on the right of the same line, split by pipes. On links,
+              everything before the last detail (the dates) fades in on hover,
+              focus or while open; its space is kept so nothing shifts. Screens
+              without hover always show it. */}
           <span
             className={`hidden shrink-0 items-center gap-3 tabular-nums @lg:row-start-1 @lg:flex ${hasIcon ? '@lg:col-start-3 @lg:pl-4' : '@lg:col-start-2 @lg:pl-6'}`}
           >
-            {details.map((text, index) => (
-              <span
-                key={text}
-                className={index === details.length - 1 ? 'text-body/55' : 'text-body/40'}
-              >
-                {text}
-              </span>
-            ))}
+            {details.map((text, index) =>
+              index === details.length - 1 ? (
+                <span key={text} className="text-body/55">
+                  {text}
+                </span>
+              ) : (
+                <span
+                  key={text}
+                  className={`flex items-center gap-3 text-body/40 ${href ? 'opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 group-data-active:opacity-100 [@media(hover:none)]:opacity-100' : ''}`}
+                >
+                  {text}
+                  <span aria-hidden className="text-body/25">
+                    |
+                  </span>
+                </span>
+              ),
+            )}
           </span>
         </>
       )}

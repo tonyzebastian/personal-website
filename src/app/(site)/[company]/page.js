@@ -1,19 +1,30 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowRight } from '@phosphor-icons/react/ssr';
 import { experience } from '@/lib/content';
 import { postmanData } from '@/lib/case-studies/postman';
 import { hypersonixData } from '@/lib/case-studies/hypersonix';
 import PanelPage from '@/components/panel/PanelPage';
 import CaseStudy from '@/components/CaseStudy';
 import Row from '@/components/Row';
+import Expandable from '@/components/Expandable';
+import YouTubeEmbed from '@/components/YouTubeEmbed';
+import { buttonVariants } from '@/components/ui/button';
 
-// One summary page per experience entry: /sundial, /postman, /hypersonix,
-// /avrl and /infosys. Only those are built; any other path is a 404.
+// One page per experience entry: /sundial, /postman, /hypersonix, /avrl and
+// /infosys. Each starts with the written overview. Hypersonix folds its case
+// studies behind "More about my work here"; Postman's are long enough to get
+// their own full page (/postman/work). Only these are built; any other path
+// is a 404.
 export const dynamicParams = false;
 
 const CASE_STUDIES = {
   postman: postmanData.projects,
   hypersonix: hypersonixData.projects,
 };
+
+// Pages whose case studies live on a separate full page instead of in a fold.
+const WORK_PAGES = { postman: { href: '/postman/work', label: 'See my work at Postman' } };
 
 export function generateStaticParams() {
   return experience.map((job) => ({ company: job.slug }));
@@ -47,6 +58,7 @@ export default async function CompanyPage({ params }) {
   if (!job) notFound();
 
   const projects = CASE_STUDIES[job.slug];
+  const workPage = WORK_PAGES[job.slug];
 
   return (
     <PanelPage
@@ -55,12 +67,30 @@ export default async function CompanyPage({ params }) {
       href={job.link}
       meta={[job.role, job.period]}
     >
-      {job.description && <p>{job.description}</p>}
+      {(job.overview ?? [job.description]).map((block, index) =>
+        typeof block === 'string' ? (
+          <p key={index}>{block}</p>
+        ) : (
+          <YouTubeEmbed key={block.youtube} id={block.youtube} title={block.title} />
+        )
+      )}
 
-      {projects && (
-        <div className="mt-6">
-          <CaseStudy projects={projects} />
-        </div>
+      {workPage ? (
+        <Link
+          href={workPage.href}
+          className={buttonVariants({ variant: 'outline', className: 'mt-4 self-start' })}
+        >
+          {workPage.label}
+          <ArrowRight weight="bold" data-icon="inline-end" aria-hidden />
+        </Link>
+      ) : (
+        projects && (
+          <div className="mt-4">
+            <Expandable label="More about my work here">
+              <CaseStudy projects={projects} />
+            </Expandable>
+          </div>
+        )
       )}
 
       {job.related?.length > 0 && (

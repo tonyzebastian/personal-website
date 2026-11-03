@@ -6,7 +6,8 @@ import ShowMore from '@/components/ShowMore';
 import Contact from '@/components/Contact';
 import { experience, projects, musings } from '@/lib/content';
 
-// Musings shown before "View more".
+// Rows shown before "View more".
+const EXPERIENCE_SHOWN = 3;
 const MUSINGS_SHOWN = 3;
 
 function Section({ id, title, children }) {
@@ -17,6 +18,16 @@ function Section({ id, title, children }) {
     </section>
   );
 }
+
+const jobRow = (job) => (
+  <Row
+    key={job.slug}
+    href={`/${job.slug}`}
+    icon={job.image}
+    title={job.name}
+    meta={[job.period, job.role]}
+  />
+);
 
 const musingRow = (musing) => (
   <Row key={musing.link} href={musing.link} title={musing.name} meta={[musing.date]} />
@@ -31,15 +42,9 @@ export default function HomeList() {
 
       <div className="mx-auto flex w-full max-w-lg flex-col gap-16">
         <Section id="experience" title="Experience">
-          {experience.map((job) => (
-            <Row
-              key={job.slug}
-              href={`/${job.slug}`}
-              icon={job.image}
-              title={job.name}
-              meta={[job.period, job.role]}
-            />
-          ))}
+          <ShowMore more={experience.slice(EXPERIENCE_SHOWN).map(jobRow)}>
+            {experience.slice(0, EXPERIENCE_SHOWN).map(jobRow)}
+          </ShowMore>
         </Section>
 
         <Section id="projects" title="Pet Projects">
