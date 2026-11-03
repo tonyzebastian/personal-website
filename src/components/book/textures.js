@@ -292,6 +292,37 @@ export function drawPaperMaps() {
   return { rough, normal };
 }
 
+// The intro spread: plain paper with the video's poster printed on it. The
+// scene lays the moving video over this once it plays. Like the old hero,
+// the footage is multiplied onto the paper, so its white backdrop becomes
+// the page.
+async function drawIntro(intro, { width }) {
+  const w = width * 2;
+  const h = Math.round(width * PAGE_ASPECT);
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const r = width * 0.07;
+  roundedRect(ctx, 0, 0, w, h, [r, r, r, r]);
+  ctx.clip();
+  ctx.fillStyle = intro.paper;
+  ctx.fillRect(0, 0, w, h);
+  const poster = await loadImage(intro.poster);
+  if (poster) {
+    const scale = Math.max(w / poster.width, h / poster.height);
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(poster, (w - poster.width * scale) / 2, (h - poster.height * scale) / 2, poster.width * scale, poster.height * scale);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  grain(ctx, w, h, 0.05);
+  return canvas;
+}
+
+// The last spread: a closing thought on the left; on the right, "To be
+// continued", the intro about me and a printed "More about me" link.
+// Returns the canvas and where that link sits on it (fractions of the
+// spread, from the top left), so the page can lay a real link over it.
 function drawEnd(end, { width, fonts }) {
   const w = width * 2;
   const h = Math.round(width * PAGE_ASPECT);
@@ -306,6 +337,7 @@ function drawEnd(end, { width, fonts }) {
   ctx.fillRect(0, 0, w, h);
   wash(ctx, w, h, '#e6d6bf', 17);
 
+  // Left page: the closing thought.
   ctx.fillStyle = '#32404f';
   ctx.textAlign = 'center';
   serif(ctx, width * 0.065, fonts.serif, 'italic');
@@ -314,22 +346,67 @@ function drawEnd(end, { width, fonts }) {
   lines.forEach((line, i) => ctx.fillText(line, width / 2, h * 0.45 + i * width * 0.09));
   ctx.globalAlpha = 1;
 
+  // Right page: title and swoosh.
+  const x = width * 1.14;
   const title = layer(w, h, (l) => {
     l.fillStyle = '#32404f';
     l.textAlign = 'left';
     serif(l, width * 0.13, fonts.serif);
-    l.fillText(end.word, width * 1.14, h * 0.4);
+    l.fillText(end.word, x, h * 0.3);
     l.strokeStyle = '#32404f';
     l.lineWidth = width * 0.006;
     l.beginPath();
-    l.moveTo(width * 1.14, h * 0.44);
-    l.bezierCurveTo(width * 1.4, h * 0.42, width * 1.6, h * 0.47, width * 1.8, h * 0.43);
+    l.moveTo(x, h * 0.34);
+    l.bezierCurveTo(width * 1.4, h * 0.32, width * 1.6, h * 0.37, width * 1.8, h * 0.33);
     l.stroke();
     chalkify(l, w, h, 0.2);
   });
   ctx.drawImage(title, 0, 0);
+
+  // The intro about me.
+  const size = width * 0.043;
+  const lineHeight = size * 1.5;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#32404f';
+  ctx.font = `${size}px ${fonts.sans}`;
+  ctx.letterSpacing = '0px';
+  ctx.globalAlpha = 0.8;
+  let y = h * 0.47;
+  for (const line of wrapText(ctx, end.intro, width * 0.7)) {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+  ctx.globalAlpha = 1;
+
+  // The link, with an arrow, printed like the site's links.
+  y += lineHeight * 0.9;
+  ctx.font = `500 ${size}px ${fonts.sans}`;
+  ctx.fillText(end.link.label, x, y);
+  const labelWidth = ctx.measureText(end.link.label).width;
+  const ax = x + labelWidth + size * 0.45;
+  const ay = y - size * 0.33;
+  const aw = size * 0.8;
+  ctx.strokeStyle = '#32404f';
+  ctx.lineWidth = size * 0.09;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(ax, ay);
+  ctx.lineTo(ax + aw, ay);
+  ctx.moveTo(ax + aw * 0.6, ay - aw * 0.38);
+  ctx.lineTo(ax + aw, ay);
+  ctx.lineTo(ax + aw * 0.6, ay + aw * 0.38);
+  ctx.stroke();
+  const pad = size * 0.35;
+  const link = {
+    left: (x - pad) / w,
+    top: (y - size - pad * 0.4) / h,
+    right: (ax + aw + pad) / w,
+    bottom: (y + size * 0.3 + pad * 0.4) / h,
+  };
+
   grain(ctx, w, h, 0.08);
-  return canvas;
+  return { canvas, link };
 }
 
 // The cover: a dark board with chalky lettering.
@@ -418,7 +495,9 @@ function drawCover(cover, { width, fonts, back = false }) {
 export function drawContactShadow() {
   const rw = 448;
   const rh = Math.round((rw / 2) * PAGE_ASPECT); // an open spread: 2 pages wide
-  const pad = 64;
+  // Room for the blur to fade to nothing on every side, so the shadow never
+  // ends in a hard edge.
+  const pad = 96;
   const canvas = document.createElement('canvas');
   canvas.width = rw + pad * 2;
   canvas.height = rh + pad * 2;
@@ -426,10 +505,11 @@ export function drawContactShadow() {
   const r = rw * 0.035;
   const shape = (inset, dx, dy) => roundedRect(ctx, pad + inset + dx, pad + inset + dy, rw - inset * 2, rh - inset * 2, [r, r, r, r]);
   ctx.fillStyle = '#fff';
-  // Wide, faint ambient shadow.
-  ctx.filter = 'blur(26px)';
-  ctx.globalAlpha = 0.32;
-  shape(-4, 6, 12);
+  // Wide, faint ambient shadow, falling mostly down and right (the light is
+  // above and to the left), so little of it reaches above the book.
+  ctx.filter = 'blur(18px)';
+  ctx.globalAlpha = 0.34;
+  shape(0, 6, 28);
   ctx.fill();
   // Mid shadow.
   ctx.filter = 'blur(10px)';
@@ -480,14 +560,21 @@ export async function drawPages(book, { width, motifs, icons }) {
 
   const options = { width, fonts, motifs, icons };
   const pages = [{ layers: [drawCover(book.cover, options)], part: 'whole', edge: '#1d2024' }];
+  if (book.intro) {
+    const layers = [await drawIntro(book.intro, options)];
+    const video = { src: book.intro.video, paper: book.intro.paper };
+    pages.push({ layers, part: 'left', edge: book.intro.paper, video });
+    pages.push({ layers, part: 'right', edge: book.intro.paper, video });
+  }
   for (const chapter of book.chapters) {
     const layers = await drawSpread(chapter, options);
     pages.push({ layers, part: 'left', edge: chapter.paper });
     pages.push({ layers, part: 'right', edge: chapter.paper });
   }
-  const end = [drawEnd(book.end, options)];
+  const endArt = drawEnd(book.end, options);
+  const end = [endArt.canvas];
   pages.push({ layers: end, part: 'left', edge: '#f6f0e6' });
-  pages.push({ layers: end, part: 'right', edge: '#f6f0e6' });
+  pages.push({ layers: end, part: 'right', edge: '#f6f0e6', link: endArt.link });
   pages.push({ layers: [drawCover(book.cover, { ...options, back: true })], part: 'whole', edge: '#1d2024' });
   return pages;
 }

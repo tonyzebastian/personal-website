@@ -79,7 +79,7 @@ function boardGeometry(t, w = W, d = D, r = RADIUS) {
   return geometry;
 }
 
-export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotion = false, onSpread, onHover }) {
+export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotion = false, onSpread, onHover, onVideo }) {
   // Treat colours as the reference does: textures straight to screen, no
   // colour-space conversion, so pages print exactly as drawn.
   THREE.ColorManagement.enabled = false;
@@ -154,6 +154,35 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   const clothNormal = surface(paper.normal);
   clothNormal.repeat.set(9, 9);
 
+  // The intro video, shared by both pages of the first spread. It loads
+  // only once that spread is on screen, and plays only while it is.
+  const videoPage = pages.find((page) => page.video);
+  const videoMix = { value: 0 }; // 0 shows the printed poster, 1 the moving video
+  let video = null;
+  let videoTexture = null;
+  let videoReady = false;
+  let playPending = false;
+  // Paused with the button. Leaving the intro clears it, so the video plays
+  // again on the way back. With reduced motion it starts paused.
+  let userPaused = reduceMotion;
+  if (videoPage) {
+    video = document.createElement('video');
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.setAttribute('playsinline', '');
+    video.addEventListener('playing', () => {
+      videoReady = true;
+    });
+    // Report playing and muted to the page, for its buttons.
+    const report = () => onVideo?.({ playing: !video.paused, muted: video.muted });
+    video.addEventListener('play', report);
+    video.addEventListener('pause', report);
+    video.addEventListener('volumechange', report);
+    videoTexture = track(new THREE.VideoTexture(video));
+  }
+
   // Shared uniforms: the crease shade near the spine, and one parallax
   // offset per illustration.
   const crease = { value: 0 };
@@ -216,6 +245,15 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const spine = page.part !== 'whole';
     const insidePage = board && spine; // a page printed on a cover board, with a rim around it
     const f = (n) => n.toFixed(5);
+    // The video fills the spread like the art does, cropped to fit, and is
+    // multiplied onto the paper so its white backdrop becomes the page.
+    const videoCode = page.video
+      ? `{
+            vec2 videoUv = vec2(0.5 + (vMapUv.x - 0.5) * ${f((2 * W) / D / (16 / 9))}, vMapUv.y);
+            vec3 footage = texture2D(uVideo, videoUv).rgb;
+            art.rgb = mix(art.rgb, uPaper * footage, uVideoMix * step(0.5, art.a));
+          }`
+      : '';
     const boardCode = board
       ? `{
             vec2 pu = vPageUv;
@@ -300,6 +338,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCrease = crease;
       shader.uniforms.uOffset = offset;
+      if (page.video) {
+        shader.uniforms.uVideo = { value: videoTexture };
+        shader.uniforms.uVideoMix = videoMix;
+        shader.uniforms.uPaper = { value: new THREE.Color(page.video.paper) };
+      }
       if (board) {
         shader.uniforms.uCloth = { value: board.cloth };
         shader.uniforms.uMirror = { value: board.mirror ? 1 : 0 };
@@ -322,7 +365,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
-          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${samplers}`
+          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${page.video ? 'uniform sampler2D uVideo;\nuniform float uVideoMix;\nuniform vec3 uPaper;\n' : ''}${samplers}`
         )
         .replace(
           '#include <map_fragment>',
@@ -330,6 +373,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
             vec4 art = texture2D(map, vMapUv);
             art.rgb /= max(art.a, 0.0001);
             ${mixes}
+            ${videoCode}
             ${boardCode}
             diffuseColor *= art;
           #endif
@@ -341,7 +385,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
           }`
         );
     };
-    material.customProgramCacheKey = () => `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}`;
+    material.customProgramCacheKey = () =>
+      `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${page.video ? 'video' : ''}`;
     return material;
   }
 
@@ -389,8 +434,10 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   for (let s = 1; s < leafCount; s++) spreadLayers[s] = pages[2 * s].layers;
 
   // State
-  let progress = 0; // the reading timeline: 0 closed, s = spread s open
-  let target = 0;
+  // With an intro video the book starts open on it; otherwise closed.
+  const startSpread = videoPage ? 1 : 0;
+  let progress = startSpread; // the reading timeline: 0 closed, s = spread s open
+  let target = startSpread;
   let tween = null;
   let drag = null;
   let hover = false;
@@ -398,7 +445,9 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
   let width = 1;
   let height = 1;
-  let inset = { x: 0, y: 0 };
+  // Where the frame (the book's box) sits within the bigger canvas, as
+  // fractions of the canvas: { x0, x1, y0, y1 }.
+  let inset = { x0: 0, x1: 1, y0: 0, y1: 1 };
   let visible = true;
   let frameId = 0;
   let last = performance.now();
@@ -474,13 +523,19 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     // canvas runs past it so shadows are never cut off).
     const aspect = width / height;
     const tan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const frameW = 1 - 2 * inset.x;
-    const frameH = 1 - 2 * inset.y;
+    const frameW = inset.x1 - inset.x0;
+    const frameH = inset.y1 - inset.y0;
     const distance = Math.max((DC / 2 + 0.03) / (tan * frameH), (WC + 0.03) / (tan * aspect * frameW));
     camera.position.set(0, distance, 0);
     camera.lookAt(0, 0, 0);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
+    // The canvas runs further past the frame below than above (that is where
+    // the shadow falls), so shift the image to centre the book on the frame.
+    const projection = camera.projectionMatrix.elements;
+    projection[8] = -((inset.x0 + inset.x1) - 1);
+    projection[9] = (inset.y0 + inset.y1) - 1;
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   }
 
   function tick() {
@@ -488,6 +543,26 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const now = performance.now();
     const dt = Math.min(1 / 30, (now - last) / 1000);
     last = now;
+    if (video) {
+      // Play only while the book rests on the intro: a page turning away
+      // pauses it, and coming back plays it again.
+      const onIntro = target === 1 && Math.abs(progress - 1) < 0.15;
+      if (target !== 1) userPaused = reduceMotion;
+      const shouldPlay = visible && onIntro && !userPaused && document.visibilityState === 'visible';
+      if (shouldPlay && video.paused && !playPending) {
+        if (!video.getAttribute('src')) video.src = videoPage.video.src;
+        playPending = true;
+        video
+          .play()
+          .catch(() => {})
+          .finally(() => {
+            playPending = false;
+          });
+      } else if (!shouldPlay && !video.paused) {
+        video.pause();
+      }
+      videoMix.value += ((videoReady ? 1 : 0) - videoMix.value) * (1 - Math.exp(-dt * 4));
+    }
     if (!visible) return;
     if (tween) {
       const t = Math.min(1, (now - tween.start) / tween.duration);
@@ -593,7 +668,12 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const f = frame.getBoundingClientRect();
     width = Math.max(1, c.width);
     height = Math.max(1, c.height);
-    inset = { x: (f.left - c.left) / c.width, y: (f.top - c.top) / c.height };
+    inset = {
+      x0: (f.left - c.left) / c.width,
+      x1: (f.right - c.left) / c.width,
+      y0: (f.top - c.top) / c.height,
+      y1: (f.bottom - c.top) / c.height,
+    };
     renderer.setSize(width, height, false);
   };
   const resizeObserver = new ResizeObserver(measure);
@@ -607,12 +687,48 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   visibility.observe(canvas);
 
   measure();
+  onSpread?.(startSpread);
   tick();
 
   return {
     goTo,
+    // The play / pause button on the intro spread.
+    toggleVideo() {
+      if (!video || target !== 1) return;
+      // Playing now? Then pause it; otherwise let it play.
+      userPaused = !video.paused;
+    },
+    // Where the printed link on the last page appears, as percentages of
+    // the frame, for laying a real link over it. The book lies flat and
+    // centred there, so this holds for as long as the frame keeps its size.
+    linkRect() {
+      const page = pages.find((p) => p.link);
+      if (!page) return null;
+      camera.updateMatrixWorld();
+      const c = canvas.getBoundingClientRect();
+      const f = frame.getBoundingClientRect();
+      const toFrame = (u, v) => {
+        // Spread canvas fraction -> the open book's top surface.
+        const point = new THREE.Vector3((u * 2 - 1) * W, COVER_T + PAGE_T, -D / 2 + v * D).project(camera);
+        const px = c.left + ((point.x + 1) / 2) * c.width;
+        const py = c.top + ((1 - point.y) / 2) * c.height;
+        return [((px - f.left) / f.width) * 100, ((py - f.top) / f.height) * 100];
+      };
+      const [left, top] = toFrame(page.link.left, page.link.top);
+      const [right, bottom] = toFrame(page.link.right, page.link.bottom);
+      return { left, top, width: right - left, height: bottom - top };
+    },
+    // The sound button. Unmuting needs a click, which this always comes from.
+    toggleSound() {
+      if (video) video.muted = !video.muted;
+    },
     dispose() {
       cancelAnimationFrame(frameId);
+      if (video) {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      }
       resizeObserver.disconnect();
       visibility.disconnect();
       eventTarget.removeEventListener('pointerdown', onPointerDown);

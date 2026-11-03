@@ -301,6 +301,14 @@ export const storybook = {
     subtitle: 'a builder who designs, codes and tells stories.',
     note: 'A simple illustrated story',
   },
+  // The first spread: the old hero video, printed across both pages. The
+  // book opens here by default. The poster shows until the video plays.
+  intro: {
+    video: '/hero_video.mp4',
+    poster: '/hero_image.jpg',
+    paper: '#fbf8f3',
+    label: 'Tony Sebastian, introduced in a short video.',
+  },
   chapters: [
     {
       id: 'designer',
@@ -372,5 +380,7 @@ export const storybook = {
   end: {
     word: 'To be continued',
     body: 'Consistency beats talent, and side projects keep the passion alive.',
+    intro: bio.intro,
+    link: { label: 'More about me', href: '/about' },
   },
 };

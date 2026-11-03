@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useReducedMotion } from 'motion/react';
-import { HandGrabbing } from '@phosphor-icons/react';
+import { HandGrabbing, Pause, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 
 // The storybook hero: a WebGL board book lying on the page, seen from above
@@ -14,8 +15,12 @@ import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 // three.js and the page drawings load only after the page itself has loaded,
 // so the book never holds up the first paint.
 
+// Soft, frosted buttons that sit on the page without shouting.
+const videoButton =
+  'flex items-center justify-center rounded-full bg-paper/55 text-ink/50 ring-1 ring-ink/5 backdrop-blur-md transition-[opacity,color,background-color] duration-200 hover:bg-paper/75 hover:text-ink/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/25';
+
 export default function HeroBook({ book }) {
-  const { cover, chapters, end } = book;
+  const { cover, intro, chapters, end } = book;
   const reduceMotion = useReducedMotion();
   const frameRef = useRef(null);
   const canvasRef = useRef(null);
@@ -24,7 +29,27 @@ export default function HeroBook({ book }) {
   const [status, setStatus] = useState('loading'); // loading | ready | failed
   const [spread, setSpread] = useState(0);
   const [dragged, setDragged] = useState(false);
-  const lastSpread = chapters.length + 1;
+  const [video, setVideo] = useState({ playing: false, muted: true });
+  // Spreads: 0 closed, then the intro video (if any), the chapters, the end.
+  const firstChapter = intro ? 2 : 1;
+  const lastSpread = chapters.length + firstChapter;
+
+  // Where the link printed on the last page sits, so a real link can lie
+  // over it. Measured once the book is drawn, and again on resize.
+  const [linkRect, setLinkRect] = useState(null);
+  useEffect(() => {
+    if (status !== 'ready') return undefined;
+    let frame = requestAnimationFrame(() => setLinkRect(sceneRef.current?.linkRect() ?? null));
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => requestAnimationFrame(() => setLinkRect(sceneRef.current?.linkRect() ?? null)));
+    });
+    observer.observe(frameRef.current);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [status]);
 
   // The scene owns the reading position; it reports every change back.
   const go = useCallback((next) => sceneRef.current?.goTo(next), []);
@@ -66,6 +91,7 @@ export default function HeroBook({ book }) {
           pages,
           reduceMotion,
           onSpread: setSpread,
+          onVideo: setVideo,
         });
         sceneRef.current = scene;
         setStatus('ready');
@@ -101,7 +127,8 @@ export default function HeroBook({ book }) {
     }
   };
 
-  const chapter = spread >= 1 && spread <= chapters.length ? chapters[spread - 1] : null;
+  const chapter = chapters[spread - firstChapter] ?? null;
+  const onIntro = intro && spread === 1;
   const open = spread > 0;
 
   return (
@@ -117,12 +144,13 @@ export default function HeroBook({ book }) {
         onPointerDown={() => open && setDragged(true)}
         className="group/book relative mb-5 aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:outline-1 focus-visible:outline-offset-[12px] focus-visible:outline-ink/20"
       >
-        {/* The canvas runs well past the frame, so the book's shadows are
-            never cut off; it takes no clicks, the frame does. */}
+        {/* The canvas runs well past the frame, most of all below it where
+            the shadow falls, so shadows are never cut off. It takes no
+            clicks; the frame does. */}
         <canvas
           ref={canvasRef}
           aria-hidden
-          className="pointer-events-none absolute -inset-x-[4%] -inset-y-[18%] h-[136%] w-[108%] sm:-inset-x-[14%] sm:w-[128%]"
+          className="pointer-events-none absolute -top-[18%] -left-[7%] h-[156%] w-[114%] sm:-left-[14%] sm:w-[128%]"
         />
         {status === 'loading' && (
           <p className="absolute inset-0 flex items-center justify-center font-serif italic text-ink/40">Loading…</p>
@@ -131,6 +159,47 @@ export default function HeroBook({ book }) {
           <p className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-ink/55">
             This browser can&apos;t show the book.
           </p>
+        )}
+
+        {/* Video controls, on the page itself: play / pause in the middle
+            (on hover, always while paused, always on touch screens), sound
+            in the corner. */}
+        {status === 'ready' && onIntro && (
+          <>
+            <button
+              type="button"
+              onClick={() => sceneRef.current?.toggleVideo()}
+              aria-label={video.playing ? 'Pause video' : 'Play video'}
+              className={`${videoButton} absolute top-1/2 left-1/2 size-14 -translate-x-1/2 -translate-y-1/2 ${
+                video.playing
+                  ? 'opacity-0 group-hover/book:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100'
+                  : 'opacity-100'
+              }`}
+            >
+              {video.playing ? <Pause size={22} weight="fill" /> : <Play size={22} weight="fill" className="ml-0.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => sceneRef.current?.toggleSound()}
+              aria-label={video.muted ? 'Turn sound on' : 'Turn sound off'}
+              className={`${videoButton} absolute right-[8%] bottom-[8%] size-9`}
+            >
+              {video.muted ? <SpeakerSimpleSlash size={17} weight="bold" /> : <SpeakerSimpleHigh size={17} weight="bold" />}
+            </button>
+          </>
+        )}
+
+        {/* The "More about me" link printed on the last page: a real link
+            laid over the print, with the site's green highlight on hover. */}
+        {status === 'ready' && spread === lastSpread && linkRect && (
+          <Link
+            href={end.link.href}
+            scroll={false}
+            className="absolute rounded-sm mix-blend-multiply transition-colors hover:bg-highlight focus-visible:bg-highlight focus-visible:outline-none"
+            style={{ left: `${linkRect.left}%`, top: `${linkRect.top}%`, width: `${linkRect.width}%`, height: `${linkRect.height}%` }}
+          >
+            <span className="sr-only">{end.link.label}</span>
+          </Link>
         )}
 
         {/* With no buttons, say once how to turn pages; gone after the first drag. */}
@@ -151,7 +220,13 @@ export default function HeroBook({ book }) {
         Use the left and right arrow keys to turn pages, Enter to open the book and Escape to close it.
       </p>
       <p className="sr-only" aria-live="polite">
-        {chapter ? `${chapter.title}. ${chapter.body}` : open ? end.word : 'The book is closed.'}
+        {onIntro
+          ? intro.label
+          : chapter
+            ? `${chapter.title}. ${chapter.body}`
+            : open
+              ? `${end.word}. ${end.intro}`
+              : 'The book is closed.'}
       </p>
 
       {/* Sources for the page drawings; serialised into the textures. */}
