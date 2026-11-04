@@ -1,0 +1,65 @@
+/* A School of Fish (from the playground repo), scoped to its stage instead
+   of the whole window. */
+.aquarium {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.aquarium .background-layer {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.aquarium .main-bg {
+  background-image: url('/playground/fish/main_bg.webp');
+  z-index: -1;
+}
+
+.aquarium .sub-bg {
+  background-image: url('/playground/fish/sub_bg.webp');
+  z-index: 1;
+}
+
+.aquarium .background-fish-container,
+.aquarium .fish-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.aquarium .background-fish-container {
+  z-index: 0;
+}
+
+.aquarium .fish-container {
+  z-index: 2;
+}
+
+.aquarium .background-fish,
+.aquarium .fish {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.aquarium .background-fish {
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+}
+
+.aquarium .background-fish img {
+  width: auto;
+  height: 20px;
+}
+
+.aquarium .fish img {
+  width: auto;
+  height: 25px;
+}

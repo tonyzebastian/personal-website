@@ -37,7 +37,7 @@ export default function Row({ href, icon, title, meta = [] }) {
               pipe travels with the item after it; the wrapper clips the
               pipe that would start a wrapped line. */}
           <span
-            className={`overflow-hidden text-body/60 tabular-nums @lg:hidden ${hasIcon ? 'col-start-2 row-start-2 self-start' : ''}`}
+            className={`overflow-hidden text-body/70 tabular-nums @lg:hidden ${hasIcon ? 'col-start-2 row-start-2 self-start' : ''}`}
           >
             <span className="-ml-[17px] flex flex-wrap">
               {[...details].reverse().map((text) => (
@@ -59,13 +59,13 @@ export default function Row({ href, icon, title, meta = [] }) {
           >
             {details.map((text, index) =>
               index === details.length - 1 ? (
-                <span key={text} className="text-body/55">
+                <span key={text} className="text-body/70">
                   {text}
                 </span>
               ) : (
                 <span
                   key={text}
-                  className={`flex items-center gap-3 text-body/40 ${href ? 'opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 group-data-active:opacity-100 [@media(hover:none)]:opacity-100' : ''}`}
+                  className={`flex items-center gap-3 text-body/70 ${href ? 'opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 group-data-active:opacity-100 [@media(hover:none)]:opacity-100' : ''}`}
                 >
                   {text}
                   <span aria-hidden className="text-body/25">
@@ -87,7 +87,7 @@ export default function Row({ href, icon, title, meta = [] }) {
 
   if (!href) return <div className={className}>{body}</div>;
 
-  const linkClass = `group ${className} outline-none transition-colors hover:bg-body/[0.03] focus-visible:bg-body/[0.05] data-active:bg-body/[0.05]`;
+  const linkClass = `group ${className} outline-none transition-colors hover:bg-body/[0.03] focus-visible:bg-body/[0.05] focus-visible:ring-2 focus-visible:ring-ring data-active:bg-body/[0.05]`;
 
   if (isExternal) {
     return (
@@ -124,7 +124,7 @@ function RowIcon({ src, title }) {
           className="size-7 object-contain drop-shadow-md @lg:size-6"
         />
       ) : (
-        <span className="flex size-7 items-center justify-center rounded-full bg-body/[0.06] text-xs font-medium text-body/55 @lg:size-6">
+        <span className="flex size-7 items-center justify-center rounded-full bg-body/[0.06] text-xs font-medium text-body/70 @lg:size-6">
           {title.charAt(0)}
         </span>
       )}

@@ -31,6 +31,54 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.tonyzeb.com/playground/gallery-pieces</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/light-and-shadow</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/pocket-worlds</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/in-motion</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/mosaic-image-lab</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/flock-in-flight</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/build-your-truck</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/school-of-fish</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.tonyzeb.com/hypersonix</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>yearly</changefreq>
@@ -95,5 +143,8 @@
     <lastmod>2025-08-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/playground/365-days-of-drawing</loc>
   </url>
 </urlset>

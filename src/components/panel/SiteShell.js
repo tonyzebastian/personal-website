@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSelectedLayoutSegments } from 'next/navigation';
 import { AnimatePresence, LazyMotion, MotionConfig, m, useReducedMotion } from 'motion/react';
 import { ArrowLeft } from '@phosphor-icons/react';
 import { buttonVariants } from '@/components/ui/button';
@@ -36,10 +36,14 @@ function useIsDesktop() {
 }
 
 // The site layout: the home list, plus a panel for whatever route is open.
-// Every route other than "/" opens in the panel, so the URL always matches
-// what is on screen. The panel is one layer over home: switching from one
-// panel page to another replaces the history entry, so Back (or closing)
-// always returns home rather than stepping through every page opened.
+// Every route other than "/" opens in the panel. The panel still opens pages
+// through the router, but the address bar stays on "/": once a page is open
+// it is set back to "/", so a refresh always lands on home. Which page is
+// open comes from the router's own tree (useSelectedLayoutSegments), which
+// keeps the page even though the URL says "/". The panel is one layer over
+// home: switching from one panel page to another replaces the history entry,
+// so Back (or closing) always returns home rather than stepping through
+// every page opened.
 //
 // Wide screens: the list sits centred; opening a panel pushes it into the
 // left share of the screen while the panel slides in on the right.
@@ -47,21 +51,53 @@ function useIsDesktop() {
 //
 // The panel reacts to a click straight away: it opens (or closes) and shows a
 // placeholder while the page loads, instead of waiting for the route.
-// Arriving straight on a page (a shared link, a new tab, the panel's expand
-// button) shows that page on its own, full width, with a link home. Once the
+// Arriving straight on a page (a typed link, a new tab, the panel's expand
+// button) shows that page on its own, full width, with a link home, and keeps
+// its URL. Once the
 // visitor reaches "/", the list and panel take over for the rest of the visit.
 // `panelPaths` lists the routes that open in the panel; `fullPagePaths` lists
-// routes that always show full width.
-export default function SiteShell({ list, panelPaths, fullPagePaths = [], children }) {
-  const pathname = usePathname();
+// routes that always show full width; `panelTitles` maps routes whose title
+// shows in the panel's top row (their page hides its own heading there);
+// `noBlurPaths` lists routes whose panel has no blur along its bottom edge.
+export default function SiteShell({
+  list,
+  panelPaths,
+  fullPagePaths = [],
+  panelTitles = {},
+  noBlurPaths = [],
+  children,
+}) {
+  // The page the router is showing (not the address bar, which stays on "/"
+  // while a panel is open).
+  const segments = useSelectedLayoutSegments();
+  const pathname = `/${segments.filter((segment) => !segment.startsWith('(')).join('/')}`;
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const reduceMotion = useReducedMotion();
   const asideRef = useRef(null);
 
-  // Whether the panel was opened from home in this tab, so closing can step
-  // back instead of adding another history entry.
+  // Motion's animation code loads on demand. A panel opened before it
+  // arrives would keep the width it first rendered with (0%) and never slide
+  // open, so the aside is drawn afresh once the features are in: it then
+  // takes its current width at once.
+  const [motionReady, setMotionReady] = useState(false);
+  useEffect(() => {
+    let live = true;
+    loadFeatures().then(() => live && setMotionReady(true));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  // Whether the open panel's history entry sits right after home's, so
+  // closing can step back instead of adding another entry. Set once the
+  // panel's page has loaded (not on the click), so closing before then never
+  // steps back past home; Back then Forward also counts.
   const fromHome = useRef(false);
+  const previousPath = useRef(pathname);
+  // The page last open in the panel, to give focus back to its row on close.
+  const lastActive = useRef(null);
+  const listRef = useRef(null);
   // Move focus into the panel once the clicked page has loaded.
   const focusPanel = useRef(false);
   // In the full-page view, start the next page at the top (set on link clicks,
@@ -85,25 +121,74 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
   if (fullPage && pathname === '/') setFullPage(false);
   const showFullPage = fullPage || fullPagePaths.includes(pathname);
 
+  // Panel pages keep the address bar on "/". Next sets the page's URL as the
+  // route commits; this puts "/" back before the browser paints. Next follows
+  // the change (it patches history.replaceState) and keeps the page's tree
+  // on the entry, so Back and Forward still close and reopen the panel.
+  // It also reruns when Next's own URL changes (`addressBar`): on a slow
+  // first load Next can set the page's URL a commit after the page shows.
+  const addressBar = usePathname();
+  useLayoutEffect(() => {
+    if (showFullPage || pathname === '/' || window.location.pathname === '/') return;
+    window.history.replaceState(null, '', '/');
+  }, [pathname, showFullPage, addressBar]);
+
   const loading = pendingPath !== null;
   const open = loading || (pathname !== '/' && !closing);
   const contentKey = loading ? `loading:${pendingPath}` : pathname;
   const activePath = open ? (pendingPath ?? pathname) : null;
 
+  // Whether the list should lay out for its narrow, panel-open width. It turns
+  // on the moment a panel starts opening and off only once the close slide has
+  // finished, so layouts that depend on it (the Playground grid) change
+  // once per open or close instead of at every width the slide passes through.
+  const [holdNarrow, setHoldNarrow] = useState(open);
+  if (open && !holdNarrow) setHoldNarrow(true);
+  const listNarrow = open || (holdNarrow && isDesktop !== false);
+  useEffect(() => {
+    if (open || !holdNarrow) return;
+    // The panel's slide settles in about PANEL_SPRING.visualDuration.
+    const timer = setTimeout(() => setHoldNarrow(false), reduceMotion ? 0 : PANEL_SPRING.visualDuration * 1000);
+    return () => clearTimeout(timer);
+  }, [open, holdNarrow, reduceMotion]);
+
   useEffect(() => {
     if (pathname === '/') fromHome.current = false;
+    else if (previousPath.current === '/') fromHome.current = true;
+    previousPath.current = pathname;
   }, [pathname]);
 
+  useEffect(() => {
+    if (activePath) lastActive.current = activePath;
+  }, [activePath]);
+
+  // However the panel closes (close button, Esc, Back, a home link), focus
+  // inside it would be lost as it turns inert: give it to the row that opened
+  // it, or to the list.
+  const wasOpen = useRef(open);
+  useLayoutEffect(() => {
+    const justClosed = wasOpen.current && !open;
+    wasOpen.current = open;
+    if (!justClosed) return;
+    const focused = document.activeElement;
+    if (focused && focused !== document.body && !asideRef.current?.contains(focused)) return;
+    const row = lastActive.current && listRef.current?.querySelector(`a[href="${lastActive.current}"]`);
+    (row || listRef.current)?.focus({ preventScroll: true });
+  }, [open]);
+
   const close = useCallback(() => {
-    // Give focus back to the row that opened the panel, if focus was inside it.
-    if (asideRef.current?.contains(document.activeElement)) {
-      document.querySelector('a[aria-current="page"]')?.focus({ preventScroll: true });
+    setClosing(true);
+    if (pendingPath !== null && pathname === '/') {
+      // Still loading from home: there is no panel entry to step back over,
+      // so cancel the navigation instead (the newer one wins).
+      setPendingPath(null);
+      router.replace('/', { scroll: false });
+      return;
     }
     setPendingPath(null);
-    setClosing(true);
     if (fromHome.current) router.back();
     else router.push('/', { scroll: false });
-  }, [router]);
+  }, [router, pendingPath, pathname]);
 
   // Catch clicks on links (in the list, the panel or the sheet) before Next
   // starts loading the route, so the panel can respond in the same frame.
@@ -126,9 +211,7 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
     } else if (panelPaths.includes(url.pathname)) {
       setPendingPath(url.pathname);
       focusPanel.current = true;
-      if (pathname === '/') {
-        fromHome.current = true;
-      } else {
+      if (pathname !== '/') {
         // Panel to panel: replace the entry instead of adding one.
         event.preventDefault();
         router.replace(url.pathname + url.search + url.hash, { scroll: false });
@@ -193,7 +276,12 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
               layer, so the hero image can only blend with what is inside it.
               On wide screens it sits 16px in from the top and bottom, like the
               panel, so its scrollbar spans the same height. */}
-          <div className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 lg:my-4 lg:overflow-y-auto">
+          <div
+            ref={listRef}
+            tabIndex={-1}
+            data-panel-open={listNarrow ? '' : undefined}
+            className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 outline-none lg:my-4 lg:overflow-y-auto"
+          >
             <ActivePathContext value={activePath}>{list}</ActivePathContext>
           </div>
 
@@ -203,6 +291,7 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
               focused or read out. */}
           {isDesktop !== false && (
             <m.aside
+              key={motionReady ? 'ready' : 'loading'}
               ref={asideRef}
               aria-label="Details"
               inert={!open}
@@ -216,7 +305,11 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
                   (and moves back out on close) instead of being uncovered. */}
               <div className="absolute inset-y-0 left-0 py-4 pr-4" style={{ width: `${PANEL_SHARE}vw` }}>
                 <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-paper">
-                  <PanelHeader href={open ? pendingPath ?? pathname : null} onClose={close} />
+                  <PanelHeader
+                    href={open ? pendingPath ?? pathname : null}
+                    title={open ? panelTitles[pendingPath ?? pathname] : null}
+                    onClose={close}
+                  />
                   <div className="relative min-h-0 flex-1">
                     <AnimatePresence initial={false}>
                       {open && (
@@ -235,7 +328,7 @@ export default function SiteShell({ list, panelPaths, fullPagePaths = [], childr
                         </m.div>
                       )}
                     </AnimatePresence>
-                    <PanelBlur />
+                    {!noBlurPaths.includes(pendingPath ?? pathname) && <PanelBlur />}
                   </div>
                 </div>
               </div>

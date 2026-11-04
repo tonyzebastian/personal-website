@@ -9,11 +9,11 @@ const LINKS = [
   { label: 'GitHub', href: bio.social.github, Icon: GithubLogo },
 ];
 
-// "Start a conversation" at the bottom of the home page.
+// "Start a conversation" at the bottom of the About page.
 export default function Contact() {
   return (
     <section aria-labelledby="contact" className="flex flex-col gap-3">
-      <h2 id="contact" className="font-sans text-base font-semibold tracking-normal">Start a conversation</h2>
+      <h3 id="contact">Start a conversation</h3>
       <p>{aboutConversation.intro}</p>
       <ul className="list-disc space-y-1 pl-5 marker:text-body/40">
         {aboutConversation.topics.map((topic) =>

@@ -35,7 +35,7 @@ export const projects = [
   },
   {
     name: 'Resume Builder',
-    description: 'The simplest resumer builder',
+    description: 'The simplest resume builder',
     link: 'https://resume-builder-dun-rho.vercel.app/',
     image: '/icons/resume.webp',
   },
@@ -176,8 +176,9 @@ export const musings = [
 ];
 
 
+
 export const bio = {
-  intro: "I like to build things. I'm into design, art and cinematography. Believes in consistency, side projects and letting life shape my craft.",
+  intro: "I like to build things. I'm into design, art and cinematography. I believe in consistency, side projects and letting life shape my craft.",
   social: {
     x: "https://x.com/tonyzebastian",
     linkedin: "https://www.linkedin.com/in/tonyzebastian/",
@@ -250,12 +251,6 @@ export const aboutPrinciples = [
   "It's never too late to pick up a new hobby.",
   "Let life's events shape and inspire your creative journey.",
   "Side projects are like oxygen—they keep your passion alive."
-];
-
-export const animation = [
-  {
-    text: "Animation lets me express emotions and ideas uniquely. I'm particularly fond of frame-by-frame animation, playful logo reveals, and creating small moments that connect with with people.",
-  },
 ];
 
 export const junymade = [

@@ -1,6 +1,7 @@
 import HighlightLink from '@/components/ui/HighlightLink';
 import PanelPage from '@/components/panel/PanelPage';
-import { aboutBio, aboutFunThings, aboutPrinciples, now, animation, photography, junymade } from '@/lib/content';
+import Contact from '@/components/Contact';
+import { aboutBio, aboutFunThings, aboutPrinciples, now, photography, junymade } from '@/lib/content';
 import { galleryImages } from './config';
 import MasonryGridLightbox from '@/components/ui/MasonryGridLigthbox';
 
@@ -98,11 +99,6 @@ export default function About() {
           ))}
         </Section>
 
-        <Section title="Animation">
-          <Paragraphs items={animation} />
-          <MasonryGridLightbox lightboxImages={galleryImages.animation.lightbox} />
-        </Section>
-
         <Section title="Juny Made, art studio">
           <Paragraphs items={junymade} />
           <MasonryGridLightbox lightboxImages={galleryImages.junyMade.lightbox} />
@@ -112,11 +108,13 @@ export default function About() {
           <Paragraphs items={photography} />
           <MasonryGridLightbox lightboxImages={galleryImages.photography.lightbox} height={580} />
         </Section>
+
+        <Contact />
       </div>
 
       <footer className="mt-10 border-t border-border pt-4 text-center">
-        <p className="text-body/55">Built with Next.js and Motion · Typefaces: Libre Caslon Condensed and Figtree</p>
-        <p className="text-body/40">© Tony Sebastian, 2026</p>
+        <p className="text-body/70">Built with Next.js and Motion · Typefaces: Libre Caslon Condensed and Figtree</p>
+        <p className="text-body/70">© Tony Sebastian, 2026</p>
       </footer>
     </PanelPage>
   );

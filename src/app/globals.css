@@ -34,13 +34,15 @@
   --secondary: color-mix(in srgb, var(--body) 6%, var(--paper));
   --secondary-foreground: var(--ink);
   --muted: color-mix(in srgb, var(--body) 4%, var(--paper));
-  --muted-foreground: color-mix(in srgb, var(--body) 55%, transparent);
+  /* 70% is the lightest body tint that passes AA for text on the canvas
+     (4.7:1); the focus ring needs 3:1 (60% gives 3.6:1). */
+  --muted-foreground: color-mix(in srgb, var(--body) 70%, transparent);
   --accent: color-mix(in srgb, var(--body) 6%, var(--paper));
   --accent-foreground: var(--ink);
   --destructive: var(--color-red-600);
   --border: color-mix(in srgb, var(--body) 12%, transparent);
   --input: color-mix(in srgb, var(--body) 16%, transparent);
-  --ring: color-mix(in srgb, var(--body) 40%, transparent);
+  --ring: color-mix(in srgb, var(--body) 60%, transparent);
   --radius: 0.5rem;
 }
 
@@ -168,7 +170,7 @@
   h5,
   h6 {
     font-weight: 400;
-    color: color-mix(in srgb, var(--body) 55%, transparent);
+    color: color-mix(in srgb, var(--body) 70%, transparent);
   }
 
   p,
@@ -346,4 +348,157 @@ html::after {
 [data-ending-style] > .reveal-rows > * {
   transition-duration: 150ms;
   transition-delay: 0ms;
+}
+
+/* CoverGrid (Playground), after officecommun.com: covers fade up 12px as they
+   scroll in (RevealGroup adds .is-in and the stagger in --d), and the image
+   eases up to 103% on hover. */
+.cover-reveal {
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 700ms var(--ease-snappy),
+    translate 700ms var(--ease-snappy);
+  transition-delay: var(--d, 0ms);
+}
+.cover-reveal.is-in {
+  opacity: 1;
+  translate: none;
+}
+/* Columns follow the list column's width, except while a panel is open:
+   then they stay at two fluid columns (see CoverGrid). Each switch fades the
+   grid in quickly so the covers don't visibly jump to their new places. */
+.cover-grid {
+  max-width: 32rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  animation: cover-grid-wide 200ms var(--ease-snappy);
+}
+@container (min-width: 792px) {
+  .cover-grid {
+    max-width: none;
+    grid-template-columns: repeat(var(--cols-3), 232px);
+    justify-content: center;
+  }
+}
+@container (min-width: 1040px) {
+  .cover-grid {
+    grid-template-columns: repeat(var(--cols-4), 232px);
+  }
+}
+[data-panel-open] .cover-grid {
+  max-width: 32rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: normal;
+  animation-name: cover-grid-narrow;
+}
+/* Two names for the same fade, so toggling between them restarts it. */
+@keyframes cover-grid-wide {
+  from { opacity: 0; }
+}
+@keyframes cover-grid-narrow {
+  from { opacity: 0; }
+}
+.cover-img {
+  transition: scale 900ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cover:hover .cover-img {
+    scale: 1.03;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover-reveal {
+    translate: none;
+  }
+  .cover:hover .cover-img {
+    scale: none;
+  }
+}
+
+/* Registered so the bracket length and colour can transition. */
+@property --len {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 8px;
+}
+@property --corner-color {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: transparent;
+}
+
+/* Corner brackets: four small L marks that frame a link on hover or keyboard
+   focus, and stay on the link whose page is open in the panel (data-active),
+   longer and darker. Used by the CoverGrid tiles.
+     --corner-inset   how far outside (negative) or inside the box they sit
+     --corner-from    starting scale, so they close in onto the item
+   Showing, they close in, grow and darken. Hiding is a plain fade: the other
+   values only reset once the brackets are gone, so a tile that loses the
+   selection just fades out instead of shrinking, lightening and spreading. */
+.corners {
+  position: relative;
+  --corner: color-mix(in srgb, var(--body) 40%, transparent);
+  --corner-active: color-mix(in srgb, var(--body) 70%, transparent);
+}
+.corners::after {
+  content: '';
+  position: absolute;
+  inset: var(--corner-inset, 0);
+  pointer-events: none;
+  --corner-color: var(--corner);
+  --c: linear-gradient(var(--corner-color), var(--corner-color));
+  --len: 8px;
+  --w: 1.5px;
+  /* The vertical bars start where the horizontal ones end, so the two never
+     overlap: with a see-through colour an overlap shows as a darker square. */
+  --short: calc(var(--len) - var(--w));
+  background:
+    var(--c) top left / var(--len) var(--w),
+    var(--c) left 0 top var(--w) / var(--w) var(--short),
+    var(--c) top right / var(--len) var(--w),
+    var(--c) right 0 top var(--w) / var(--w) var(--short),
+    var(--c) bottom left / var(--len) var(--w),
+    var(--c) left 0 bottom var(--w) / var(--w) var(--short),
+    var(--c) bottom right / var(--len) var(--w),
+    var(--c) right 0 bottom var(--w) / var(--w) var(--short);
+  background-repeat: no-repeat;
+  opacity: 0;
+  scale: var(--corner-from, 1);
+  transition:
+    opacity 200ms ease-out,
+    scale 0s 200ms,
+    --len 0s 200ms,
+    --corner-color 0s 200ms;
+}
+.corners:focus-visible::after,
+.corners[data-active]::after {
+  opacity: 1;
+  scale: 1;
+  transition:
+    opacity 150ms ease-out,
+    scale 200ms var(--ease-snappy),
+    --len 300ms var(--ease-snappy),
+    --corner-color 300ms ease;
+}
+/* The open item's brackets reach further along each edge, darker. */
+.corners:focus-visible::after,
+.corners[data-active]::after {
+  --len: 16px;
+  --corner-color: var(--corner-active);
+}
+@media (hover: hover) and (pointer: fine) {
+  .corners:hover::after {
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity 150ms ease-out,
+      scale 200ms var(--ease-snappy),
+      --len 300ms var(--ease-snappy),
+      --corner-color 300ms ease;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .corners::after {
+    scale: none;
+  }
 }
