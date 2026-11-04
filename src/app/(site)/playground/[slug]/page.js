@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import PanelPage from '@/components/panel/PanelPage';
 import GroupItem from '@/components/playground/GroupItem';
 import LinkedText from '@/components/LinkedText';
-import { findPlayground, playground } from '@/lib/playground';
+import { findPlayground, playgroundPages } from '@/lib/playground';
 
 // One page per Playground entry, opened in the panel from the home grid. A
 // group lists its pieces one below the other, each live, each able to open on
@@ -11,7 +11,7 @@ import { findPlayground, playground } from '@/lib/playground';
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return playground.map(({ slug }) => ({ slug }));
+  return playgroundPages.map(({ slug }) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
@@ -49,7 +49,11 @@ export default async function PlaygroundEntry({ params }) {
       compact
       fill={entry.fill}
     >
-      {entry.type === 'clips' ? (
+      {entry.type === 'note' ? (
+        // In the side panel the page's own header is hidden (the panel's top
+        // row names it), so the note shows its text here instead.
+        <p className="hidden text-body/70 in-[aside]:block">{entry.description}</p>
+      ) : entry.type === 'clips' ? (
         <div className="flex flex-col gap-12">
           {entry.clips.map((clip) => (
             <GroupItem key={clip.src} video={clip.src} title={clip.title} hint={clip.hint} />

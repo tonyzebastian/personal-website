@@ -5,8 +5,12 @@
 //            its own in a lightbox, with its controls
 //   single   one live piece filling the page
 //   clips    short videos one below the other, each with its name and hint
+//   note     a plain page in the panel: the description, nothing live yet
+//   link     an outside project: the card opens `href` in a new tab and has
+//            no page here
 // `cover` is a short clip (`video`) or a still (`image`) in public/playground,
-// with an optional `position` for the part the tile's crop keeps ('left').
+// with an optional `position` for the part the tile's crop keeps ('left'), or
+// `{ placeholder: true }` for a plain tile with the title until there's art.
 // `tagline` (optional) follows the title in the panel's top row, after a pipe.
 // `links` (optional) { phrase: url } turns those words in the tagline and
 // description into highlight links (LinkedText).
@@ -182,6 +186,23 @@ export const playground = [
     cover: { video: '/playground/covers/fish.mp4' },
     description: 'Fish that follow your cursor around the pond and scatter when you click.',
   },
+  {
+    slug: 'ux-nudges',
+    title: 'UX Nudges',
+    type: 'link',
+    href: 'https://ux-nudge.web.app/',
+    cover: { image: '/playground/covers/ux-nudges.webp' },
+    description: 'A collection of nudges from apps.',
+  },
+  {
+    slug: 'dalal-prints',
+    title: 'Dalal Prints',
+    type: 'note',
+    cover: { placeholder: true },
+    description: 'Details coming soon.',
+  },
 ];
 
-export const findPlayground = (slug) => playground.find((entry) => entry.slug === slug);
+// Entries with a page of their own (everything but outside links).
+export const playgroundPages = playground.filter((entry) => entry.type !== 'link');
+export const findPlayground = (slug) => playgroundPages.find((entry) => entry.slug === slug);

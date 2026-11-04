@@ -1,7 +1,7 @@
 import HomeList from '@/components/HomeList';
 import SiteShell from '@/components/panel/SiteShell';
 import { experience, musings } from '@/lib/content';
-import { playground } from '@/lib/playground';
+import { playgroundPages } from '@/lib/playground';
 
 // Routes that open in the panel. The shell uses this to open the panel the
 // moment one of these links is clicked.
@@ -9,7 +9,7 @@ const PANEL_PATHS = [
   '/about',
   ...experience.map((job) => `/${job.slug}`),
   ...musings.map((musing) => musing.link),
-  ...playground.map((item) => `/playground/${item.slug}`),
+  ...playgroundPages.map((item) => `/playground/${item.slug}`),
 ];
 // Routes that always show full width, never in the panel.
 const FULL_PAGE_PATHS = ['/postman/work'];
@@ -17,9 +17,9 @@ const FULL_PAGE_PATHS = ['/postman/work'];
 // beside its buttons, instead of in the page (Playground pages).
 // Pages that fill the panel edge to edge (`fill` in playground.js) skip its
 // bottom blur, which would sit over their content.
-const NO_BLUR_PATHS = playground.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
+const NO_BLUR_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
 const PANEL_TITLES = Object.fromEntries(
-  playground.map((item) => [`/playground/${item.slug}`, { title: item.title, tagline: item.tagline, links: item.links }]),
+  playgroundPages.map((item) => [`/playground/${item.slug}`, { title: item.title, tagline: item.tagline, links: item.links }]),
 );
 
 // Home and every page that opens in the side panel share this layout, so the

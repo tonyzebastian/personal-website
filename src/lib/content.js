@@ -19,35 +19,6 @@ export const metadata = {
   },
 };
 
-export const projects = [
-  {
-    // Details, logo and link to come.
-    name: 'Dalal Prints',
-    description: 'Details soon',
-    link: null,
-    image: null,
-  },
-  {
-    name: 'UX Nudges',
-    description: 'A collection of nudges from apps',
-    link: 'https://ux-nudge.web.app/',
-    image: '/icons/nudges.webp',
-  },
-  {
-    name: 'Resume Builder',
-    description: 'The simplest resume builder',
-    link: 'https://resume-builder-dun-rho.vercel.app/',
-    image: '/icons/resume.webp',
-  },
-  {
-    name: 'Abstract Illustration Library',
-    description: 'A library of free to use illustrations',
-    link: 'https://abstract-library.framer.website/',
-    image: '/icons/abstract.webp',
-  },
-];
-
-
 export const experience = [
   {
     name: 'Sundial',

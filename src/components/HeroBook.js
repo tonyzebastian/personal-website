@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useReducedMotion } from 'motion/react';
-import { HandGrabbing, Pause, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react';
+import { Pause, Play, SpeakerSimpleHigh, SpeakerSimpleSlash } from '@phosphor-icons/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 
 // The storybook hero: a WebGL board book lying on the page, seen from above
@@ -28,7 +28,6 @@ export default function HeroBook({ book }) {
   const sceneRef = useRef(null);
   const [status, setStatus] = useState('loading'); // loading | ready | failed
   const [spread, setSpread] = useState(0);
-  const [dragged, setDragged] = useState(false);
   const [video, setVideo] = useState({ playing: false, muted: true });
   // Spreads: 0 closed, then the intro video (if any), the chapters, the end.
   const firstChapter = intro ? 2 : 1;
@@ -141,7 +140,6 @@ export default function HeroBook({ book }) {
         aria-describedby="book-help"
         tabIndex={0}
         onKeyDown={onKeyDown}
-        onPointerDown={() => open && setDragged(true)}
         className="group/book relative mb-5 aspect-[16/9] w-full touch-pan-y rounded-xl outline-none select-none focus-visible:outline-1 focus-visible:outline-offset-[12px] focus-visible:outline-ink/20"
       >
         {/* The canvas runs well past the frame, most of all below it where
@@ -202,18 +200,6 @@ export default function HeroBook({ book }) {
           </Link>
         )}
 
-        {/* With no buttons, say once how to turn pages; gone after the first drag. */}
-        {status === 'ready' && open && (
-          <span
-            aria-hidden
-            className={`pointer-events-none absolute -bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-1.5 text-xs text-ink/45 transition-opacity duration-500 ${
-              dragged ? 'opacity-0' : 'opacity-100'
-            }`}
-          >
-            <HandGrabbing weight="bold" size={14} />
-            Drag to turn the pages
-          </span>
-        )}
       </div>
 
       <p id="book-help" className="sr-only">

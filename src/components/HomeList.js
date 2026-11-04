@@ -4,11 +4,10 @@ import Hero from '@/components/Hero';
 import Row from '@/components/Row';
 import ShowMore from '@/components/ShowMore';
 import CoverGrid from '@/components/CoverGrid';
-import { experience, projects, musings } from '@/lib/content';
+import { experience, musings } from '@/lib/content';
 import { playground } from '@/lib/playground';
 
 // Rows shown before "View more".
-const EXPERIENCE_SHOWN = 3;
 const MUSINGS_SHOWN = 3;
 
 function Section({ id, title, children }) {
@@ -41,26 +40,12 @@ export default function HomeList() {
     // Playground grid below breaks out of the column so it can grow to four
     // covers across.
     <div className="flex flex-col gap-16 pt-8 pb-24 lg:pt-4 lg:pb-20">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-16 px-6 md:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 px-6 md:px-8">
         <Hero />
 
         <div className="mx-auto flex w-full max-w-lg flex-col gap-16">
           <Section id="experience" title="Experience">
-            <ShowMore more={experience.slice(EXPERIENCE_SHOWN).map(jobRow)}>
-              {experience.slice(0, EXPERIENCE_SHOWN).map(jobRow)}
-            </ShowMore>
-          </Section>
-
-          <Section id="projects" title="Pet Projects">
-            {projects.map((project) => (
-              <Row
-                key={project.name}
-                href={project.link}
-                icon={project.image}
-                title={project.name}
-                meta={[project.description]}
-              />
-            ))}
+            {experience.map(jobRow)}
           </Section>
 
           <Section id="musings" title="Musings">
@@ -71,15 +56,13 @@ export default function HomeList() {
         </div>
       </div>
 
-      <section aria-labelledby="playground" className="flex flex-col gap-4">
-        <div className="mx-auto w-full max-w-2xl px-6 md:px-8">
-          <h2 id="playground" className="mx-auto max-w-lg font-sans text-base font-semibold tracking-normal">
-            Playground
-          </h2>
-        </div>
+      {/* No visible heading: the covers speak for themselves. The extra top
+          margin balances the Musings toggle, which pulls what follows up. */}
+      <section aria-label="Playground" className="mt-4">
         <CoverGrid
           items={playground.map((item) => ({
-            href: `/playground/${item.slug}`,
+            href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
+            external: item.type === 'link',
             title: item.title,
             cover: item.cover,
           }))}
