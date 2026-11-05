@@ -14,8 +14,12 @@ import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 //                 top row already reads out with its links): the panel's
 //                 top row shows the title instead (`panelTitles` in the (site) layout). The sheet and
 //                 the full-page view still show it.
-//   fill          in the side panel, the body fills the panel's height and
-//                 width with no page padding (a tool like Mosaic Image Lab)
+//   fill          wherever it fills (the side panel, or a full page that
+//                 fills, both marked data-fills), the body takes the whole
+//                 height and width with no page padding and the heading is
+//                 hidden from sight (a tool like Mosaic Image Lab)
+//   heading       false hides the title and description from sight
+//                 everywhere (kept for screen readers)
 export default function PanelPage({
   icon,
   title,
@@ -25,6 +29,7 @@ export default function PanelPage({
   wide = false,
   compact = false,
   fill = false,
+  heading = true,
   children,
 }) {
   const details = meta.filter(Boolean);
@@ -47,9 +52,11 @@ export default function PanelPage({
 
   return (
     <article
-      className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-[aside]:flex in-[aside]:h-full in-[aside]:max-w-none in-[aside]:flex-col in-[aside]:p-0!' : ''}`}
+      className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''}`}
     >
-      <header className={`mb-10 flex max-w-2xl flex-col items-start gap-3 ${compact ? 'in-[aside]:sr-only' : ''}`}>
+      <header
+        className={`mb-10 flex max-w-2xl flex-col items-start gap-3 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
+      >
         <div className="flex items-center gap-3">
           {icon && (
             <img
@@ -78,7 +85,7 @@ export default function PanelPage({
         )}
         {description && <p className={`text-body/70 ${compact ? 'in-[aside]:hidden' : ''}`}>{description}</p>}
       </header>
-      <div className={`flex flex-col gap-6 ${fill ? 'in-[aside]:min-h-0 in-[aside]:flex-1' : ''}`}>{children}</div>
+      <div className={`flex flex-col gap-6 ${fill ? 'in-data-fills:min-h-0 in-data-fills:flex-1' : ''}`}>{children}</div>
     </article>
   );
 }

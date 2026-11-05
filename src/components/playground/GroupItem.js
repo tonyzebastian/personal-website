@@ -34,9 +34,10 @@ export default function GroupItem({ id, video, title, hint, description, fill = 
 
 const REVEAL =
   'opacity-0 transition-opacity duration-150 ease-out group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100';
-// `fill`: in the side panel the stage drops its shape and fills the panel.
+// `fill`: wherever it fills (side panel or a filling full page, both
+// data-fills), the stage drops its shape and takes the whole space.
 const FILL =
-  'in-[aside]:aspect-auto! in-[aside]:min-h-0 in-[aside]:flex-1 in-[aside]:rounded-none in-[aside]:bg-transparent';
+  'in-data-fills:aspect-auto! in-data-fills:min-h-0 in-data-fills:flex-1 in-data-fills:rounded-none in-data-fills:bg-transparent';
 // cn, not buttonVariants' own className, so these win over the base
 // border-transparent and the outline variant's paper fill.
 const ACTION = cn(

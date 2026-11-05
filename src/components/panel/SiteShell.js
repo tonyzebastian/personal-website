@@ -5,8 +5,14 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter, useSelectedLayoutSegments } from 'next/navigation';
 import { AnimatePresence, LazyMotion, MotionConfig, m, useReducedMotion } from 'motion/react';
-import { ArrowLeft } from '@phosphor-icons/react';
-import { buttonVariants } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { ActivePathContext } from './ActivePath';
 import FrozenRouter from './FrozenRouter';
 import PanelBlur from './PanelBlur';
@@ -58,13 +64,18 @@ function useIsDesktop() {
 // `panelPaths` lists the routes that open in the panel; `fullPagePaths` lists
 // routes that always show full width; `panelTitles` maps routes whose title
 // shows in the panel's top row (their page hides its own heading there);
-// `noBlurPaths` lists routes whose panel has no blur along its bottom edge.
+// `fillPaths` lists routes that fill their container edge to edge (no bottom
+// blur in the panel, the whole screen below the breadcrumb on a full page);
+// `pageTitles` names each route for the full-page view's breadcrumb.
+// Both the panel and a full page carry data-fills: pages with `fill` stretch
+// to fill whatever carries it (Tailwind `in-data-fills:`).
 export default function SiteShell({
   list,
   panelPaths,
   fullPagePaths = [],
   panelTitles = {},
-  noBlurPaths = [],
+  fillPaths = [],
+  pageTitles = {},
   children,
 }) {
   // The page the router is showing (not the address bar, which stays on "/"
@@ -252,18 +263,32 @@ export default function SiteShell({
   }, []);
 
   if (showFullPage) {
+    const title = pageTitles[pathname];
+    // Pages that fill (tools like the drawing wall) take the whole screen
+    // below the breadcrumb; the rest scroll as a normal page.
+    const fills = fillPaths.includes(pathname);
     return (
-      <div className="min-h-dvh bg-paper" onClickCapture={onFullPageClick}>
-        <div className="mx-auto max-w-2xl px-6 pt-6 pb-10 md:px-10">
-          <Link
-            href="/"
-            className={buttonVariants({ variant: 'ghost', className: '-ml-[13px] text-body/80' })}
-          >
-            <ArrowLeft weight="bold" data-icon="inline-start" aria-hidden />
-            Tony Sebastian
-          </Link>
-        </div>
-        {children}
+      <div
+        data-fills={fills ? '' : undefined}
+        className={`bg-paper ${fills ? 'flex h-dvh flex-col' : 'min-h-dvh'}`}
+        onClickCapture={onFullPageClick}
+      >
+        <Breadcrumb className="shrink-0 px-6 pt-3.5 pb-2.5 md:px-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link href="/" />}>Tony Sebastian</BreadcrumbLink>
+            </BreadcrumbItem>
+            {title && (
+              <>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{title}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </>
+            )}
+          </BreadcrumbList>
+        </Breadcrumb>
+        {fills ? <div className="relative min-h-0 flex-1">{children}</div> : children}
       </div>
     );
   }
@@ -293,6 +318,7 @@ export default function SiteShell({
             <m.aside
               key={motionReady ? 'ready' : 'loading'}
               ref={asideRef}
+              data-fills=""
               aria-label="Details"
               inert={!open}
               initial={false}
@@ -328,7 +354,7 @@ export default function SiteShell({
                         </m.div>
                       )}
                     </AnimatePresence>
-                    {!noBlurPaths.includes(pendingPath ?? pathname) && <PanelBlur />}
+                    {!fillPaths.includes(pendingPath ?? pathname) && <PanelBlur />}
                   </div>
                 </div>
               </div>

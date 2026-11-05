@@ -15,9 +15,18 @@ const PANEL_PATHS = [
 const FULL_PAGE_PATHS = ['/postman/work'];
 // Pages whose title (and optional tagline) sits in the side panel's top row,
 // beside its buttons, instead of in the page (Playground pages).
-// Pages that fill the panel edge to edge (`fill` in playground.js) skip its
-// bottom blur, which would sit over their content.
-const NO_BLUR_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
+// Pages that fill their container edge to edge (`fill` in playground.js):
+// the side panel skips its bottom blur, and the full-page view gives them the
+// whole screen below the breadcrumb.
+const FILL_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
+// Every page's short title, for the full-page view's breadcrumb.
+const PAGE_TITLES = {
+  '/about': 'About',
+  '/postman/work': 'Work at Postman',
+  ...Object.fromEntries(experience.map((job) => [`/${job.slug}`, job.name])),
+  ...Object.fromEntries(musings.map((musing) => [musing.link, musing.name])),
+  ...Object.fromEntries(playgroundPages.map((item) => [`/playground/${item.slug}`, item.title])),
+};
 const PANEL_TITLES = Object.fromEntries(
   playgroundPages.map((item) => [`/playground/${item.slug}`, { title: item.title, tagline: item.tagline, links: item.links }]),
 );
@@ -31,7 +40,8 @@ export default function SiteLayout({ children }) {
       panelPaths={PANEL_PATHS}
       fullPagePaths={FULL_PAGE_PATHS}
       panelTitles={PANEL_TITLES}
-      noBlurPaths={NO_BLUR_PATHS}
+      fillPaths={FILL_PATHS}
+      pageTitles={PAGE_TITLES}
     >
       {children}
     </SiteShell>
