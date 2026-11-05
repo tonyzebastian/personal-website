@@ -1,27 +1,27 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { createScene, pickSpecies } from './scene';
 import './fish.css';
 
 // A School of Fish (from the playground repo): twenty fish follow the cursor
-// and scatter when you click; ten more drift behind the water's surface. The
-// swimming is the original's, but measured inside this box instead of the
-// window, and everything stops when the piece unmounts. The original moves a
-// fixed step per frame, so it slowed down whenever the page drew fewer
-// frames; here each step is scaled by the time that passed, tuned to how the
-// original looks at 120 frames a second.
+// and scatter when you click; more drift far behind them. The swimming is the
+// original's, measured inside this box and scaled by the time that passed,
+// tuned to how the original looks at 120 frames a second. The look is painted
+// in code (scene.js): watercolour water, light shafts, layers of rock and
+// kelp, and ink-silhouette fish.
 
 const FOREGROUND = 20;
-const BACKGROUND = 10;
+const BACKGROUND = 16;
 const FRAME = 1000 / 120;
 
 // One school: `follow` fish chase the cursor, the others wander between
 // random points every five seconds.
-function createSchool(root, nodes, { follow }) {
+function createSchool(root, count, { follow }) {
   const size = () => root.getBoundingClientRect();
   let { width, height } = size();
 
-  const fishData = nodes.map(() => ({
+  const fishData = Array.from({ length: count }, () => ({
     x: Math.random() * width,
     y: Math.random() * height,
     velocityX: 0,
@@ -33,10 +33,15 @@ function createSchool(root, nodes, { follow }) {
     personalSpace: follow ? 30 + Math.random() * 50 : 100 + Math.random() * 100,
     targetX: follow ? width / 2 : Math.random() * width,
     targetY: follow ? height / 2 : Math.random() * height,
+    // How it looks: species, size and depth within its school, tail beat.
+    species: pickSpecies(follow),
+    z: Math.random(),
+    scale: 0.8 + Math.random() * 0.4,
+    phase: Math.random() * Math.PI * 2,
   }));
 
   // k: how many 120fps frames this step stands for.
-  const update = (fish, data, index, k) => {
+  const update = (data, index, k) => {
     const dx = data.targetX - data.x;
     const dy = data.targetY - data.y;
     const distToTarget = Math.sqrt(dx * dx + dy * dy);
@@ -88,12 +93,18 @@ function createSchool(root, nodes, { follow }) {
       data.currentAngle += diff * (1 - 0.9 ** k);
     }
 
-    fish.style.transform = `translate(${data.x}px, ${data.y}px) rotate(${data.currentAngle}rad)`;
+    // The tail beats faster the faster it swims.
+    const swim = Math.sqrt(data.velocityX ** 2 + data.velocityY ** 2) * data.speed;
+    data.phase += (0.04 + Math.min(swim, 4) * 0.05) * k;
   };
 
+  // Drawn nearest last.
+  fishData.sort((a, b) => a.z - b.z);
+
   return {
+    fish: fishData,
     step(k) {
-      nodes.forEach((fish, index) => update(fish, fishData[index], index, k));
+      fishData.forEach((data, index) => update(data, index, k));
     },
     resize() {
       ({ width, height } = size());
@@ -128,35 +139,56 @@ function createSchool(root, nodes, { follow }) {
 
 export default function Aquarium() {
   const rootRef = useRef(null);
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     const root = rootRef.current;
-    const front = createSchool(root, [...root.querySelectorAll('.fish')], { follow: true });
-    const back = createSchool(root, [...root.querySelectorAll('.background-fish')], { follow: false });
+    const scene = createScene(canvasRef.current);
+    const front = createSchool(root, FOREGROUND, { follow: true });
+    const back = createSchool(root, BACKGROUND, { follow: false });
 
+    const pointer = { x: 0, y: 0, px: 0, py: 0 };
     const local = (event) => {
       const rect = root.getBoundingClientRect();
       return [event.clientX - rect.left, event.clientY - rect.top];
     };
-    const onMove = (event) => front.target(...local(event));
-    const onClick = (event) => front.scatter(...local(event));
+    const onMove = (event) => {
+      const [x, y] = local(event);
+      const rect = root.getBoundingClientRect();
+      pointer.x = x / rect.width - 0.5;
+      pointer.y = y / rect.height - 0.5;
+      front.target(x, y);
+    };
+    const onClick = (event) => {
+      const [x, y] = local(event);
+      front.scatter(x, y);
+      scene.disturb(x, y);
+    };
     root.addEventListener('pointermove', onMove);
     root.addEventListener('click', onClick);
 
-    const resizeObserver = new ResizeObserver(() => {
+    const resize = () => {
+      const { width, height } = root.getBoundingClientRect();
+      scene.resize(width, height, Math.min(window.devicePixelRatio || 1, 2));
       front.resize();
       back.resize();
-    });
+    };
+    resize();
+    const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(root);
     const wander = setInterval(back.wander, 5000);
 
     // Capped, so a long pause (a hidden tab) doesn't send them leaping.
-    let last = performance.now();
+    const start = performance.now();
+    let last = start;
     let raf = requestAnimationFrame(function frame(now) {
       const k = Math.min(now - last, 100) / FRAME;
       last = now;
+      pointer.px += (pointer.x - pointer.px) * (1 - 0.96 ** k);
+      pointer.py += (pointer.y - pointer.py) * (1 - 0.96 ** k);
       front.step(k);
       back.step(k);
+      scene.draw({ k, t: (now - start) / 1000, px: pointer.px, py: pointer.py, front: front.fish, back: back.fish });
       raf = requestAnimationFrame(frame);
     });
 
@@ -171,22 +203,7 @@ export default function Aquarium() {
 
   return (
     <div ref={rootRef} className="aquarium" role="img" aria-label="Fish swimming after the cursor">
-      <div className="background-layer sub-bg" />
-      <div className="background-fish-container">
-        {Array.from({ length: BACKGROUND }, (_, index) => (
-          <div key={index} className="background-fish">
-            <img src={`/playground/fish/fish${(index % 10) + 1}.webp`} alt="" />
-          </div>
-        ))}
-      </div>
-      <div className="background-layer main-bg" />
-      <div className="fish-container">
-        {Array.from({ length: FOREGROUND }, (_, index) => (
-          <div key={index} className="fish">
-            <img src={`/playground/fish/fish${(index % 20) + 1}.webp`} alt="" />
-          </div>
-        ))}
-      </div>
+      <canvas ref={canvasRef} />
     </div>
   );
 }
