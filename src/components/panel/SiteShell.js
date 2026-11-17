@@ -18,7 +18,7 @@ import FrozenRouter from './FrozenRouter';
 import PanelBlur from './PanelBlur';
 import PanelHeader from './PanelHeader';
 import PanelSkeleton from './PanelSkeleton';
-import { CONTENT_FADE, PANEL_SHARE, PANEL_SPRING, SPLIT_FROM } from './config';
+import { CONTENT_FADE, PANEL_SHARE, PANEL_SLIDE, SPLIT_FROM } from './config';
 
 // The sheet (and its dialog code) is only needed on narrow screens.
 const PanelSheet = dynamic(() => import('./PanelSheet'), { ssr: false });
@@ -86,19 +86,7 @@ export default function SiteShell({
   const isDesktop = useIsDesktop();
   const reduceMotion = useReducedMotion();
   const asideRef = useRef(null);
-
-  // Motion's animation code loads on demand. A panel opened before it
-  // arrives would keep the width it first rendered with (0%) and never slide
-  // open, so the aside is drawn afresh once the features are in: it then
-  // takes its current width at once.
-  const [motionReady, setMotionReady] = useState(false);
-  useEffect(() => {
-    let live = true;
-    loadFeatures().then(() => live && setMotionReady(true));
-    return () => {
-      live = false;
-    };
-  }, []);
+  const cardRef = useRef(null);
 
   // Whether the open panel's history entry sits right after home's, so
   // closing can step back instead of adding another entry. Set once the
@@ -149,19 +137,31 @@ export default function SiteShell({
   const contentKey = loading ? `loading:${pendingPath}` : pathname;
   const activePath = open ? (pendingPath ?? pathname) : null;
 
-  // Whether the list should lay out for its narrow, panel-open width. It turns
-  // on the moment a panel starts opening and off only once the close slide has
-  // finished, so layouts that depend on it (the Playground grid) change
-  // once per open or close instead of at every width the slide passes through.
-  const [holdNarrow, setHoldNarrow] = useState(open);
-  if (open && !holdNarrow) setHoldNarrow(true);
-  const listNarrow = open || (holdNarrow && isDesktop !== false);
-  useEffect(() => {
-    if (open || !holdNarrow) return;
-    // The panel's slide settles in about PANEL_SPRING.visualDuration.
-    const timer = setTimeout(() => setHoldNarrow(false), reduceMotion ? 0 : PANEL_SPRING.visualDuration * 1000);
-    return () => clearTimeout(timer);
-  }, [open, holdNarrow, reduceMotion]);
+  // Opening or closing the side panel. The panel's slot takes its new width in
+  // one step (so the list re-wraps once, not on every frame), then the list
+  // and the panel card slide from where they were to where they now sit,
+  // animating only transforms (FLIP). Interrupting a slide starts the next
+  // one from wherever things are on screen.
+  const wasOpenForSlide = useRef(open);
+  useLayoutEffect(() => {
+    if (wasOpenForSlide.current === open) return;
+    wasOpenForSlide.current = open;
+    const list = listRef.current;
+    const card = cardRef.current;
+    if (!isDesktop || reduceMotion || !list || !card) return;
+    // How far the slot moved: the panel's share of the shell.
+    const slot = (list.parentElement.clientWidth * PANEL_SHARE) / 100;
+    const sign = open ? 1 : -1;
+    // The list's centre moves by half the slot, the card by all of it.
+    for (const [el, distance] of [
+      [list, (sign * slot) / 2],
+      [card, sign * slot],
+    ]) {
+      const current = new DOMMatrix(getComputedStyle(el).transform).m41;
+      el.getAnimations().forEach((animation) => animation.cancel());
+      el.animate([{ transform: `translateX(${distance + current}px)` }, { transform: 'translateX(0)' }], PANEL_SLIDE);
+    }
+  }, [open, isDesktop, reduceMotion]);
 
   useEffect(() => {
     if (pathname === '/') fromHome.current = false;
@@ -304,7 +304,7 @@ export default function SiteShell({
           <div
             ref={listRef}
             tabIndex={-1}
-            data-panel-open={listNarrow ? '' : undefined}
+            data-panel-open={open ? '' : undefined}
             className="@container surface-canvas scrollbar-minimal min-w-0 flex-1 overflow-x-clip outline-none lg:my-4 lg:overflow-y-auto"
           >
             <ActivePathContext value={activePath}>{list}</ActivePathContext>
@@ -315,21 +315,18 @@ export default function SiteShell({
               don't flash. While closed it is inert: nothing in it can be
               focused or read out. */}
           {isDesktop !== false && (
-            <m.aside
-              key={motionReady ? 'ready' : 'loading'}
+            <aside
               ref={asideRef}
               data-fills=""
               aria-label="Details"
               inert={!open}
-              initial={false}
-              animate={{ width: open ? `${PANEL_SHARE}%` : '0%' }}
-              transition={reduceMotion ? { duration: 0 } : PANEL_SPRING}
-              className="relative hidden h-full shrink-0 overflow-hidden lg:block"
+              style={{ width: open ? `${PANEL_SHARE}%` : '0%' }}
+              className="relative z-10 hidden h-full shrink-0 lg:block"
             >
-              {/* Fixed at its open width and pinned to the left edge of its slot,
-                  so as the slot grows the whole card moves in from the right
-                  (and moves back out on close) instead of being uncovered. */}
-              <div className="absolute inset-y-0 left-0 py-4 pr-4" style={{ width: `${PANEL_SHARE}vw` }}>
+              {/* Fixed at its open width and pinned to the left edge of its slot.
+                  With the slot closed it sits just past the right edge of the
+                  screen (the shell clips it); the slide above moves it in and out. */}
+              <div ref={cardRef} className="absolute inset-y-0 left-0 py-4 pr-4" style={{ width: `${PANEL_SHARE}vw` }}>
                 <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-paper">
                   <PanelHeader
                     href={open ? pendingPath ?? pathname : null}
@@ -358,7 +355,7 @@ export default function SiteShell({
                   </div>
                 </div>
               </div>
-            </m.aside>
+            </aside>
           )}
 
           {isDesktop === false && (
