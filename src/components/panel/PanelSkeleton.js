@@ -1,5 +1,5 @@
-// Placeholder shown the moment a panel link is clicked, until the page
-// arrives. Shaped like PanelPage so the swap is calm.
+// Placeholder shown when a panel page is slow to load (after SKELETON_DELAY),
+// until the page arrives. Shaped like PanelPage so the swap is calm.
 export default function PanelSkeleton() {
   const bar = 'rounded-md bg-body/[0.06] animate-pulse';
 

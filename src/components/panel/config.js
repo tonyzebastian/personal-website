@@ -15,5 +15,10 @@ export const PANEL_SLIDE = { duration: 500, easing: 'cubic-bezier(0.32, 0.72, 0,
 // The sheet on small screens. No bounce, so it reads as one smooth glide.
 export const PANEL_SPRING = { type: 'spring', visualDuration: 0.5, bounce: 0 };
 
+// A page that loads within this many ms replaces the panel's content straight
+// away; the loading placeholder only shows when it takes longer, so fast
+// loads never flash it.
+export const SKELETON_DELAY = 150;
+
 // Swapping one panel's content for another.
 export const CONTENT_FADE = { duration: 0.2, ease: 'easeOut' };

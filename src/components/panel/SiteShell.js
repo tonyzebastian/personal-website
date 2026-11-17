@@ -18,7 +18,7 @@ import FrozenRouter from './FrozenRouter';
 import PanelBlur from './PanelBlur';
 import PanelHeader from './PanelHeader';
 import PanelSkeleton from './PanelSkeleton';
-import { CONTENT_FADE, PANEL_SHARE, PANEL_SLIDE, SPLIT_FROM } from './config';
+import { CONTENT_FADE, PANEL_SHARE, PANEL_SLIDE, SKELETON_DELAY, SPLIT_FROM } from './config';
 
 // The sheet (and its dialog code) is only needed on narrow screens.
 const PanelSheet = dynamic(() => import('./PanelSheet'), { ssr: false });
@@ -55,8 +55,9 @@ function useIsDesktop() {
 // left share of the screen while the panel slides in on the right.
 // Narrow screens: the list stays put and the panel is a sheet over it.
 //
-// The panel reacts to a click straight away: it opens (or closes) and shows a
-// placeholder while the page loads, instead of waiting for the route.
+// The panel reacts to a click straight away: it opens (or closes) at once,
+// and shows a placeholder if the page takes longer than SKELETON_DELAY to load,
+// instead of waiting for the route.
 // Arriving straight on a page (a typed link, a new tab, the panel's expand
 // button) shows that page on its own, full width, with a link home, and keeps
 // its URL. Once the
@@ -107,12 +108,21 @@ export default function SiteShell({
   // is on its way. Both reset as soon as the route actually changes.
   const [pendingPath, setPendingPath] = useState(null);
   const [closing, setClosing] = useState(false);
+  // The pending link whose placeholder is due (it has been loading for longer
+  // than SKELETON_DELAY).
+  const [skeletonFor, setSkeletonFor] = useState(null);
   const [shownPath, setShownPath] = useState(pathname);
   if (pathname !== shownPath) {
     setShownPath(pathname);
     setPendingPath(null);
+    setSkeletonFor(null);
     setClosing(false);
   }
+  useEffect(() => {
+    if (pendingPath === null) return undefined;
+    const timer = setTimeout(() => setSkeletonFor(pendingPath), SKELETON_DELAY);
+    return () => clearTimeout(timer);
+  }, [pendingPath]);
 
   // Full-page view: on when the visit starts on a page, off for good once the
   // visitor reaches home.
@@ -134,7 +144,11 @@ export default function SiteShell({
 
   const loading = pendingPath !== null;
   const open = loading || (pathname !== '/' && !closing);
-  const contentKey = loading ? `loading:${pendingPath}` : pathname;
+  // While a page loads, the panel keeps what it showed (the previous page, or
+  // nothing when opening from home) until the placeholder is due.
+  const skeleton = loading && skeletonFor === pendingPath;
+  const contentKey = skeleton ? `loading:${pendingPath}` : pathname;
+  const hasContent = !loading || skeleton || pathname !== '/';
   const activePath = open ? (pendingPath ?? pathname) : null;
 
   // Opening or closing the side panel. The panel's slot takes its new width in
@@ -230,7 +244,7 @@ export default function SiteShell({
     }
   };
 
-  const panelContent = loading ? <PanelSkeleton /> : <FrozenRouter>{children}</FrozenRouter>;
+  const panelContent = skeleton ? <PanelSkeleton /> : hasContent ? <FrozenRouter>{children}</FrozenRouter> : null;
 
   // Esc closes the side panel (the sheet gets this from its dialog).
   useEffect(() => {
@@ -335,11 +349,11 @@ export default function SiteShell({
                   />
                   <div className="relative min-h-0 flex-1">
                     <AnimatePresence initial={false}>
-                      {open && (
+                      {open && hasContent && (
                         <m.div
                           key={contentKey}
                           ref={focusOnMount}
-                          data-loading={loading ? '' : undefined}
+                          data-loading={skeleton ? '' : undefined}
                           tabIndex={-1}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
