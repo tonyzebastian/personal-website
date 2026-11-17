@@ -62,7 +62,7 @@ export default function HeroVideo() {
         height={1080}
         fetchPriority="high"
         decoding="async"
-        className={`absolute inset-0 size-full object-cover mix-blend-multiply transition-opacity duration-500 ${
+        className={`absolute inset-0 size-full object-cover mix-blend-multiply transition-opacity duration-300 ease-snappy ${
           ready ? 'opacity-0' : 'opacity-100'
         }`}
       />
@@ -80,7 +80,7 @@ export default function HeroVideo() {
         onEnded={() => setPlaying(false)}
         onClick={togglePlay}
         aria-label="Introduction video"
-        className={`absolute inset-0 size-full cursor-pointer object-cover mix-blend-multiply transition-opacity duration-500 ${
+        className={`absolute inset-0 size-full cursor-pointer object-cover mix-blend-multiply transition-opacity duration-300 ease-snappy ${
           ready ? 'opacity-100' : 'opacity-0'
         }`}
       />

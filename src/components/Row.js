@@ -26,7 +26,7 @@ export default function Row({ href, icon, title, meta = [] }) {
           {title}
         </span>
         {isExternal && (
-          <span className="w-0 shrink-0 overflow-hidden transition-[width] duration-200 ease-out md:group-hover:w-5 md:group-focus-visible:w-5">
+          <span className="w-0 shrink-0 overflow-hidden transition-[width] duration-200 ease-snappy md:group-hover:w-5 md:group-focus-visible:w-5">
             <ArrowUpRight size={14} weight="bold" className="ml-1 text-body/40" aria-hidden />
           </span>
         )}
@@ -65,7 +65,7 @@ export default function Row({ href, icon, title, meta = [] }) {
               ) : (
                 <span
                   key={text}
-                  className={`flex items-center gap-3 text-body/70 ${href ? 'opacity-0 transition-opacity duration-150 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 group-data-active:opacity-100 [@media(hover:none)]:opacity-100' : ''}`}
+                  className={`flex items-center gap-3 text-body/70 ${href ? 'opacity-0 transition-opacity duration-150 ease-snappy group-hover:opacity-100 group-focus-visible:opacity-100 group-data-active:opacity-100 [@media(hover:none)]:opacity-100' : ''}`}
                 >
                   {text}
                   <span aria-hidden className="text-body/25">

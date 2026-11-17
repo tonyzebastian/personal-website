@@ -17,10 +17,10 @@ export default function Expandable({ label, lessLabel = 'Show less', children })
         <CaretDown
           weight="bold"
           aria-hidden
-          className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-300 ease-snappy ${open ? 'rotate-180' : ''}`}
         />
       </CollapsibleTrigger>
-      <CollapsibleContent className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-300 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0">
+      <CollapsibleContent className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-300 ease-snappy data-[ending-style]:h-0 data-[ending-style]:duration-200 data-[starting-style]:h-0">
         <div className="pt-10">{children}</div>
       </CollapsibleContent>
     </Collapsible>

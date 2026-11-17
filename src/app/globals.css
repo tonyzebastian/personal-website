@@ -50,7 +50,14 @@
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-caslon), ui-serif, Georgia, serif;
 
-  /* Strong ease-out for UI motion (ease-snappy) */
+  /* Motion. One curve for UI: things appearing, leaving or changing state
+     use the strong ease-out (Tailwind `ease-snappy`). Colour-only hovers
+     keep Tailwind's default curve. The side panel's slide uses a drawer
+     curve, kept in JS (EASE_DRAWER in src/components/panel/config.js, with
+     EASE_SNAPPY mirroring this one for Motion).
+     Durations: 150ms hover reveals and exits, 200ms small fades and state
+     changes, 300ms height changes and row reveals, 400ms the panel slide.
+     Only decorative motion runs longer (cover reveal 700ms, hover zoom 900ms). */
   --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
 
   --color-ink: var(--ink);
@@ -465,7 +472,7 @@ html::after {
   opacity: 0;
   scale: var(--corner-from, 1);
   transition:
-    opacity 200ms ease-out,
+    opacity 200ms var(--ease-snappy),
     scale 0s 200ms,
     --len 0s 200ms,
     --corner-color 0s 200ms;
@@ -475,7 +482,7 @@ html::after {
   opacity: 1;
   scale: 1;
   transition:
-    opacity 150ms ease-out,
+    opacity 150ms var(--ease-snappy),
     scale 200ms var(--ease-snappy),
     --len 300ms var(--ease-snappy),
     --corner-color 300ms ease;
@@ -491,7 +498,7 @@ html::after {
     opacity: 1;
     scale: 1;
     transition:
-      opacity 150ms ease-out,
+      opacity 150ms var(--ease-snappy),
       scale 200ms var(--ease-snappy),
       --len 300ms var(--ease-snappy),
       --corner-color 300ms ease;

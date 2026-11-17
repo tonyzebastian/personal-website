@@ -25,7 +25,7 @@ export default function MasonryGridLightbox({lightboxImages = [], height}) {
         <>
             {/* Main Grid */}
                 <div
-                    className={'relative rounded-xl overflow-hidden bg-slate-50 transition-all duration-300 hover:scale-[99%] hover:border group cursor-pointer p-2'}
+                    className={'relative rounded-xl overflow-hidden bg-slate-50 border border-transparent transition-[scale,border-color] duration-200 ease-snappy hover:scale-[99%] hover:border-border group cursor-pointer p-2'}
                     onClick={() => setShowMasonryLightbox(true)}
                 >
                         <div 

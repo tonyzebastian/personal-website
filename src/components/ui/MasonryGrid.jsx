@@ -25,7 +25,7 @@ export default function MasonryGrid({ items, spotlight = { enabled: true }, clas
 
   const renderMediaItem = useCallback((item, idx) => {
     const hoverClassName = hoverEffects ? "hover:scale-[99%] hover:rounded-3xl cursor-pointer" : "";
-    const baseClassName = `rounded transition-all ease-in-out ${hoverClassName}`;
+    const baseClassName = `rounded transition-[scale,border-radius] duration-200 ease-snappy ${hoverClassName}`;
     const specialClassName = item.specialStyling ? "p-2 shadow-sm" : "";
 
     const commonProps = {

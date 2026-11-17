@@ -33,7 +33,7 @@ export default function GroupItem({ id, video, title, hint, description, fill = 
 }
 
 const REVEAL =
-  'opacity-0 transition-opacity duration-150 ease-out group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100';
+  'opacity-0 transition-opacity duration-150 ease-snappy group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100';
 // `fill`: wherever it fills (side panel or a filling full page, both
 // data-fills), the stage drops its shape and takes the whole space.
 const FILL =

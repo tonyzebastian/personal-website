@@ -12,7 +12,8 @@ export const PANEL_SHARE = 60;
 // The curve is an iOS-like drawer: quick to start, long soft landing.
 // 400ms: the curve covers most of the distance in the first half, so it reads
 // as quick while the tail keeps the landing soft.
-export const PANEL_SLIDE = { duration: 400, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' };
+export const EASE_DRAWER = 'cubic-bezier(0.32, 0.72, 0, 1)';
+export const PANEL_SLIDE = { duration: 400, easing: EASE_DRAWER };
 
 // The sheet on small screens. No bounce, so it reads as one smooth glide.
 export const PANEL_SPRING = { type: 'spring', visualDuration: 0.4, bounce: 0 };
