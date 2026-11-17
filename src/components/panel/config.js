@@ -10,10 +10,12 @@ export const PANEL_SHARE = 60;
 // shape at once; the list and the panel card then slide there with transforms
 // only (Web Animations, so it runs off the main thread while the page loads).
 // The curve is an iOS-like drawer: quick to start, long soft landing.
-export const PANEL_SLIDE = { duration: 500, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' };
+// 400ms: the curve covers most of the distance in the first half, so it reads
+// as quick while the tail keeps the landing soft.
+export const PANEL_SLIDE = { duration: 400, easing: 'cubic-bezier(0.32, 0.72, 0, 1)' };
 
 // The sheet on small screens. No bounce, so it reads as one smooth glide.
-export const PANEL_SPRING = { type: 'spring', visualDuration: 0.5, bounce: 0 };
+export const PANEL_SPRING = { type: 'spring', visualDuration: 0.4, bounce: 0 };
 
 // A page that loads within this many ms replaces the panel's content straight
 // away; the loading placeholder only shows when it takes longer, so fast
