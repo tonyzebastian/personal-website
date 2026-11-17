@@ -3,7 +3,7 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { AnimatePresence, LazyMotion, domMax, m, useDragControls } from 'motion/react';
 import PanelBlur from './PanelBlur';
-import { CONTENT_FADE, PANEL_SPRING } from './config';
+import { CONTENT_EXIT, CONTENT_FADE, PANEL_SPRING } from './config';
 
 // Pulled down this far, or flicked this fast, the sheet closes.
 const CLOSE_DISTANCE = 120;
@@ -70,7 +70,7 @@ export default function PanelSheet({ open, contentKey, onClose, children }) {
                       key={contentKey}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      exit={{ opacity: 0, transition: CONTENT_EXIT }}
                       transition={CONTENT_FADE}
                       className="scrollbar-minimal absolute inset-0 overflow-y-auto overscroll-contain"
                     >

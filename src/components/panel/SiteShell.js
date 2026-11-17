@@ -18,7 +18,7 @@ import FrozenRouter from './FrozenRouter';
 import PanelBlur from './PanelBlur';
 import PanelHeader from './PanelHeader';
 import PanelSkeleton from './PanelSkeleton';
-import { CONTENT_FADE, PANEL_SHARE, PANEL_SLIDE, SKELETON_DELAY, SPLIT_FROM } from './config';
+import { CONTENT_EXIT, CONTENT_FADE, PANEL_SHARE, PANEL_SLIDE, SKELETON_DELAY, SPLIT_FROM } from './config';
 
 // The sheet (and its dialog code) is only needed on narrow screens.
 const PanelSheet = dynamic(() => import('./PanelSheet'), { ssr: false });
@@ -357,7 +357,7 @@ export default function SiteShell({
                           tabIndex={-1}
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
+                          exit={{ opacity: 0, transition: CONTENT_EXIT }}
                           transition={CONTENT_FADE}
                           className="scrollbar-minimal absolute inset-0 overflow-y-auto outline-none"
                         >

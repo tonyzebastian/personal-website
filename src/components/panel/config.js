@@ -20,5 +20,11 @@ export const PANEL_SPRING = { type: 'spring', visualDuration: 0.5, bounce: 0 };
 // loads never flash it.
 export const SKELETON_DELAY = 150;
 
-// Swapping one panel's content for another.
-export const CONTENT_FADE = { duration: 0.2, ease: 'easeOut' };
+// The site's strong ease-out (--ease-snappy in globals.css), for Motion.
+export const EASE_SNAPPY = [0.23, 1, 0.32, 1];
+
+// Swapping one panel's content for another: the old page clears out quickly
+// (CONTENT_EXIT) while the new one fades in a little slower (CONTENT_FADE),
+// so the two barely show at once. CONTENT_FADE also fades the sheet's backdrop.
+export const CONTENT_FADE = { duration: 0.2, ease: EASE_SNAPPY };
+export const CONTENT_EXIT = { duration: 0.12, ease: EASE_SNAPPY };
