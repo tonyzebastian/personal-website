@@ -373,8 +373,10 @@ html::after {
   translate: none;
 }
 /* Columns follow the list column's width, except while a panel is open:
-   then they stay at two fluid columns (see CoverGrid). Each switch fades the
-   grid in quickly so the covers don't visibly jump to their new places. */
+   then they stay at two fluid columns (see CoverGrid). Each switch dims the
+   grid briefly (from 40%, never out of sight, so it doesn't blink) to soften
+   the covers moving to their new places. Opacity only, so it costs nothing
+   while the list slides. */
 .cover-grid {
   max-width: 32rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -400,10 +402,10 @@ html::after {
 }
 /* Two names for the same fade, so toggling between them restarts it. */
 @keyframes cover-grid-wide {
-  from { opacity: 0; }
+  from { opacity: 0.4; }
 }
 @keyframes cover-grid-narrow {
-  from { opacity: 0; }
+  from { opacity: 0.4; }
 }
 .cover-img {
   transition: scale 900ms var(--ease-snappy);
