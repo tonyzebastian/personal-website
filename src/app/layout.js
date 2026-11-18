@@ -1,5 +1,6 @@
 import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
+import { INTRO_SCRIPT } from '@/lib/intro';
 import "./globals.css";
 
 // Defaults for every page. Pages set their own title, description and
@@ -39,7 +40,11 @@ const caslon = localFont({
 
 export default function RootLayout({ children }) {
   return (
-      <html lang="en" className={`${figtree.variable} ${caslon.variable}`}>
+      // The intro script adds a class to <html> before React starts.
+      <html lang="en" className={`${figtree.variable} ${caslon.variable}`} suppressHydrationWarning>
+          <head>
+              <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
+          </head>
           <body className="flex flex-col min-h-screen">
               <main className="grow">
                   {children}

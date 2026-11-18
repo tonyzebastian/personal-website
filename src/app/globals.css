@@ -337,6 +337,59 @@ html::after {
   }
 }
 
+/* First load of the home page (html.intro-play, set by INTRO_SCRIPT in
+   lib/intro.js). Things blur in one at a time from the top: the photo, my name
+   and description word by word (these two stay in place), the about text, then
+   each section, which also rises a little as it arrives. */
+.intro-word {
+  display: inline-block;
+}
+.intro-play .intro-photo {
+  animation: intro-rise-blur 650ms var(--ease-snappy) both;
+}
+.intro-play .intro-word {
+  animation: intro-blur-in 500ms var(--ease-snappy) both;
+  animation-delay: calc(160ms + var(--i) * 38ms);
+}
+.intro-play .intro-after > * {
+  animation: intro-rise-blur 700ms var(--ease-snappy) 620ms both;
+}
+.intro-play .intro-after > :nth-child(n + 2) {
+  animation-delay: 780ms;
+}
+.intro-play .intro-flow > :not(.intro-hero, .intro-skip) {
+  animation: intro-rise-blur 750ms var(--ease-snappy) both;
+}
+/* Sections follow one another; any added later join the last step. From the
+   fourth on there is no blur, since these can hold large images. */
+.intro-play .intro-flow > :nth-child(2) { animation-delay: 980ms; }
+.intro-play .intro-flow > :nth-child(3) { animation-delay: 1180ms; }
+.intro-play .intro-flow > :nth-child(n + 4):not(.intro-skip) {
+  animation: intro-rise 750ms var(--ease-snappy) 1380ms both;
+}
+.intro-play .intro-flow > :nth-child(n + 5):not(.intro-skip) {
+  animation-delay: 1560ms;
+}
+@keyframes intro-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+@keyframes intro-rise-blur {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(18px);
+  }
+}
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
 /* ShowMore: rows revealed by "View more" fade and settle in one after
    another while the panel grows; on close they fade out together, quickly. */
 .reveal-rows > * {

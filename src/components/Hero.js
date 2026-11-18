@@ -4,17 +4,39 @@ import HeroBook from '@/components/HeroBook';
 
 const LINK = 'rounded-sm bg-highlight px-1 text-ink transition-colors hover:bg-highlight-strong';
 
+const NAME = 'Tony Sebastian';
+const DESCRIPTION = 'A generalist who designs, codes and tells stories.';
+
+// Words that blur into view one after another on the first load. `from` is
+// where this run sits in the overall order.
+function Words({ text, from = 0 }) {
+  return text.split(' ').map((word, i) => (
+    <span key={i}>
+      <span className="intro-word" style={{ '--i': from + i }}>
+        {word}
+      </span>{' '}
+    </span>
+  ));
+}
+
 // Hero: my photo (which turns into the storybook, see HeroBook), my name and
-// what I do, then a little more about me.
+// what I do, then a little more about me. On the first load these appear one
+// at a time from the top (see the `.intro-*` styles in globals.css).
 export default function Hero() {
   return (
     <header className="flex flex-col gap-5">
-      <HeroBook book={storybook} />
-      <div className="flex flex-col gap-0.5">
-        <h1>Tony Sebastian</h1>
-        <p className="text-body/70">A generalist who designs, codes and tells stories.</p>
+      <div className="intro-photo">
+        <HeroBook book={storybook} />
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h1>
+          <Words text={NAME} />
+        </h1>
+        <p className="text-body/70">
+          <Words text={DESCRIPTION} from={NAME.split(' ').length} />
+        </p>
+      </div>
+      <div className="intro-after flex flex-col gap-3">
         {homeAbout.map((paragraph, i) => (
           <p key={i}>
             {paragraph.map((part, j) =>

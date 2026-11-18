@@ -7,6 +7,7 @@ import { Dialog } from '@base-ui/react/dialog';
 import { useReducedMotion } from 'motion/react';
 import { X } from '@phosphor-icons/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
+import { INTRO_MS } from '@/lib/intro';
 
 // My photo, which is secretly the first page of a book (see book/scene.js).
 // Hovering it swings the leather cover shut over it. Clicking sends the book to
@@ -113,7 +114,13 @@ export default function HeroBook({ book }) {
     };
     startRef.current = start;
 
+    let introTimer = 0;
     const whenIdle = () => {
+      // Heavy setup waits for the first-load animation to finish.
+      if (document.documentElement.classList.contains('intro-play') && !introTimer) {
+        introTimer = window.setTimeout(whenIdle, INTRO_MS);
+        return;
+      }
       if (window.requestIdleCallback) idleId = window.requestIdleCallback(start, { timeout: 2500 });
       else idleId = window.setTimeout(start, 400);
     };
@@ -125,6 +132,7 @@ export default function HeroBook({ book }) {
     return () => {
       cancelled = true;
       window.removeEventListener('load', whenIdle);
+      window.clearTimeout(introTimer);
       if (window.cancelIdleCallback) window.cancelIdleCallback(idleId);
       window.clearTimeout(idleId);
       scene?.dispose();
