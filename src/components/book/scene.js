@@ -12,8 +12,11 @@
 //   when interrupted: the keys ease it to a page, a drag pulls it along just
 //   behind the hand (the width of the book's frame is one page), and letting
 //   go carries that speed into the nearest page.
-// - While the cover opens, the book slides from cover-centred to
-//   spread-centred.
+// - The book lives on a canvas over the whole window, so it can travel. At
+//   rest it is hidden and the page shows my photo instead, which is the
+//   book's first page. On hover the cover swings shut over that page; on click
+//   the book flies to the middle of the window, opening and growing. The page
+//   dims once it has landed, and brightens again before it leaves.
 // - Paper is a slightly glossy standard material with roughness and normal
 //   maps. A low light grazes from the top of the page and follows the
 //   mouse, so the sheen moves. The book itself stays still.
@@ -21,10 +24,9 @@
 //   turns.
 // - Dragging is the only control: drag left to open and turn forward, right
 //   to turn back. On the first spread, the cover follows a drag to the
-//   right, and a short pull or flick closes the book; a fast flick closes it
-//   from any spread. Hovering the
-//   closed book opens the cover a little; hovering an open page lifts its
-//   outer edge towards the hand, and pressing lifts it further.
+//   right, and a short pull or flick closes the book (and the dialog); a fast
+//   flick does so from any spread. Hovering an open page lifts its outer edge
+//   towards the hand, and pressing lifts it further.
 // - Nothing runs at rest: frames are drawn only while something moves.
 //
 // On top of that, for a light page: a soft contact shadow under the book
@@ -49,7 +51,6 @@ const COVER_RADIUS = RADIUS * (WC / W);
 // standing up mid-turn grows only a little, so it stays inside the canvas.
 const FOV = 12;
 const LAYER_DEPTH = [0, 0.5, 1.6]; // how far each art layer slides while turning
-const HOVER_LIFT = 0.42; // radians the cover opens while hovered
 const PAGE_LIFT = 0.46; // radians an open page lifts at its outer edge
 const PRESS_LIFT = 1.2; // how much further it lifts while pressed
 // The pages under a lifted one follow it, each a little less, so their edges
@@ -59,7 +60,12 @@ const PAGE_FAN = [1, 0.86, 0.7, 0.52];
 const BEND_SPEED = 0.55; // radians a page's edge trails, per page per second
 const BEND_SAG = 0.18; // radians it sags under its weight when half raised
 const BEND_MAX = 0.85; // the most a page ever curves
-const INTRO_DELAY = 450; // ms the closed cover shows before the book opens itself
+const HOVER_GROW = 0.18; // how much bigger the closed book is than my photo
+const HOVER_SPRING = 11;
+const HOVER_OUT_SPRING = 24; // quicker on the way back to my photo
+const MORPH_SPRING = 9; // how quickly the book becomes the dialog
+const REVEAL_TIME = 0.2; // seconds the page behind takes to dim
+const DIALOG_PAGE_MAX = 330; // the widest a page gets in the dialog, in pixels
 const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
 const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
 const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
@@ -218,7 +224,7 @@ function bendablePage(t) {
   return geometry;
 }
 
-export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotion = false, onSpread, onHover }) {
+export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion = false, onSpread, onLayout, onReveal, onRequestClose }) {
   // Treat colours as the reference does: textures straight to screen, no
   // colour-space conversion, so pages print exactly as drawn.
   THREE.ColorManagement.enabled = false;
@@ -270,6 +276,10 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   room.dispose?.();
   pmrem.dispose();
 
+  // Everything that travels together: the book and the shadow under it.
+  const stage = new THREE.Group();
+  scene.add(stage);
+
   const contact = drawContactShadow();
   const contactShadow = new THREE.Mesh(
     track(new THREE.PlaneGeometry(1, 1)),
@@ -285,7 +295,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   contactShadow.rotation.x = -Math.PI / 2;
   contactShadow.position.y = 0.0005;
   contactShadow.renderOrder = -1;
-  scene.add(contactShadow);
+  stage.add(contactShadow);
 
   // Paper surface, shared by every page.
   const paper = drawPaperMaps();
@@ -537,7 +547,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   const lastSpread = leafCount - 1; // the last leaf is the back board; it never turns
   const thickness = (k) => (k === 0 || k === leafCount - 1 ? COVER_T : PAGE_T);
   const book = new THREE.Group();
-  scene.add(book);
+  stage.add(book);
 
   const leaves = [];
   for (let k = 0; k < leafCount; k++) {
@@ -577,9 +587,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   for (let s = 1; s < leafCount; s++) spreadLayers[s] = pages[2 * s].layers;
 
   // State
-  // The book shows its cover, then opens itself once it is ready. With
-  // reduced motion it simply starts open.
-  const startSpread = reduceMotion ? 1 : 0;
+  const startSpread = 0;
   let progress = startSpread; // the reading timeline: 0 closed, s = spread s open
   let velocity = 0; // of progress, in pages per second
   let target = startSpread; // the spread being turned to
@@ -588,21 +596,24 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   let pointer = null; // the mouse, while it is over the frame
   let hoverDirty = false;
   let hit = null; // where the mouse meets the book
-  let coverLift = 0;
+  let eventTarget = null; // the dialog's book area, while it is open
+  const hover = { x: 0, v: 0, to: 0 }; // 0 my photo, 1 the closed book
+  const morph = { x: 0, v: 0, goal: 0, to: 0 }; // 0 by my photo, 1 the dialog
+  let reveal = 0; // the dimmed page behind the book, 0 gone and 1 shown
+  let revealed = false;
+  let wantsHover = false;
+  let closing = false; // waiting for the page to brighten before leaving
+  let closedByHand = false; // the cover shuts where it is, then the book leaves
+  let tie = 1; // how much of the opening the timeline follows
   let liftSpread = 1; // the spread whose pages are lifted
   const lift = { left: 0, right: 0 };
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
-  let width = 1;
-  let height = 1;
-  // Where the frame (the book's box) sits within the bigger canvas, as
-  // fractions of the canvas: { x0, x1, y0, y1 }.
-  let inset = { x0: 0, x1: 1, y0: 0, y1: 1 };
-  let visible = true;
+  let view = null; // the window's measurements; see measureView
+  let sized = false;
   let frameId = 0;
   let last = performance.now();
   let started = false;
   let disposed = false;
-  let introTimer = 0;
   let dirty = true;
   renderer.shadowMap.needsUpdate = true;
 
@@ -614,8 +625,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   }
 
   function goTo(next) {
-    clearTimeout(introTimer);
-    next = clamp(Math.round(next), 0, lastSpread);
+    next = clamp(Math.round(next), 1, lastSpread);
     if (next === target && !drag) return;
     target = next;
     onSpread?.(next);
@@ -632,7 +642,62 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     progress = to + (offset + push) * decay;
   }
 
+  // The same spring, for any value.
+  function springValue(value, to, stiffness, dt) {
+    const offset = value.x - to;
+    const decay = Math.exp(-stiffness * dt);
+    const push = (value.v + stiffness * offset) * dt;
+    value.v = (value.v - stiffness * push) * decay;
+    value.x = to + (offset + push) * decay;
+    if (Math.abs(value.x - to) < 0.0006 && Math.abs(value.v) < 0.01) {
+      value.x = to;
+      value.v = 0;
+    }
+  }
+
+  // The hover and the journey to the dialog. The book opens as it travels:
+  // while it does, the reading timeline simply follows the journey.
+  function moveMorph(dt) {
+    // The dimming waits for the book to land, and leaves before it does.
+    const showBackground = morph.to === 1 && !closing && morph.x > 0.985;
+    if (showBackground !== revealed) {
+      revealed = showBackground;
+      onReveal?.(revealed);
+    }
+    const revealStep = reduceMotion ? 1 : dt / REVEAL_TIME;
+    reveal = clamp(reveal + (showBackground ? revealStep : -revealStep), 0, 1);
+    if (closing && !drag && reveal === 0 && (!closedByHand || progress === 0)) {
+      closing = false;
+      closedByHand = false;
+      tie = progress; // every turned page closes on the way back
+      target = 0;
+      goal = 0;
+      morph.to = 0;
+      onSpread?.(0);
+    }
+    const hoverTo = wantsHover || morph.to > 0 || morph.x > 0 || closing ? 1 : 0;
+    if (reduceMotion) {
+      hover.x = hoverTo;
+      morph.x = morph.goal = morph.to;
+      return;
+    }
+    springValue(hover, hoverTo, hoverTo ? HOVER_SPRING : HOVER_OUT_SPRING, dt);
+    morph.goal += (morph.to - morph.goal) * (1 - Math.exp(-7 * dt));
+    if (Math.abs(morph.to - morph.goal) < 0.001) morph.goal = morph.to;
+    springValue(morph, morph.goal, MORPH_SPRING, dt);
+  }
+
   function moveProgress(dt) {
+    const journeying = morph.x !== morph.to || morph.goal !== morph.to;
+    if (journeying && !drag && !closing) {
+      // From a later spread the pages run back early, so the cover can close
+      // while there is still some distance to travel.
+      const next = tie * morph.x ** Math.min(2, 1 + 0.25 * Math.max(0, tie - 1));
+      velocity = dt > 0 ? clamp((next - progress) / dt, -6, 6) : 0;
+      progress = next;
+      goal = progress;
+      return;
+    }
     if (reduceMotion) {
       progress = drag?.moved ? drag.to : target;
       goal = progress;
@@ -664,8 +729,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     }
   }
 
-  // The cover lifts over the closed book. Over an open one, the page under
-  // the mouse lifts, more the nearer the mouse is to its outer edge.
+  // The page under the mouse lifts, more the nearer it is to the outer edge.
   function moveLifts(dt) {
     const still = !drag?.moved && target > 0 && Math.abs(progress - target) < 0.01;
     if (lift.left === 0 && lift.right === 0 && target > 0) liftSpread = target;
@@ -675,8 +739,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
         : 0;
     lift.right = approach(lift.right, hit?.x > 0 && target < lastSpread ? amount : 0, 11, dt);
     lift.left = approach(lift.left, hit?.x < 0 ? amount : 0, 11, dt);
-    const overCover = hit && !drag && progress < 0.001 && !reduceMotion;
-    coverLift = approach(coverLift, overCover ? HOVER_LIFT : 0, 6, dt);
   }
 
   // How far each page wants to curve: its edge trails the way it is turning,
@@ -701,7 +763,9 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     leaves.forEach((leaf, i) => {
       leaf.theta = Math.PI * clamp(progress - i, 0, 1);
     });
-    leaves[0].theta = Math.max(leaves[0].theta, coverLift);
+    // Beside my photo the cover stands on its edge, unseen from above, and
+    // swings down over the photo as the hover comes in.
+    leaves[0].theta = Math.max(leaves[0].theta, (1 - hover.x) * (Math.PI / 2));
     PAGE_FAN.forEach((share, depth) => {
       const right = leaves[liftSpread + depth];
       if (right && liftSpread + depth < lastSpread) right.theta = clamp(right.theta + lift.right * share, 0, Math.PI);
@@ -713,6 +777,12 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
   function layout() {
     setLeafAngles();
+    const shown = Math.max(hover.x, morph.x);
+    leaves[0].mesh.visible = shown > 0;
+    // The back board tucks in behind my photo, then grows to its full size.
+    const rim = smoothstep(0.1, 0.7, shown);
+    const lastLeaf = leaves[lastSpread];
+    lastLeaf.mesh.scale.set(W / WC + (1 - W / WC) * rim, 1, D / DC + (1 - D / DC) * rim);
     // A page can only curve as far as it has room to above the pile below.
     for (let i = 1; i < lastSpread; i++) {
       const leaf = leaves[i];
@@ -742,44 +812,75 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       const turning = Math.PI * (clamp(progress - s, 0, 1) + clamp(progress - s + 1, 0, 1) - 1);
       // Spreads glimpsed under a lifted page show their art at rest.
       const away = s - liftSpread;
-      const shown = away > 0 ? lift.right : lift.left;
-      const glimpsed = away !== 0 && Math.abs(away) < PAGE_FAN.length ? smoothstep(0, 0.08, shown) : 0;
+      const lifted = away > 0 ? lift.right : lift.left;
+      const glimpsed = away !== 0 && Math.abs(away) < PAGE_FAN.length ? smoothstep(0, 0.08, lifted) : 0;
       offsets
         .get(spreadLayers[s])
         ?.value.set(0.1 * turning * (1 - glimpsed), 0);
     }
 
-    // The book slides right as the cover opens, so the spread is centred.
+    // My photo's page is centred while closed, the spine once open.
     const open = clamp(progress, 0, 1);
-    book.position.x = (-WC / 2) * (1 - open);
+    book.position.x = (-W / 2) * (1 - open);
     // The shadow reaches left only as the cover comes down onto the table.
     const landed = Math.pow(clamp((open - 0.55) / 0.45, 0, 1), 2);
     contactShadow.scale.set(WC * (1 + landed) * contact.scaleX, DC * contact.scaleY, 1);
     contactShadow.position.x = book.position.x + (WC * (1 - landed)) / 2;
+    contactShadow.material.opacity = smoothstep(0.2, 0.9, shown);
 
     // The sheen follows the mouse.
     graze.position.x = -0.2 * mouse.ex;
 
-    // Straight down, framing the open spread inside the frame element (the
-    // canvas runs past it so shadows are never cut off).
-    const aspect = width / height;
+    // From my photo to the middle of the window, where the dialog is. World
+    // units are page widths at the dialog's size, with the origin at the
+    // window's centre.
+    const { vw, vh, page } = view;
+    const photo = anchor.getBoundingClientRect();
+    const closedScale = (photo.width / (W * page)) * (1 + HOVER_GROW * hover.x);
+    const closedW = WC * page * closedScale;
+    const closedH = DC * page * closedScale;
+    // The book grows up and to the right, keeping clear of my name below and
+    // in line with the text on its left.
+    const grownX = (hover.x * (closedW - photo.width)) / 2;
+    const grownY = (hover.x * (closedH - photo.height)) / 2;
+    const photoX = photo.left + photo.width / 2 + grownX - vw / 2;
+    const photoY = photo.top + photo.height / 2 - grownY - vh / 2;
+    const m = morph.x;
+    const scale = closedScale + (1 - closedScale) * m;
+    stage.scale.setScalar(scale);
+    stage.position.set(((1 - m) * photoX) / page, 0, ((1 - m) * photoY) / page);
+    // The light's shadow area goes with the book.
+    sun.position.set(-2.4 + stage.position.x, 4.2, -1.8 + stage.position.z);
+    sun.target.position.set(stage.position.x, 0, stage.position.z);
+    sun.target.updateMatrixWorld();
+
+    // Straight down at the whole window.
     const tan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const frameW = inset.x1 - inset.x0;
-    const frameH = inset.y1 - inset.y0;
-    const distance = Math.max((DC / 2 + 0.03) / (tan * frameH), (WC + 0.03) / (tan * aspect * frameW));
+    const distance = vh / (2 * page * tan);
     camera.position.set(0, distance, 0);
     camera.lookAt(0, 0, 0);
-    camera.aspect = aspect;
+    camera.aspect = vw / vh;
+    camera.near = Math.max(0.05, distance - 4);
+    camera.far = distance + 2;
     camera.updateProjectionMatrix();
-    // The canvas runs further past the frame below than above (that is where
-    // the shadow falls), so shift the image to centre the book on the frame.
-    const projection = camera.projectionMatrix.elements;
-    projection[8] = -((inset.x0 + inset.x1) - 1);
-    projection[9] = (inset.y0 + inset.y1) - 1;
-    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+
+    // The canvas and my photo trade places while the cover is still on edge.
+    canvas.style.visibility = shown > 0 ? 'visible' : 'hidden';
+    canvas.style.opacity = String(smoothstep(0, 0.16, shown));
+    // (Only the picture hides: the button must stay focusable.)
+    anchor.firstElementChild.style.visibility = shown > 0.16 ? 'hidden' : '';
+
+    // The page behind dims.
+    backdrop.style.visibility = reveal > 0 ? 'visible' : 'hidden';
+    backdrop.style.opacity = String(1 - (1 - reveal) ** 3);
   }
 
   function draw() {
+    // The full-window drawing surface is only made once it is needed.
+    if (!sized) {
+      renderer.setSize(view.vw, view.vh);
+      sized = true;
+    }
     layout();
     renderer.render(scene, camera);
     dirty = false;
@@ -787,7 +888,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
   function tick() {
     frameId = 0;
-    if (!visible) return;
     const now = performance.now();
     const dt = Math.min(1 / 30, (now - last) / 1000);
     last = now;
@@ -795,7 +895,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       hoverDirty = false;
       updateHover();
     }
-    const before = [progress, coverLift, lift.left, lift.right];
+    const before = [progress, hover.x, morph.x, reveal, lift.left, lift.right];
+    moveMorph(dt);
     moveProgress(dt);
     moveLifts(dt);
     const bent = moveBends(dt);
@@ -803,11 +904,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     // Mouse, eased: it only moves the light's sheen across the paper.
     mouse.ex = approach(mouse.ex, mouse.x, 3, dt);
     if (Math.abs(mouse.x - mouse.ex) < 0.005) mouse.ex = mouse.x;
-    const leavesMoved = bent || [progress, coverLift, lift.left, lift.right].some((v, i) => v !== before[i]);
+    const leavesMoved = bent || [progress, hover.x, morph.x, reveal, lift.left, lift.right].some((v, i) => v !== before[i]);
     if (leavesMoved) renderer.shadowMap.needsUpdate = true;
     const moving = leavesMoved || mouse.ex !== sheen;
     if (moving || dirty) draw();
-    const waiting = !drag && (progress !== target || goal !== target);
+    const waiting = !drag && (closing || progress !== target || goal !== target || morph.goal !== morph.to);
     if (moving || waiting) frameId = requestAnimationFrame(tick);
   }
 
@@ -819,22 +920,19 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const rect = canvas.getBoundingClientRect();
     ndc.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
-    const hit = raycaster.intersectObjects(leaves.map((l) => l.mesh), false)[0];
-    return hit ? hit.point.clone() : null;
+    const found = raycaster.intersectObjects(leaves.map((l) => l.mesh), false)[0];
+    return found ? found.point.clone() : null;
   }
 
   function updateHover() {
     if (drag) return;
     const point = pointer ? hitsBook(pointer) : null;
-    const over = !!point;
-    if (over !== !!hit) onHover?.(over);
     hit = point;
-    eventTarget.style.cursor = over ? 'grab' : '';
+    if (eventTarget) eventTarget.style.cursor = point ? 'grab' : '';
   }
 
   function onPointerDown(event) {
-    if (event.button !== 0 || event.target.closest('a, button')) return;
-    clearTimeout(introTimer);
+    if (event.button !== 0 || event.target.closest('a, button') || morph.x < 0.98) return;
     // A touch has no hover, so its page lifts from here.
     hit = hitsBook(event);
     drag = { startX: event.clientX, startProgress: progress, to: progress, moved: false, samples: [[performance.now(), progress]] };
@@ -848,7 +946,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   }
 
   function onPointerMove(event) {
-    const rect = frame.getBoundingClientRect();
+    if (!eventTarget || !view) return;
+    const rect = frameRect();
     const x = clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1.5, 1.5);
     const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
     // The sheen only follows a mouse near the book.
@@ -888,14 +987,10 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     if (!d) return;
     goal = progress;
     if (event.pointerType === 'touch') hit = null;
-    eventTarget.style.cursor = hit ? 'grab' : '';
+    if (eventTarget) eventTarget.style.cursor = hit ? 'grab' : '';
     hoverDirty = true;
     wake();
-    if (!d.moved) {
-      // A click on the closed book opens it.
-      if (target === 0 && hitsBook(event)) goTo(1);
-      return;
-    }
+    if (!d.moved) return;
     // Let go: carry on with the drag's speed, then settle on a page. Only the
     // last moments count, so a hand that stopped before letting go has no speed.
     const now = performance.now();
@@ -909,10 +1004,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       (handSpeed < CLOSE_FLICK || d.to < CLOSE_PULL || (d.to < CLOSE_NUDGE && handSpeed < CLOSE_NUDGE_SPEED));
     if (closing) {
       hit = null;
-      goTo(0);
+      closedByHand = progress <= 1;
+      onRequestClose?.();
       return;
     }
-    const next = clamp(Math.round(progress + handSpeed * 0.25), wasOpen ? 1 : 0, lastSpread);
+    const next = clamp(Math.round(progress + handSpeed * 0.25), 1, lastSpread);
     target = next;
     goal = next;
     onSpread?.(next);
@@ -925,36 +1021,59 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     wake();
   }
 
-  eventTarget.addEventListener('pointerdown', onPointerDown);
-  eventTarget.addEventListener('pointerup', onPointerUp);
-  eventTarget.addEventListener('pointercancel', onPointerUp);
-  eventTarget.addEventListener('pointerleave', onPointerLeave);
+  function attachFrame(element) {
+    if (eventTarget) {
+      eventTarget.removeEventListener('pointerdown', onPointerDown);
+      eventTarget.removeEventListener('pointerup', onPointerUp);
+      eventTarget.removeEventListener('pointercancel', onPointerUp);
+      eventTarget.removeEventListener('pointerleave', onPointerLeave);
+    }
+    eventTarget = element;
+    if (!element) return;
+    element.addEventListener('pointerdown', onPointerDown);
+    element.addEventListener('pointerup', onPointerUp);
+    element.addEventListener('pointercancel', onPointerUp);
+    element.addEventListener('pointerleave', onPointerLeave);
+  }
   window.addEventListener('pointermove', onPointerMove);
 
-  const measure = () => {
-    const c = canvas.getBoundingClientRect();
-    const f = frame.getBoundingClientRect();
-    width = Math.max(1, c.width);
-    height = Math.max(1, c.height);
-    inset = {
-      x0: (f.left - c.left) / c.width,
-      x1: (f.right - c.left) / c.width,
-      y0: (f.top - c.top) / c.height,
-      y1: (f.bottom - c.top) / c.height,
-    };
-    renderer.setSize(width, height, false);
-    // Resizing clears the canvas, so redraw before the browser paints.
-    if (started) draw();
+  // The dialog is the open book, as big as the window allows, with room above
+  // and below it (the close button sits below).
+  function measureView() {
+    const vw = document.documentElement.clientWidth;
+    const vh = window.innerHeight;
+    const margin = vw < 640 ? 12 : 24;
+    const pad = 56;
+    const page = Math.max(60, Math.min(DIALOG_PAGE_MAX, (vw - 2 * margin) / (2 * WC), (vh - 2 * (margin + pad)) / DC));
+    const width = 2 * WC * page;
+    const height = DC * page + 2 * pad;
+    const dialog = { left: (vw - width) / 2, top: (vh - height) / 2, width, height };
+    view = { vw, vh, page, pad, dialog };
+  }
+  const frameRect = () => {
+    const { dialog, pad } = view;
+    const { left, width } = dialog;
+    const top = dialog.top + pad;
+    const height = dialog.height - 2 * pad;
+    return { left, top, width, height, right: left + width, bottom: top + height };
   };
-  const resizeObserver = new ResizeObserver(measure);
-  resizeObserver.observe(canvas);
-  resizeObserver.observe(frame);
 
-  const visibility = new IntersectionObserver(([entry]) => {
-    visible = entry.isIntersecting;
-    if (visible) wake();
-  });
-  visibility.observe(canvas);
+  const onResize = () => {
+    measureView();
+    sized = false;
+    onLayout?.(view.dialog, view.pad);
+    if (started && Math.max(hover.x, morph.x) > 0) draw();
+  };
+  window.addEventListener('resize', onResize);
+
+  // While the closed book sits by my photo, it scrolls with the page.
+  const onScroll = () => {
+    if (started && hover.x > 0 && morph.x < 1) {
+      dirty = true;
+      wake();
+    }
+  };
+  window.addEventListener('scroll', onScroll, { capture: true, passive: true });
 
   const onContextRestored = () => {
     dirty = true;
@@ -982,28 +1101,54 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       }
     }
     if (disposed) return;
-    measure();
-    draw();
     started = true;
-    if (startSpread === 0) introTimer = setTimeout(() => goTo(1), INTRO_DELAY);
+    if (wantsHover || morph.to) wake();
   }
 
-  measure();
+  measureView();
+  onLayout?.(view.dialog, view.pad);
   onSpread?.(startSpread);
   const ready = prepare();
 
   return {
     goTo,
-    ready, // resolves once the book has drawn its first frame
+    attachFrame,
+    ready, // resolves once everything is on the graphics card
+    setHover(on) {
+      wantsHover = on;
+      wake();
+    },
+    open() {
+      closing = false;
+      closedByHand = false;
+      tie = 1;
+      morph.to = 1;
+      target = 1;
+      onSpread?.(1);
+      wake();
+    },
+    close() {
+      hit = null;
+      pointer = null;
+      drag = null;
+      // Once the page has brightened, the book closes on its way home. A
+      // cover pulled shut by hand finishes closing first, carrying the hand's
+      // speed, and only then does the book shrink.
+      closing = true;
+      if (closedByHand) {
+        target = 0;
+        goal = 0;
+      }
+      wake();
+    },
     // Where the printed link on the last page appears, as percentages of
-    // the frame, for laying a real link over it. The book lies flat and
-    // centred there, so this holds for as long as the frame keeps its size.
+    // the book's area in the dialog.
     linkRect() {
       const page = pages.find((p) => p.link);
       if (!page) return null;
       camera.updateMatrixWorld();
       const c = canvas.getBoundingClientRect();
-      const f = frame.getBoundingClientRect();
+      const f = frameRect();
       const toFrame = (u, v) => {
         // Spread canvas fraction -> the open book's top surface.
         const point = new THREE.Vector3((u * 2 - 1) * W, COVER_T + PAGE_T, -D / 2 + v * D).project(camera);
@@ -1017,16 +1162,12 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     },
     dispose() {
       disposed = true;
-      clearTimeout(introTimer);
       cancelAnimationFrame(frameId);
-      resizeObserver.disconnect();
-      visibility.disconnect();
       canvas.removeEventListener('webglcontextrestored', onContextRestored);
-      eventTarget.removeEventListener('pointerdown', onPointerDown);
-      eventTarget.removeEventListener('pointerup', onPointerUp);
-      eventTarget.removeEventListener('pointercancel', onPointerUp);
-      eventTarget.removeEventListener('pointerleave', onPointerLeave);
+      attachFrame(null);
       window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, { capture: true });
       for (const thing of disposables) thing.dispose();
       renderer.dispose();
     },

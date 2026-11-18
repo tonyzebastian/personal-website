@@ -35,15 +35,13 @@ const musingRow = (musing) => (
 
 export default function HomeList() {
   return (
-    // The column is 672px so the hero image can run wider; everything else
-    // sits at a 512px reading width (max-w-lg) centred inside it. The
-    // Playground grid below breaks out of the column so it can grow to four
-    // covers across.
-    <div className="flex flex-col gap-16 pt-8 pb-24 lg:pt-4 lg:pb-20">
+    // Everything sits at a 512px reading width (max-w-lg). The Playground grid
+    // below breaks out of the column so it can grow to four covers across.
+    <div className="flex flex-col gap-16 pt-16 pb-24 lg:pt-24 lg:pb-20">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 px-6 md:px-8">
-        <Hero />
-
         <div className="mx-auto flex w-full max-w-lg flex-col gap-16">
+          <Hero />
+
           <Section id="experience" title="Experience">
             {experience.map(jobRow)}
           </Section>

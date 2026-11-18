@@ -261,16 +261,33 @@ export const aboutConversation = {
   ]
 };
 
+// A little more about me, under my name on the home page. A paragraph is a
+// list of text and links.
+export const homeAbout = [
+  [
+    'Most recently I led design at ',
+    { label: 'Sundial', href: '/sundial' },
+    ', an AI analytics startup, where more and more of my design work happened directly in code. Before that I spent three years at ',
+    { label: 'Postman', href: '/postman' },
+    ', designing for the developers who rely on it every day.',
+  ],
+  [
+    "My path here wasn't linear: a master's in marketing, a job at ",
+    { label: 'Infosys', href: '/infosys' },
+    ', then teaching myself design. Outside work I draw, film and keep a side project or two going.',
+  ],
+];
+
 // The storybook in the hero: a cover, one spread per side of me, and an end
 // spread. `word` is the big lettering across the spread; `motif` picks the
 // placeholder drawing in book/Motifs.js. Add `image` (a 2:1.12 WebP spanning
 // both pages, e.g. '/images/book/designer.webp') to replace the placeholder
 // scene with a real illustration.
 export const storybook = {
-  // The leather cover: the title and subtitle are stamped in gold foil.
+  // The leather cover: `lines` are stamped in gold foil, one under the other.
   cover: {
-    title: 'Tony Sebastian',
-    subtitle: 'A generalist who designs, codes and tells stories',
+    title: 'A book about Tony',
+    lines: ['A book', 'about', 'Tony'],
   },
   // The first spread: a note on the inside of the cover (placeholder copy
   // for now) and my photo on the right.

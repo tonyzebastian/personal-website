@@ -1,5 +1,6 @@
 // Builds the leather cover's normal map from two inputs prepared on the page:
-// `press`, an RGBA mask of what is pressed into the board, and `grain`, the
+// `press`, an RGBA mask of what is pressed into the board (red the pattern,
+// green the foil lettering, pressed only lightly), and `grain`, the
 // scanned leather's normal map, tiled across the cover and flattened where
 // the pattern is pressed in. Plain number crunching with no DOM, so it can run
 // in a worker (see coverNormal.worker.js).
@@ -12,11 +13,13 @@ export function buildCoverNormal({ width, height, press, grain, grainSize, tiles
     const ty = Math.floor(((y % tile) / tile) * grainSize);
     for (let x = 0; x < width; x++) {
       const i = y * row + x * 4;
-      const p = press[i] / 255;
-      const left = x > 0 ? press[i - 4] : press[i];
-      const right = x < width - 1 ? press[i + 4] : press[i];
-      const up = y > 0 ? press[i - row] : press[i];
-      const down = y < height - 1 ? press[i + row] : press[i];
+      const heightAt = (k) => press[k] + 0.15 * press[k + 1];
+      const p = Math.min(1, Math.max(press[i], press[i + 1]) / 170);
+      const here = heightAt(i);
+      const left = x > 0 ? heightAt(i - 4) : here;
+      const right = x < width - 1 ? heightAt(i + 4) : here;
+      const up = y > 0 ? heightAt(i - row) : here;
+      const down = y < height - 1 ? heightAt(i + row) : here;
       // Pressed in: the height drops where the mask is white.
       const ex = ((right - left) / 255) * depth;
       const ey = ((up - down) / 255) * depth;
@@ -26,7 +29,7 @@ export function buildCoverNormal({ width, height, press, grain, grainSize, tiles
       let lz = 1;
       if (grain) {
         const j = (ty * grainSize + Math.floor(((x % tile) / tile) * grainSize)) * 4;
-        const flat = 2 * (1 - 0.85 * p);
+        const flat = 2 * (1 - p);
         lx = (grain[j] / 127.5 - 1) * flat;
         ly = (grain[j + 1] / 127.5 - 1) * flat;
         lz = grain[j + 2] / 127.5 - 1;

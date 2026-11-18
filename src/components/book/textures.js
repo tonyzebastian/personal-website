@@ -22,7 +22,7 @@ const LEATHER_TILES = 1.7;
 // Deep bottle-green leather (drawn darker than it shows: the scene's light
 // lifts it to about #1f3d2b), and the gold foil stamped into it.
 const LEATHER = '#0b2314';
-const FOIL = '#cfae66';
+const FOIL = '#d9b45f';
 
 const TABLE_SIZE = 1024;
 
@@ -545,41 +545,54 @@ function embossPattern(ctx, color) {
   }
 }
 
-// The cover's lettering, centred in the frame: my name in the heading
-// serif, a short rule with a diamond, and the description in italics.
+// The cover's lettering, set the way a clothbound title is stamped: spaced
+// capitals of one size, stacked and centred a little above the middle, closed
+// with a small ornament.
 function coverTitle(ctx, cover, { w, h, fonts, fill, scale = 1 }) {
   ctx.save();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   const u = w / COVER_W; // pixels per page width
   const x = FRAME_CENTRE * u;
-  const y = h * 0.42;
+  const size = 0.15 * u;
+  const tracking = size * 0.16;
+  const leading = 0.205 * u;
+  const top = h * 0.335;
   ctx.fillStyle = fill;
   ctx.strokeStyle = fill;
-  ctx.textAlign = 'center';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = size * 0.012;
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  serif(ctx, 0.12 * u, fonts.serif);
-  ctx.fillText(cover.title, x, y);
-  // The rule: two short lines either side of a diamond.
-  const ry = y + 0.06 * u;
-  const d = 0.009 * u;
-  ctx.lineWidth = 0.0035 * u;
+  serif(ctx, size, fonts.serif);
+  cover.lines.forEach((text, i) => {
+    // Letter by letter, so the spacing is the same in every browser.
+    const letters = [...text.toUpperCase()];
+    const widths = letters.map((letter) => ctx.measureText(letter).width);
+    const total = widths.reduce((sum, width) => sum + width, 0) + tracking * (letters.length - 1);
+    let cursor = x - total / 2;
+    letters.forEach((letter, k) => {
+      ctx.fillText(letter, cursor, top + i * leading);
+      ctx.strokeText(letter, cursor, top + i * leading);
+      cursor += widths[k] + tracking;
+    });
+  });
+  // The ornament: a small diamond between two short rules.
+  const y = top + (cover.lines.length - 1) * leading + 0.095 * u;
+  const d = 0.011 * u;
+  ctx.lineWidth = 0.004 * u;
   ctx.beginPath();
-  ctx.moveTo(x - 0.11 * u, ry);
-  ctx.lineTo(x - d * 2, ry);
-  ctx.moveTo(x + d * 2, ry);
-  ctx.lineTo(x + 0.11 * u, ry);
+  ctx.moveTo(x - 0.1 * u, y);
+  ctx.lineTo(x - d * 2.2, y);
+  ctx.moveTo(x + d * 2.2, y);
+  ctx.lineTo(x + 0.1 * u, y);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x, ry - d);
-  ctx.lineTo(x + d, ry);
-  ctx.lineTo(x, ry + d);
-  ctx.lineTo(x - d, ry);
+  ctx.moveTo(x, y - d);
+  ctx.lineTo(x + d, y);
+  ctx.lineTo(x, y + d);
+  ctx.lineTo(x - d, y);
   ctx.closePath();
   ctx.fill();
-  serif(ctx, 0.05 * u, fonts.serif, 'italic');
-  wrapText(ctx, cover.subtitle, 0.62 * u).forEach((line, i) => {
-    ctx.fillText(line, x, ry + 0.085 * u + i * 0.065 * u);
-  });
   ctx.restore();
 }
 
@@ -632,12 +645,11 @@ function drawCover(cover, { width, fonts, leather, back = false }) {
       coverTitle(l, cover, { w, h, fonts, fill: FOIL });
       l.globalCompositeOperation = 'source-atop';
       const sheen = l.createLinearGradient(w * 0.3, 0, w * 0.75, 0);
-      sheen.addColorStop(0, 'rgba(255,240,200,0.25)');
-      sheen.addColorStop(0.5, 'rgba(120,85,30,0.2)');
-      sheen.addColorStop(1, 'rgba(255,240,200,0.2)');
+      sheen.addColorStop(0, 'rgba(255,244,210,0.25)');
+      sheen.addColorStop(0.5, 'rgba(255,244,210,0)');
+      sheen.addColorStop(1, 'rgba(255,244,210,0.2)');
       l.fillStyle = sheen;
       l.fillRect(0, 0, w, h);
-      chalkify(l, w, h, 0.04);
     });
     ctx.drawImage(foil, 0, 0);
   }
@@ -670,9 +682,12 @@ async function drawCoverNormal(cover, { w, h, fonts, leather }) {
   m.fillRect(0, 0, nw, nh);
   m.save();
   toBoard(m, w, h, s);
-  embossPattern(m, '#fff');
+  // Red: the pressed pattern. Green: the foil lettering, which lies smooth
+  // over the leather and is pressed in only lightly, so it stays solid.
+  embossPattern(m, '#f00');
   m.restore();
-  coverTitle(m, cover, { w, h, fonts, fill: '#fff', scale: s });
+  m.globalCompositeOperation = 'lighter';
+  coverTitle(m, cover, { w, h, fonts, fill: '#0f0', scale: s });
   // Soften the pressing's walls.
   const soft = document.createElement('canvas');
   soft.width = nw;
@@ -731,7 +746,7 @@ function drawCoverFoil(cover, { w, h, fonts }) {
   toBoard(ctx, w, h);
   embossPattern(ctx, 'rgb(0,255,0)');
   ctx.restore();
-  coverTitle(ctx, cover, { w, h, fonts, fill: 'rgb(0,255,255)' });
+  coverTitle(ctx, cover, { w, h, fonts, fill: 'rgb(0,255,170)' });
   return canvas;
 }
 
