@@ -267,18 +267,20 @@ export const aboutConversation = {
 // both pages, e.g. '/images/book/designer.webp') to replace the placeholder
 // scene with a real illustration.
 export const storybook = {
+  // The leather cover: the title and subtitle are stamped in gold foil.
   cover: {
     title: 'Tony Sebastian',
-    subtitle: 'a builder who designs, codes and tells stories.',
-    note: 'A simple illustrated story',
+    subtitle: 'A generalist who designs, codes and tells stories',
   },
-  // The first spread: the old hero video, printed across both pages. The
-  // book opens here by default. The poster shows until the video plays.
+  // The first spread: a note on the inside of the cover (placeholder copy
+  // for now) and my photo on the right.
   intro: {
-    video: '/hero_video.mp4',
-    poster: '/hero_image.jpg',
-    paper: '#fbf8f3',
-    label: 'Tony Sebastian, introduced in a short video.',
+    photo: '/book/tony.webp',
+    paper: '#f6f1e8',
+    kicker: 'Chapter one',
+    title: "Hello, I'm Tony.",
+    body: 'This page is still being written. Turn the page to meet the designer, the coder and the storyteller.',
+    label: "Hello, I'm Tony. A photo of me, smiling, on the first page.",
   },
   chapters: [
     {

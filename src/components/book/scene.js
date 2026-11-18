@@ -6,9 +6,10 @@
 //   with rounded outer corners and solid edges, hinged at the spine.
 // - Reading is one timeline, `progress`: leaf k turns 0 -> 180 degrees as
 //   progress runs from k to k + 1, so jumping several pages turns them one
-//   after another. Buttons ease progress to a page over 1.5s; dragging
-//   scrubs it directly (the width of the book's frame is one page) and
-//   snaps to the nearest page with a little inertia.
+//   after another. Progress always moves on a spring, so it keeps its speed
+//   when interrupted: the keys ease it to a page, a drag pulls it along just
+//   behind the hand (the width of the book's frame is one page), and letting
+//   go carries that speed into the nearest page.
 // - While the cover opens, the book slides from cover-centred to
 //   spread-centred.
 // - Paper is a slightly glossy standard material with roughness and normal
@@ -17,23 +18,28 @@
 // - Each illustration is layered; upper layers slide while their page
 //   turns.
 // - Dragging is the only control: drag left to open and turn forward, right
-//   to turn back. A fast flick to the right closes the book. Hovering the
-//   closed book opens the cover a little, showing the first page.
+//   to turn back. On the first spread, the cover follows a drag to the
+//   right, and a short pull or flick closes the book; a fast flick closes it
+//   from any spread. Hovering the
+//   closed book opens the cover a little; hovering an open page lifts its
+//   outer edge towards the hand, and pressing lifts it further.
+// - Nothing runs at rest: frames are drawn only while something moves.
 //
 // On top of that, for a light page: a soft contact shadow under the book
 // (a pre-blurred texture that widens as the book opens) and a
 // shadow-casting light, so a turning page shades the pages below it.
 import * as THREE from 'three';
-import { drawContactShadow, drawPaperMaps, PAGE_ASPECT } from './textures';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { COVER_OVERHANG, drawContactShadow, drawPaperMaps, PAGE_ASPECT } from './textures';
 
 const W = 1; // page width
 const D = PAGE_ASPECT; // page depth, along the spine
 const PAGE_T = 0.005;
-const COVER_T = 0.008;
+const COVER_T = 0.012;
 const RADIUS = 0.07;
 // Hard covers overhang the pages by this much on the three outer sides, so
 // an open book shows a rim of cover around each page block.
-const OVERHANG = 0.035;
+const OVERHANG = COVER_OVERHANG;
 const WC = W + OVERHANG; // cover board width
 const DC = D + 2 * OVERHANG; // cover board depth
 const COVER_RADIUS = RADIUS * (WC / W);
@@ -42,11 +48,29 @@ const COVER_RADIUS = RADIUS * (WC / W);
 const FOV = 12;
 const LAYER_DEPTH = [0, 0.5, 1.6]; // how far each art layer slides while turning
 const HOVER_LIFT = 0.42; // radians the cover opens while hovered
-const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book
-
-const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+const PAGE_LIFT = 0.46; // radians an open page lifts at its outer edge
+const PRESS_LIFT = 1.2; // how much further it lifts while pressed
+// The pages under a lifted one follow it, each a little less, so their edges
+// fan out. From straight above a page only shows its edge once it is well
+// lifted, which is why these stay close together.
+const PAGE_FAN = [1, 0.86, 0.7, 0.52];
+const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
+const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
+const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
+const CLOSE_NUDGE_SPEED = -0.6; // pages per second, rightwards
+const TURN_SPRING = 10; // how quickly a page settles (higher is quicker)
+const DRAG_SPRING = 28; // how closely a dragged page follows the hand
+const MAX_TURN_SPEED = 3; // pages per second, when jumping several pages
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const smoothstep = (lo, hi, v) => {
+  const t = clamp((v - lo) / (hi - lo), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+// Eases towards a value at the same pace at any frame rate.
+const approach = (value, to, rate, dt) => {
+  const next = value + (to - value) * (1 - Math.exp(-rate * dt));
+  return Math.abs(to - next) < 0.0005 ? to : next;
+};
 
 // A board w x d: rounded on the outer (x = w) corners, square at the spine.
 // Material slots: 0 back face (y = 0), 1 front face (y = t), 2 edges.
@@ -79,7 +103,7 @@ function boardGeometry(t, w = W, d = D, r = RADIUS) {
   return geometry;
 }
 
-export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotion = false, onSpread, onHover, onVideo }) {
+export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotion = false, onSpread, onHover }) {
   // Treat colours as the reference does: textures straight to screen, no
   // colour-space conversion, so pages print exactly as drawn.
   THREE.ColorManagement.enabled = false;
@@ -91,6 +115,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   renderer.toneMapping = THREE.NoToneMapping;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.shadowMap.autoUpdate = false; // redrawn only when a leaf moves
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.05, 20);
@@ -121,6 +146,14 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     return thing;
   };
   const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+  // A soft room to reflect, for the leather's sheen and the gold foil. Only
+  // the front cover uses it.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const room = new RoomEnvironment();
+  const environment = track(pmrem.fromScene(room, 0.04).texture);
+  room.dispose?.();
+  pmrem.dispose();
 
   const contact = drawContactShadow();
   const contactShadow = new THREE.Mesh(
@@ -153,35 +186,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   // The covers are bookcloth: matte, with a finer, deeper weave.
   const clothNormal = surface(paper.normal);
   clothNormal.repeat.set(9, 9);
-
-  // The intro video, shared by both pages of the first spread. It loads
-  // only once that spread is on screen, and plays only while it is.
-  const videoPage = pages.find((page) => page.video);
-  const videoMix = { value: 0 }; // 0 shows the printed poster, 1 the moving video
-  let video = null;
-  let videoTexture = null;
-  let videoReady = false;
-  let playPending = false;
-  // Paused with the button. Leaving the intro clears it, so the video plays
-  // again on the way back. With reduced motion it starts paused.
-  let userPaused = reduceMotion;
-  if (videoPage) {
-    video = document.createElement('video');
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.preload = 'auto';
-    video.setAttribute('playsinline', '');
-    video.addEventListener('playing', () => {
-      videoReady = true;
-    });
-    // Report playing and muted to the page, for its buttons.
-    const report = () => onVideo?.({ playing: !video.paused, muted: video.muted });
-    video.addEventListener('play', report);
-    video.addEventListener('pause', report);
-    video.addEventListener('volumechange', report);
-    videoTexture = track(new THREE.VideoTexture(video));
-  }
 
   // Shared uniforms: the crease shade near the spine, and one parallax
   // offset per illustration.
@@ -217,12 +221,32 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       map.offset.set(0.5, 0);
     }
     const cloth = board && page.part === 'whole';
+    // The front cover brings its own maps, laid over the board like its art.
+    const coverMap = (source) => {
+      const texture = track(new THREE.CanvasTexture(source));
+      texture.anisotropy = anisotropy;
+      texture.repeat.copy(map.repeat);
+      texture.offset.copy(map.offset);
+      return texture;
+    };
+    const leather = cloth && page.normal;
     const material = track(
       new THREE.MeshStandardMaterial(
-        cloth
+        leather
           ? {
               map,
-              roughness: 0.92,
+              roughness: 0.52,
+              metalness: 1, // scaled by the foil map: only the foil is metal
+              roughnessMap: roughMap,
+              metalnessMap: coverMap(page.foil),
+              normalMap: coverMap(page.normal),
+              envMap: environment,
+              envMapIntensity: 0.75,
+            }
+          : cloth
+          ? {
+              map,
+              roughness: 0.9,
               metalness: 0,
               roughnessMap: roughMap,
               normalMap: clothNormal,
@@ -245,15 +269,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const spine = page.part !== 'whole';
     const insidePage = board && spine; // a page printed on a cover board, with a rim around it
     const f = (n) => n.toFixed(5);
-    // The video fills the spread like the art does, cropped to fit, and is
-    // multiplied onto the paper so its white backdrop becomes the page.
-    const videoCode = page.video
-      ? `{
-            vec2 videoUv = vec2(0.5 + (vMapUv.x - 0.5) * ${f((2 * W) / D / (16 / 9))}, vMapUv.y);
-            vec3 footage = texture2D(uVideo, videoUv).rgb;
-            art.rgb = mix(art.rgb, uPaper * footage, uVideoMix * step(0.5, art.a));
-          }`
-      : '';
     const boardCode = board
       ? `{
             vec2 pu = vPageUv;
@@ -268,7 +283,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
               vec4 cloth = texture2D(uCloth, clothUv);
               art = vec4(cloth.rgb / max(cloth.a, 0.0001), 1.0);
               // The turn-in catches more light than the outside of the cover.
-              art.rgb = mix(art.rgb, vec3(0.36, 0.38, 0.4), 0.38) * 1.12;
+              art.rgb *= 1.18;
 
               // Board coordinates in world units: x from the spine, y from
               // the bottom edge of the board.
@@ -320,7 +335,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
             float grain = (texture2D(roughnessMap, vRoughnessMapUv * 2.7).g - 0.75) / 0.25;
             float wear = (1.0 - smoothstep(0.0, 0.02 + 0.02 * corner, edgeDist))
               * smoothstep(0.42 - 0.35 * corner, 0.8 - 0.35 * corner, grain);
-            art.rgb = mix(art.rgb, vec3(0.8, 0.78, 0.74), wear * (0.65 + 0.25 * corner));
+            // Leather wears paler at the edges, towards its undyed grain.
+            art.rgb = mix(art.rgb, min(art.rgb * 1.8 + 0.05, 1.0), wear * (0.5 + 0.3 * corner));
             art.rgb *= 1.0 - 0.18 * exp(-pow((edgeDist - 0.011) / 0.0035, 2.0));
             ${
               cloth
@@ -338,11 +354,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCrease = crease;
       shader.uniforms.uOffset = offset;
-      if (page.video) {
-        shader.uniforms.uVideo = { value: videoTexture };
-        shader.uniforms.uVideoMix = videoMix;
-        shader.uniforms.uPaper = { value: new THREE.Color(page.video.paper) };
-      }
       if (board) {
         shader.uniforms.uCloth = { value: board.cloth };
         shader.uniforms.uMirror = { value: board.mirror ? 1 : 0 };
@@ -362,10 +373,27 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
           }`
         )
         .join('\n');
+      if (leather) {
+        // Foil is smooth metal; pressed leather is burnished a little
+        // smoother than the grain around it.
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <metalnessmap_fragment>',
+          `#include <metalnessmap_fragment>
+          roughnessFactor = mix(roughnessFactor * (1.0 - 0.3 * texelMetalness.g), 0.42, texelMetalness.b);`
+        ).replace(
+          // Flat ambient light ignores the grain; let the room's light,
+          // which follows the surface, do more of the work here.
+          '#include <lights_fragment_begin>',
+          THREE.ShaderChunk.lights_fragment_begin.replace(
+            'getAmbientLightIrradiance( ambientLightColor )',
+            'getAmbientLightIrradiance( ambientLightColor ) * 0.35'
+          )
+        );
+      }
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
-          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${page.video ? 'uniform sampler2D uVideo;\nuniform float uVideoMix;\nuniform vec3 uPaper;\n' : ''}${samplers}`
+          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${samplers}`
         )
         .replace(
           '#include <map_fragment>',
@@ -373,7 +401,6 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
             vec4 art = texture2D(map, vMapUv);
             art.rgb /= max(art.a, 0.0001);
             ${mixes}
-            ${videoCode}
             ${boardCode}
             diffuseColor *= art;
           #endif
@@ -386,7 +413,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
         );
     };
     material.customProgramCacheKey = () =>
-      `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${page.video ? 'video' : ''}`;
+      `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${leather ? 'leather' : ''}`;
     return material;
   }
 
@@ -403,7 +430,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const isCover = k === 0 || k === leafCount - 1;
     const edge = track(
       new THREE.MeshStandardMaterial({
-        color: new THREE.Color(isCover ? '#26292d' : pages[2 * k].edge).multiplyScalar(isCover ? 1 : 0.93),
+        color: new THREE.Color(isCover ? '#183222' : pages[2 * k].edge).multiplyScalar(isCover ? 1 : 0.93),
         roughness: isCover ? 0.95 : 0.7,
         metalness: isCover ? 0 : 0.05,
         roughnessMap: isCover ? roughMap : null,
@@ -434,14 +461,19 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   for (let s = 1; s < leafCount; s++) spreadLayers[s] = pages[2 * s].layers;
 
   // State
-  // With an intro video the book starts open on it; otherwise closed.
-  const startSpread = videoPage ? 1 : 0;
+  // The book starts open on the first spread.
+  const startSpread = 1;
   let progress = startSpread; // the reading timeline: 0 closed, s = spread s open
-  let target = startSpread;
-  let tween = null;
+  let velocity = 0; // of progress, in pages per second
+  let target = startSpread; // the spread being turned to
+  let goal = startSpread; // eases to the target, so a turn starts softly
   let drag = null;
-  let hover = false;
-  let hoverLift = 0;
+  let pointer = null; // the mouse, while it is over the frame
+  let hoverDirty = false;
+  let hit = null; // where the mouse meets the book
+  let coverLift = 0;
+  let liftSpread = startSpread; // the spread whose pages are lifted
+  const lift = { left: 0, right: 0 };
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
   let width = 1;
   let height = 1;
@@ -451,15 +483,15 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   let visible = true;
   let frameId = 0;
   let last = performance.now();
-  const startTime = last;
+  let started = false;
+  let dirty = true;
+  renderer.shadowMap.needsUpdate = true;
 
-  function tweenTo(next, duration, ease) {
-    if (reduceMotion) {
-      progress = next;
-      tween = null;
-      return;
-    }
-    tween = { from: progress, to: next, start: performance.now(), duration: duration * 1000, ease };
+  // Runs the frame loop; it stops itself once everything has settled.
+  function wake() {
+    if (frameId || !started) return;
+    last = performance.now();
+    frameId = requestAnimationFrame(tick);
   }
 
   function goTo(next) {
@@ -467,22 +499,79 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     if (next === target && !drag) return;
     target = next;
     onSpread?.(next);
-    tweenTo(next, 1.5, easeInOutCubic);
+    wake();
   }
 
-  function layout(time, dt) {
-    // Mouse, eased: it only moves the light's sheen across the paper.
-    const k = 1 - Math.exp(-dt * 3);
-    mouse.ex += (mouse.x - mouse.ex) * k;
+  // A critically damped spring: it reaches the value without bouncing, and
+  // keeps its speed when the value changes under it.
+  function springTo(to, stiffness, dt) {
+    const offset = progress - to;
+    const decay = Math.exp(-stiffness * dt);
+    const push = (velocity + stiffness * offset) * dt;
+    velocity = (velocity - stiffness * push) * decay;
+    progress = to + (offset + push) * decay;
+  }
 
-    // Leaf angles from the timeline, plus the cover lifting under the mouse.
-    const closed = progress < 0.001;
-    const liftTarget = hover && closed && !reduceMotion ? HOVER_LIFT : 0;
-    hoverLift += (liftTarget - hoverLift) * (1 - Math.exp(-dt * 6));
+  function moveProgress(dt) {
+    if (reduceMotion) {
+      progress = drag?.moved ? drag.to : target;
+      goal = progress;
+      velocity = 0;
+      return;
+    }
+    if (drag) {
+      springTo(drag.to, DRAG_SPRING, dt);
+      if (Math.abs(progress - drag.to) < 0.0005 && Math.abs(velocity) < 0.01) {
+        progress = drag.to;
+        velocity = 0;
+      }
+    } else {
+      const step = (target - goal) * (1 - Math.exp(-8 * dt));
+      goal += clamp(step, -MAX_TURN_SPEED * dt, MAX_TURN_SPEED * dt);
+      if (Math.abs(target - goal) < 0.001) goal = target;
+      const side = Math.sign(progress - target);
+      springTo(goal, TURN_SPRING, dt);
+      // A board lands and stops; it never swings past flat.
+      const landed = side !== 0 && Math.sign(progress - target) !== side;
+      if (landed || (goal === target && Math.abs(progress - target) < 0.0008 && Math.abs(velocity) < 0.01)) {
+        progress = target;
+        velocity = 0;
+      }
+    }
+    if (progress < 0 || progress > lastSpread) {
+      progress = clamp(progress, 0, lastSpread);
+      velocity = 0;
+    }
+  }
+
+  // The cover lifts over the closed book. Over an open one, the page under
+  // the mouse lifts, more the nearer the mouse is to its outer edge.
+  function moveLifts(dt) {
+    const still = !drag?.moved && target > 0 && Math.abs(progress - target) < 0.01;
+    if (lift.left === 0 && lift.right === 0 && target > 0) liftSpread = target;
+    const amount =
+      hit && still && liftSpread === target && !reduceMotion
+        ? PAGE_LIFT * smoothstep(0.3, 0.95, Math.abs(hit.x) / W) * (drag ? PRESS_LIFT : 1)
+        : 0;
+    lift.right = approach(lift.right, hit?.x > 0 && target < lastSpread ? amount : 0, 11, dt);
+    lift.left = approach(lift.left, hit?.x < 0 ? amount : 0, 11, dt);
+    const overCover = hit && !drag && progress < 0.001 && !reduceMotion;
+    coverLift = approach(coverLift, overCover ? HOVER_LIFT : 0, 6, dt);
+  }
+
+  function layout() {
+    // Leaf angles from the timeline, plus whatever the mouse is lifting.
     leaves.forEach((leaf, i) => {
       leaf.theta = Math.PI * clamp(progress - i, 0, 1);
     });
-    leaves[0].theta = Math.max(leaves[0].theta, hoverLift);
+    leaves[0].theta = Math.max(leaves[0].theta, coverLift);
+    PAGE_FAN.forEach((share, depth) => {
+      const right = leaves[liftSpread + depth];
+      if (right && liftSpread + depth < lastSpread) right.theta = clamp(right.theta + lift.right * share, 0, Math.PI);
+      // The cover lifts only as the top leaf; it never follows a page.
+      const k = liftSpread - 1 - depth;
+      if (k > 0 || (k === 0 && depth === 0)) leaves[k].theta = clamp(leaves[k].theta - lift.left * share, 0, Math.PI);
+    });
 
     // Stack heights: flat leaves rest on those below them on their side;
     // a turning board swings about a hinge between the two piles.
@@ -502,10 +591,15 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
     // Art layers slide while their page turns.
     for (let s = 1; s < leafCount; s++) {
-      const turning = leaves[s].theta - (Math.PI - leaves[s - 1].theta);
+      // From the timeline alone, so the mouse lifting a page moves no art.
+      const turning = Math.PI * (clamp(progress - s, 0, 1) + clamp(progress - s + 1, 0, 1) - 1);
+      // Spreads glimpsed under a lifted page show their art at rest.
+      const away = s - liftSpread;
+      const shown = away > 0 ? lift.right : lift.left;
+      const glimpsed = away !== 0 && Math.abs(away) < PAGE_FAN.length ? smoothstep(0, 0.08, shown) : 0;
       offsets
         .get(spreadLayers[s])
-        ?.value.set(0.1 * turning, 0);
+        ?.value.set(0.1 * turning * (1 - glimpsed), 0);
     }
 
     // The book slides right as the cover opens, so the spread is centred.
@@ -538,39 +632,35 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   }
 
+  function draw() {
+    layout();
+    renderer.render(scene, camera);
+    dirty = false;
+  }
+
   function tick() {
-    frameId = requestAnimationFrame(tick);
+    frameId = 0;
+    if (!visible) return;
     const now = performance.now();
     const dt = Math.min(1 / 30, (now - last) / 1000);
     last = now;
-    if (video) {
-      // Play only while the book rests on the intro: a page turning away
-      // pauses it, and coming back plays it again.
-      const onIntro = target === 1 && Math.abs(progress - 1) < 0.15;
-      if (target !== 1) userPaused = reduceMotion;
-      const shouldPlay = visible && onIntro && !userPaused && document.visibilityState === 'visible';
-      if (shouldPlay && video.paused && !playPending) {
-        if (!video.getAttribute('src')) video.src = videoPage.video.src;
-        playPending = true;
-        video
-          .play()
-          .catch(() => {})
-          .finally(() => {
-            playPending = false;
-          });
-      } else if (!shouldPlay && !video.paused) {
-        video.pause();
-      }
-      videoMix.value += ((videoReady ? 1 : 0) - videoMix.value) * (1 - Math.exp(-dt * 4));
+    if (hoverDirty) {
+      hoverDirty = false;
+      updateHover();
     }
-    if (!visible) return;
-    if (tween) {
-      const t = Math.min(1, (now - tween.start) / tween.duration);
-      progress = tween.from + (tween.to - tween.from) * tween.ease(t);
-      if (t >= 1) tween = null;
-    }
-    layout((now - startTime) / 1000, dt);
-    renderer.render(scene, camera);
+    const before = [progress, coverLift, lift.left, lift.right];
+    moveProgress(dt);
+    moveLifts(dt);
+    const sheen = mouse.ex;
+    // Mouse, eased: it only moves the light's sheen across the paper.
+    mouse.ex = approach(mouse.ex, mouse.x, 3, dt);
+    if (Math.abs(mouse.x - mouse.ex) < 0.005) mouse.ex = mouse.x;
+    const leavesMoved = [progress, coverLift, lift.left, lift.right].some((v, i) => v !== before[i]);
+    if (leavesMoved) renderer.shadowMap.needsUpdate = true;
+    const moving = leavesMoved || mouse.ex !== sheen;
+    if (moving || dirty) draw();
+    const waiting = !drag && (progress !== target || goal !== target);
+    if (moving || waiting) frameId = requestAnimationFrame(tick);
   }
 
   // Pointer
@@ -585,76 +675,105 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     return hit ? hit.point.clone() : null;
   }
 
+  function updateHover() {
+    if (drag) return;
+    const point = pointer ? hitsBook(pointer) : null;
+    const over = !!point;
+    if (over !== !!hit) onHover?.(over);
+    hit = point;
+    eventTarget.style.cursor = over ? 'grab' : '';
+  }
+
   function onPointerDown(event) {
     if (event.button !== 0 || event.target.closest('a, button')) return;
-    tween = null;
-    drag = { startX: event.clientX, startProgress: progress, moved: false, samples: [[performance.now(), progress]] };
+    // A touch has no hover, so its page lifts from here.
+    hit = hitsBook(event);
+    drag = { startX: event.clientX, startProgress: progress, to: progress, moved: false, samples: [[performance.now(), progress]] };
+    if (hit) eventTarget.style.cursor = 'grabbing';
     try {
       eventTarget.setPointerCapture(event.pointerId);
     } catch {
       // Synthetic or already-released pointers cannot be captured.
     }
+    wake();
   }
 
   function onPointerMove(event) {
     const rect = frame.getBoundingClientRect();
-    mouse.x = clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1.5, 1.5);
-    mouse.y = clamp(((event.clientY - rect.top) / rect.height) * 2 - 1, -1.5, 1.5);
+    const x = clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1.5, 1.5);
+    const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    // The sheen only follows a mouse near the book.
+    if (Math.abs(y) <= 1.5 && x !== mouse.x) {
+      mouse.x = x;
+      wake();
+    }
 
     if (drag) {
       const dx = event.clientX - drag.startX;
       if (!drag.moved && Math.abs(dx) > 6) drag.moved = true;
       if (drag.moved) {
-        // Once open, a slow drag cannot shut the book; only a flick can.
-        const min = drag.startProgress >= 1 ? 1 : 0;
         const raw = drag.startProgress - dx / rect.width;
-        progress = clamp(raw, min, lastSpread);
+        drag.to = clamp(raw, 0, lastSpread);
         // Speed comes from the hand, not the clamped page, so a flick on the
         // first spread still registers.
         drag.samples.push([performance.now(), raw]);
         if (drag.samples.length > 6) drag.samples.shift();
+        wake();
       }
       return;
     }
 
+    if (event.pointerType === 'touch') return;
     const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
-    const over = inside && progress < 0.001 && !!hitsBook(event);
-    if (over !== hover) {
-      hover = over;
-      onHover?.(over);
+    const next = inside && !event.target.closest?.('a, button') ? { clientX: event.clientX, clientY: event.clientY } : null;
+    if (next || pointer) {
+      pointer = next;
+      hoverDirty = true;
+      wake();
     }
-    eventTarget.style.cursor = progress < 0.001 && !over ? '' : 'grab';
   }
 
   function onPointerUp(event) {
     const d = drag;
     drag = null;
     if (!d) return;
+    goal = progress;
+    if (event.pointerType === 'touch') hit = null;
+    eventTarget.style.cursor = hit ? 'grab' : '';
+    hoverDirty = true;
+    wake();
     if (!d.moved) {
       // A click on the closed book opens it.
       if (target === 0 && hitsBook(event)) goTo(1);
       return;
     }
-    // Let go: carry on a little with the drag's speed, then settle on a page.
-    const [t0, p0] = d.samples[0];
-    const [t1, p1] = d.samples[d.samples.length - 1];
-    const velocity = t1 > t0 ? ((p1 - p0) / (t1 - t0)) * 1000 : 0;
-    if (d.startProgress >= 1 && velocity < CLOSE_FLICK) {
-      hover = false;
+    // Let go: carry on with the drag's speed, then settle on a page. Only the
+    // last moments count, so a hand that stopped before letting go has no speed.
+    const now = performance.now();
+    const samples = d.samples.filter(([t]) => now - t < 120);
+    const [t0, p0] = samples[0] ?? [now, progress];
+    const [t1, p1] = samples[samples.length - 1] ?? [now, progress];
+    const handSpeed = t1 > t0 ? ((p1 - p0) / (t1 - t0)) * 1000 : 0;
+    const wasOpen = d.startProgress >= 0.99;
+    const closing =
+      wasOpen &&
+      (handSpeed < CLOSE_FLICK || d.to < CLOSE_PULL || (d.to < CLOSE_NUDGE && handSpeed < CLOSE_NUDGE_SPEED));
+    if (closing) {
+      hit = null;
       goTo(0);
       return;
     }
-    const next = clamp(Math.round(progress + velocity * 0.25), d.startProgress >= 1 ? 1 : 0, lastSpread);
+    const next = clamp(Math.round(progress + handSpeed * 0.25), wasOpen ? 1 : 0, lastSpread);
     target = next;
+    goal = next;
     onSpread?.(next);
-    tweenTo(next, 0.7, easeOutCubic);
   }
 
   function onPointerLeave() {
-    if (hover) {
-      hover = false;
-      onHover?.(false);
-    }
+    if (!pointer && !hit) return;
+    pointer = null;
+    hoverDirty = true;
+    wake();
   }
 
   eventTarget.addEventListener('pointerdown', onPointerDown);
@@ -675,6 +794,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       y1: (f.bottom - c.top) / c.height,
     };
     renderer.setSize(width, height, false);
+    // Resizing clears the canvas, so redraw before the browser paints.
+    if (started) draw();
   };
   const resizeObserver = new ResizeObserver(measure);
   resizeObserver.observe(canvas);
@@ -682,22 +803,24 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
   const visibility = new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
-    last = performance.now();
+    if (visible) wake();
   });
   visibility.observe(canvas);
 
+  const onContextRestored = () => {
+    dirty = true;
+    renderer.shadowMap.needsUpdate = true;
+    wake();
+  };
+  canvas.addEventListener('webglcontextrestored', onContextRestored);
+
   measure();
   onSpread?.(startSpread);
-  tick();
+  draw();
+  started = true;
 
   return {
     goTo,
-    // The play / pause button on the intro spread.
-    toggleVideo() {
-      if (!video || target !== 1) return;
-      // Playing now? Then pause it; otherwise let it play.
-      userPaused = !video.paused;
-    },
     // Where the printed link on the last page appears, as percentages of
     // the frame, for laying a real link over it. The book lies flat and
     // centred there, so this holds for as long as the frame keeps its size.
@@ -718,19 +841,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       const [right, bottom] = toFrame(page.link.right, page.link.bottom);
       return { left, top, width: right - left, height: bottom - top };
     },
-    // The sound button. Unmuting needs a click, which this always comes from.
-    toggleSound() {
-      if (video) video.muted = !video.muted;
-    },
     dispose() {
       cancelAnimationFrame(frameId);
-      if (video) {
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-      }
       resizeObserver.disconnect();
       visibility.disconnect();
+      canvas.removeEventListener('webglcontextrestored', onContextRestored);
       eventTarget.removeEventListener('pointerdown', onPointerDown);
       eventTarget.removeEventListener('pointerup', onPointerUp);
       eventTarget.removeEventListener('pointercancel', onPointerUp);

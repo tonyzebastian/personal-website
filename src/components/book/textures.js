@@ -5,6 +5,23 @@
 
 export const PAGE_ASPECT = 1.2 / 1.05; // page depth (along the spine) / page width, as the reference's boards
 
+// Hard covers overhang the pages by this much on the three outer sides.
+export const COVER_OVERHANG = 0.035;
+const COVER_W = 1 + COVER_OVERHANG;
+const COVER_D = PAGE_ASPECT + 2 * COVER_OVERHANG;
+
+// The embossed frame on the front cover: its outer rule's distance from the
+// spine (kept clear of the hinge) and from the other edges, in page widths.
+const FRAME = { spine: 0.09, edge: 0.062 };
+const FRAME_CENTRE = (FRAME.spine + COVER_W - FRAME.edge) / 2;
+// How many times the leather scan repeats across the cover.
+const LEATHER_TILES = 1.7;
+
+// Deep bottle-green leather (drawn darker than it shows: the scene's light
+// lifts it to about #1f3d2b), and the gold foil stamped into it.
+const LEATHER = '#0b2314';
+const FOIL = '#cfae66';
+
 const TABLE_SIZE = 1024;
 
 function fontFamilies() {
@@ -292,11 +309,9 @@ export function drawPaperMaps() {
   return { rough, normal };
 }
 
-// The intro spread: plain paper with the video's poster printed on it. The
-// scene lays the moving video over this once it plays. Like the old hero,
-// the footage is multiplied onto the paper, so its white backdrop becomes
-// the page.
-async function drawIntro(intro, { width }) {
+// The first spread, under the cover. Right: my photo, full bleed. Left (the
+// inside of the cover): a short note.
+async function drawIntro(intro, { width, fonts }) {
   const w = width * 2;
   const h = Math.round(width * PAGE_ASPECT);
   const canvas = document.createElement('canvas');
@@ -308,13 +323,38 @@ async function drawIntro(intro, { width }) {
   ctx.clip();
   ctx.fillStyle = intro.paper;
   ctx.fillRect(0, 0, w, h);
-  const poster = await loadImage(intro.poster);
-  if (poster) {
-    const scale = Math.max(w / poster.width, h / poster.height);
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(poster, (w - poster.width * scale) / 2, (h - poster.height * scale) / 2, poster.width * scale, poster.height * scale);
-    ctx.globalCompositeOperation = 'source-over';
+  wash(ctx, w, h, '#e9dfcf', 23);
+
+  const photo = await loadImage(intro.photo);
+  if (photo) {
+    const scale = Math.max(width / photo.width, h / photo.height);
+    const pw = photo.width * scale;
+    const ph = photo.height * scale;
+    ctx.drawImage(photo, width + (width - pw) / 2, (h - ph) / 2, pw, ph);
   }
+
+  // The note, centred on the left page.
+  const ink = '#2b3a2f';
+  const cx = width / 2;
+  const top = h * 0.4;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = ink;
+  ctx.globalAlpha = 0.6;
+  ctx.font = `600 ${width * 0.026}px ${fonts.sans}`;
+  ctx.letterSpacing = `${width * 0.026 * 0.24}px`;
+  ctx.fillText(intro.kicker.toUpperCase(), cx, top);
+  ctx.globalAlpha = 1;
+  serif(ctx, width * 0.075, fonts.serif);
+  ctx.fillText(intro.title, cx, top + width * 0.095);
+  ctx.font = `${width * 0.036}px ${fonts.sans}`;
+  ctx.letterSpacing = '0px';
+  ctx.globalAlpha = 0.75;
+  wrapText(ctx, intro.body, width * 0.6).forEach((line, i) => {
+    ctx.fillText(line, cx, top + width * 0.16 + i * width * 0.054);
+  });
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+
   grain(ctx, w, h, 0.05);
   return canvas;
 }
@@ -409,8 +449,139 @@ function drawEnd(end, { width, fonts }) {
   return { canvas, link };
 }
 
-// The cover: a dark board with chalky lettering.
-function drawCover(cover, { width, fonts, back = false }) {
+// The cover: bottle-green pebbled leather with a blind-embossed double frame
+// and a fleuron in each corner, and my name and description stamped in gold
+// foil in the middle. Besides the colour it returns two maps
+// the size of the cover board: a normal map (the scanned leather grain plus
+// the pressing) and a foil map (blue: foil, green: pressed and burnished)
+// that the scene turns into metalness and roughness. The back cover lies
+// face down, so it only needs its colour, which its turn-in shows.
+
+// Draw in board units: x from the spine, y up from the bottom edge.
+function toBoard(ctx, w, h, scale = 1) {
+  ctx.setTransform((w * scale) / COVER_W, 0, 0, (-h * scale) / COVER_D, 0, h * scale);
+}
+
+// One corner fleuron, in a frame where the corner is the origin and +x, +y
+// point into the cover: a leaf along the diagonal, a scroll running out
+// along each rule with a leaflet on it, and two dots.
+function fleuron(ctx) {
+  const leaf = (ax, ay, bx, by, width) => {
+    const mx = (ax + bx) / 2;
+    const my = (ay + by) / 2;
+    const len = Math.hypot(bx - ax, by - ay);
+    const px = (-(by - ay) / len) * width;
+    const py = ((bx - ax) / len) * width;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.quadraticCurveTo(mx + px, my + py, bx, by);
+    ctx.quadraticCurveTo(mx - px, my - py, ax, ay);
+    ctx.fill();
+  };
+  const dot = (x, y, r) => {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  leaf(0.028, 0.028, 0.078, 0.078, 0.014);
+  dot(0.088, 0.088, 0.0032);
+  dot(0.098, 0.098, 0.0022);
+  for (const swap of [false, true]) {
+    const p = (x, y) => (swap ? [y, x] : [x, y]);
+    ctx.beginPath();
+    ctx.moveTo(...p(0.032, 0.026));
+    ctx.bezierCurveTo(...p(0.048, 0.01), ...p(0.078, 0.008), ...p(0.092, 0.018));
+    ctx.bezierCurveTo(...p(0.1, 0.025), ...p(0.094, 0.034), ...p(0.087, 0.03));
+    ctx.stroke();
+    dot(...p(0.087, 0.03), 0.0026);
+    leaf(...p(0.058, 0.014), ...p(0.07, 0.036), 0.006);
+  }
+}
+
+// The pressed pattern, in board units.
+function embossPattern(ctx, color) {
+  const x0 = FRAME.spine;
+  const x1 = COVER_W - FRAME.edge;
+  const y0 = FRAME.edge;
+  const y1 = COVER_D - FRAME.edge;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // The outer rule.
+  ctx.lineWidth = 0.0055;
+  ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+  // The inner rule, its corners notched with a quarter circle.
+  const gap = 0.016;
+  const n = 0.03;
+  const [ix0, ix1, iy0, iy1] = [x0 + gap, x1 - gap, y0 + gap, y1 - gap];
+  ctx.lineWidth = 0.0026;
+  ctx.beginPath();
+  ctx.moveTo(ix0 + n, iy0);
+  ctx.lineTo(ix1 - n, iy0);
+  ctx.arc(ix1, iy0, n, Math.PI, Math.PI / 2, true);
+  ctx.lineTo(ix1, iy1 - n);
+  ctx.arc(ix1, iy1, n, Math.PI * 1.5, Math.PI, true);
+  ctx.lineTo(ix0 + n, iy1);
+  ctx.arc(ix0, iy1, n, 0, -Math.PI / 2, true);
+  ctx.lineTo(ix0, iy0 + n);
+  ctx.arc(ix0, iy0, n, Math.PI / 2, 0, true);
+  ctx.closePath();
+  ctx.stroke();
+  // A fleuron in each corner, pointing in.
+  for (const [cx, cy, sx, sy] of [
+    [ix0, iy0, 1, 1],
+    [ix1, iy0, -1, 1],
+    [ix1, iy1, -1, -1],
+    [ix0, iy1, 1, -1],
+  ]) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(sx, sy);
+    fleuron(ctx);
+    ctx.restore();
+  }
+}
+
+// The cover's lettering, centred in the frame: my name in the heading
+// serif, a short rule with a diamond, and the description in italics.
+function coverTitle(ctx, cover, { w, h, fonts, fill, scale = 1 }) {
+  ctx.save();
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  const u = w / COVER_W; // pixels per page width
+  const x = FRAME_CENTRE * u;
+  const y = h * 0.42;
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = fill;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  serif(ctx, 0.12 * u, fonts.serif);
+  ctx.fillText(cover.title, x, y);
+  // The rule: two short lines either side of a diamond.
+  const ry = y + 0.06 * u;
+  const d = 0.009 * u;
+  ctx.lineWidth = 0.0035 * u;
+  ctx.beginPath();
+  ctx.moveTo(x - 0.11 * u, ry);
+  ctx.lineTo(x - d * 2, ry);
+  ctx.moveTo(x + d * 2, ry);
+  ctx.lineTo(x + 0.11 * u, ry);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, ry - d);
+  ctx.lineTo(x + d, ry);
+  ctx.lineTo(x, ry + d);
+  ctx.lineTo(x - d, ry);
+  ctx.closePath();
+  ctx.fill();
+  serif(ctx, 0.05 * u, fonts.serif, 'italic');
+  wrapText(ctx, cover.subtitle, 0.62 * u).forEach((line, i) => {
+    ctx.fillText(line, x, ry + 0.085 * u + i * 0.065 * u);
+  });
+  ctx.restore();
+}
+
+function drawCover(cover, { width, fonts, leather, back = false }) {
   const w = width;
   const h = Math.round(width * PAGE_ASPECT);
   const canvas = document.createElement('canvas');
@@ -423,70 +594,164 @@ function drawCover(cover, { width, fonts, back = false }) {
   roundedRect(ctx, 0, 0, w, h, back ? [r, 0, 0, r] : [0, r, r, 0]);
   ctx.clip();
 
-  const bg = ctx.createRadialGradient(w * 0.6, h * 0.35, 0, w * 0.5, h * 0.5, w * 0.9);
-  bg.addColorStop(0, '#2b3036');
-  bg.addColorStop(1, '#16191c');
-  ctx.fillStyle = bg;
+  // Leather: the base green, toned by the scan's pebbles, with soft
+  // mottling and edges darkened by handling.
+  ctx.fillStyle = LEATHER;
   ctx.fillRect(0, 0, w, h);
-  wash(ctx, w, h, '#4a5058', 5);
-  // A faint chalk smudge, as if wiped by hand.
-  ctx.save();
-  ctx.globalAlpha = 0.05;
-  ctx.fillStyle = '#ffffff';
-  for (let i = 0; i < 60; i++) {
-    ctx.fillRect(Math.random() * w, Math.random() * h, Math.random() * w * 0.3, 1 + Math.random() * 3);
+  if (leather.rough) {
+    const size = Math.round(w / LEATHER_TILES);
+    const tile = document.createElement('canvas');
+    tile.width = tile.height = size;
+    tile.getContext('2d').drawImage(leather.rough, 0, 0, size, size);
+    ctx.save();
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = ctx.createPattern(tile, 'repeat');
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
   }
-  ctx.restore();
+  wash(ctx, w, h, '#3a6b4b', 5);
+  wash(ctx, w, h, '#0b1d12', 11);
+  const handled = ctx.createRadialGradient(w * 0.55, h * 0.45, w * 0.25, w * 0.5, h * 0.5, w * 0.85);
+  handled.addColorStop(0, 'rgba(6,16,10,0)');
+  handled.addColorStop(1, 'rgba(6,16,10,0.4)');
+  ctx.fillStyle = handled;
+  ctx.fillRect(0, 0, w, h);
 
   if (!back) {
-    const lettering = layer(w, h, (l) => {
-      l.fillStyle = '#f2ede4';
-      l.strokeStyle = '#f2ede4';
-      l.textAlign = 'center';
-      serif(l, w * 0.15, fonts.serif);
-      const [first, ...rest] = cover.title.split(' ');
-      l.fillText(first, w / 2, h * 0.3);
-      l.fillText(rest.join(' '), w / 2, h * 0.3 + w * 0.15);
-      // Hand-drawn swoosh under the name, and an arrow pointing at it.
-      l.globalAlpha = 0.8;
-      l.lineWidth = w * 0.006;
-      l.lineCap = 'round';
-      l.beginPath();
-      l.moveTo(w * 0.22, h * 0.3 + w * 0.2);
-      l.bezierCurveTo(w * 0.4, h * 0.3 + w * 0.18, w * 0.62, h * 0.3 + w * 0.215, w * 0.8, h * 0.3 + w * 0.185);
-      l.stroke();
-      l.beginPath();
-      l.moveTo(w * 0.88, h * 0.12);
-      l.lineTo(w * 0.78, h * 0.19);
-      l.moveTo(w * 0.78, h * 0.19);
-      l.lineTo(w * 0.81, h * 0.135);
-      l.moveTo(w * 0.78, h * 0.19);
-      l.lineTo(w * 0.84, h * 0.19);
-      l.stroke();
-      serif(l, w * 0.068, fonts.serif, 'italic');
-      l.globalAlpha = 0.78;
-      wrapText(l, cover.subtitle, w * 0.68).forEach((line, i) => {
-        l.fillText(line, w / 2, h * 0.3 + w * 0.3 + i * w * 0.085);
-      });
-      l.globalAlpha = 0.45;
-      serif(l, w * 0.035, fonts.serif);
-      l.fillText(cover.note, w / 2, h * 0.86);
-      chalkify(l, w, h, 0.5);
+    // Pressing burnishes the leather a shade darker.
+    ctx.save();
+    toBoard(ctx, w, h);
+    embossPattern(ctx, 'rgba(3,12,6,0.7)');
+    ctx.restore();
+
+    // Gold foil, a little uneven where it did not take.
+    const foil = layer(w, h, (l) => {
+      coverTitle(l, cover, { w, h, fonts, fill: FOIL });
+      l.globalCompositeOperation = 'source-atop';
+      const sheen = l.createLinearGradient(w * 0.3, 0, w * 0.75, 0);
+      sheen.addColorStop(0, 'rgba(255,240,200,0.25)');
+      sheen.addColorStop(0.5, 'rgba(120,85,30,0.2)');
+      sheen.addColorStop(1, 'rgba(255,240,200,0.2)');
+      l.fillStyle = sheen;
+      l.fillRect(0, 0, w, h);
+      chalkify(l, w, h, 0.04);
     });
-    ctx.drawImage(lettering, 0, 0);
+    ctx.drawImage(foil, 0, 0);
   }
 
   // Spine hinge groove.
   const hinge = ctx.createLinearGradient(back ? w : 0, 0, back ? w * 0.9 : w * 0.1, 0);
-  hinge.addColorStop(0, 'rgba(0,0,0,0.5)');
-  hinge.addColorStop(0.5, 'rgba(255,255,255,0.04)');
+  hinge.addColorStop(0, 'rgba(0,0,0,0.45)');
+  hinge.addColorStop(0.5, 'rgba(255,255,255,0.03)');
   hinge.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = hinge;
   ctx.fillRect(0, 0, w, h);
+  grain(ctx, w, h, 0.06);
 
-  grain(ctx, w, h, 0.12);
+  if (back) return { canvas };
+  return { canvas, normal: drawCoverNormal(cover, { w, h, fonts, leather }), foil: drawCoverFoil(cover, { w, h, fonts }) };
+}
+
+// The cover's normal map, at twice the colour's resolution so the grain
+// stays crisp: the leather scan tiled across it, flattened where the
+// pattern is pressed in, plus the pressing itself.
+function drawCoverNormal(cover, { w, h, fonts, leather }) {
+  const s = 2;
+  const nw = w * s;
+  const nh = h * s;
+  const mask = document.createElement('canvas');
+  mask.width = nw;
+  mask.height = nh;
+  const m = mask.getContext('2d');
+  m.fillStyle = '#000';
+  m.fillRect(0, 0, nw, nh);
+  m.save();
+  toBoard(m, w, h, s);
+  embossPattern(m, '#fff');
+  m.restore();
+  coverTitle(m, cover, { w, h, fonts, fill: '#fff', scale: s });
+  // Soften the pressing's walls.
+  const soft = document.createElement('canvas');
+  soft.width = nw;
+  soft.height = nh;
+  const sc = soft.getContext('2d', { willReadFrequently: true });
+  sc.filter = 'blur(1.6px)';
+  sc.drawImage(mask, 0, 0);
+  const press = sc.getImageData(0, 0, nw, nh).data;
+
+  let grainData = null;
+  let ts = 0;
+  if (leather.normal) {
+    ts = leather.normal.width;
+    const t = document.createElement('canvas');
+    t.width = t.height = ts;
+    const tc = t.getContext('2d', { willReadFrequently: true });
+    tc.drawImage(leather.normal, 0, 0);
+    grainData = tc.getImageData(0, 0, ts, ts).data;
+  }
+  const tile = nw / LEATHER_TILES;
+
+  const out = new ImageData(nw, nh);
+  const d = out.data;
+  const depth = 4; // how deep the pressing reads
+  const row = nw * 4;
+  for (let y = 0; y < nh; y++) {
+    const ty = Math.floor(((y % tile) / tile) * ts);
+    for (let x = 0; x < nw; x++) {
+      const i = y * row + x * 4;
+      const p = press[i] / 255;
+      const left = x > 0 ? press[i - 4] : press[i];
+      const right = x < nw - 1 ? press[i + 4] : press[i];
+      const up = y > 0 ? press[i - row] : press[i];
+      const down = y < nh - 1 ? press[i + row] : press[i];
+      // Pressed in: the height drops where the mask is white.
+      const ex = ((right - left) / 255) * depth;
+      const ey = ((up - down) / 255) * depth;
+
+      let lx = 0;
+      let ly = 0;
+      let lz = 1;
+      if (grainData) {
+        const j = (ty * ts + Math.floor(((x % tile) / tile) * ts)) * 4;
+        const flat = 2 * (1 - 0.85 * p);
+        lx = (grainData[j] / 127.5 - 1) * flat;
+        ly = (grainData[j + 1] / 127.5 - 1) * flat;
+        lz = grainData[j + 2] / 127.5 - 1;
+      }
+      const nx = lx + ex;
+      const ny = ly + ey;
+      const len = Math.hypot(nx, ny, lz) || 1;
+      d[i] = 127.5 * (nx / len + 1);
+      d[i + 1] = 127.5 * (ny / len + 1);
+      d[i + 2] = 127.5 * (lz / len + 1);
+      d[i + 3] = 255;
+    }
+  }
+  const normal = document.createElement('canvas');
+  normal.width = nw;
+  normal.height = nh;
+  normal.getContext('2d').putImageData(out, 0, 0);
+  return normal;
+}
+
+// Blue marks the foil (metal, smooth); green the pressing (burnished, a
+// little smoother than the leather around it).
+function drawCoverFoil(cover, { w, h, fonts }) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, w, h);
+  ctx.save();
+  toBoard(ctx, w, h);
+  embossPattern(ctx, 'rgb(0,255,0)');
+  ctx.restore();
+  coverTitle(ctx, cover, { w, h, fonts, fill: 'rgb(0,255,255)' });
   return canvas;
 }
+
 
 // The shadow under the book: a tight dark contact edge plus a wide soft
 // falloff, nudged down and right, away from the light at the top left.
@@ -558,13 +823,21 @@ export async function drawPages(book, { width, motifs, icons }) {
   );
   await document.fonts.ready;
 
-  const options = { width, fonts, motifs, icons };
-  const pages = [{ layers: [drawCover(book.cover, options)], part: 'whole', edge: '#1d2024' }];
+  // The leather scan: its normal map for the grain, its roughness map to
+  // tone the colour. Missing files leave plain green leather.
+  const [leatherNormal, leatherRough] = await Promise.all([
+    loadImage('/book/leather-normal.webp'),
+    loadImage('/book/leather-rough.webp'),
+  ]);
+  const leather = { normal: leatherNormal, rough: leatherRough };
+
+  const options = { width, fonts, motifs, icons, leather };
+  const front = drawCover(book.cover, options);
+  const pages = [{ layers: [front.canvas], part: 'whole', normal: front.normal, foil: front.foil }];
   if (book.intro) {
     const layers = [await drawIntro(book.intro, options)];
-    const video = { src: book.intro.video, paper: book.intro.paper };
-    pages.push({ layers, part: 'left', edge: book.intro.paper, video });
-    pages.push({ layers, part: 'right', edge: book.intro.paper, video });
+    pages.push({ layers, part: 'left', edge: book.intro.paper });
+    pages.push({ layers, part: 'right', edge: book.intro.paper });
   }
   for (const chapter of book.chapters) {
     const layers = await drawSpread(chapter, options);
@@ -575,6 +848,6 @@ export async function drawPages(book, { width, motifs, icons }) {
   const end = [endArt.canvas];
   pages.push({ layers: end, part: 'left', edge: '#f6f0e6' });
   pages.push({ layers: end, part: 'right', edge: '#f6f0e6', link: endArt.link });
-  pages.push({ layers: [drawCover(book.cover, { ...options, back: true })], part: 'whole', edge: '#1d2024' });
+  pages.push({ layers: [drawCover(book.cover, { ...options, back: true }).canvas], part: 'whole' });
   return pages;
 }
