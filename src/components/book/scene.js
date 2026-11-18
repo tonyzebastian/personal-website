@@ -2,8 +2,10 @@
 // howtotalktowhitekidsaboutracism.com (rebuilt from its behaviour, not its
 // code):
 //
-// - Every leaf is a stiff board 1 x 1.14 and 0.005 thick (covers 0.008),
-//   with rounded outer corners and solid edges, hinged at the spine.
+// - Every leaf is a board 1 x 1.14 and 0.005 thick (covers 0.008), with
+//   rounded outer corners and solid edges, hinged at the spine. The covers
+//   are rigid; a page flexes a little as it turns, its edge trailing behind
+//   the spine and sagging under its own weight.
 // - Reading is one timeline, `progress`: leaf k turns 0 -> 180 degrees as
 //   progress runs from k to k + 1, so jumping several pages turns them one
 //   after another. Progress always moves on a spring, so it keeps its speed
@@ -54,6 +56,9 @@ const PRESS_LIFT = 1.2; // how much further it lifts while pressed
 // fan out. From straight above a page only shows its edge once it is well
 // lifted, which is why these stay close together.
 const PAGE_FAN = [1, 0.86, 0.7, 0.52];
+const BEND_SPEED = 0.55; // radians a page's edge trails, per page per second
+const BEND_SAG = 0.18; // radians it sags under its weight when half raised
+const BEND_MAX = 0.85; // the most a page ever curves
 const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
 const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
 const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
@@ -100,6 +105,115 @@ function boardGeometry(t, w = W, d = D, r = RADIUS) {
   const uv = geometry.attributes.uv;
   for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / W, (D / 2 - pos.getZ(i)) / D);
   uv.needsUpdate = true;
+  return geometry;
+}
+
+// A page that can bend: the same outline as boardGeometry, cut into columns
+// across its width. `bend(angle)` curls it along that width, by `angle`
+// radians at the outer edge, without stretching it, so the art stays put.
+function bendablePage(t) {
+  const r = RADIUS;
+  const columns = [];
+  const plain = 18;
+  for (let i = 0; i < plain; i++) columns.push(((W - r) * i) / plain);
+  // Closer together around the corner, which follows the board's curve.
+  const curve = 10;
+  for (let i = 0; i <= curve; i++) columns.push(W - r * (1 - i / curve) ** 2);
+  const halfDepth = (x) => {
+    if (x <= W - r) return D / 2;
+    const along = 1 - Math.sqrt((W - x) / r);
+    return D / 2 - r * along * along;
+  };
+
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
+  const column = []; // which column each vertex belongs to
+  const vertex = (c, y, z, nx, ny, nz) => {
+    const x = columns[c];
+    positions.push(x, y, z);
+    normals.push(nx, ny, nz);
+    uvs.push(x / W, (D / 2 - z) / D);
+    column.push(c);
+    return column.length - 1;
+  };
+  const geometry = new THREE.BufferGeometry();
+
+  // The two faces: 0 the back (y = 0), 1 the front (y = t).
+  [
+    [0, -1],
+    [t, 1],
+  ].forEach(([y, ny], slot) => {
+    const start = indices.length;
+    const pairs = columns.map((x, c) => [vertex(c, y, -halfDepth(x), 0, ny, 0), vertex(c, y, halfDepth(x), 0, ny, 0)]);
+    for (let c = 0; c < columns.length - 1; c++) {
+      const [a, b] = pairs[c];
+      const [d, e] = pairs[c + 1];
+      if (ny > 0) indices.push(a, b, e, a, e, d);
+      else indices.push(a, e, b, a, d, e);
+    }
+    geometry.addGroup(start, indices.length - start, slot);
+  });
+
+  // The edge, all the way round: along one long side, across the outer edge,
+  // back along the other side and across the spine.
+  const last = columns.length - 1;
+  const outline = [];
+  for (let c = 0; c <= last; c++) outline.push([c, -halfDepth(columns[c])]);
+  for (let c = last; c >= 0; c--) outline.push([c, halfDepth(columns[c])]);
+  const start = indices.length;
+  outline.forEach(([c0, z0], i) => {
+    const [c1, z1] = outline[(i + 1) % outline.length];
+    const dx = columns[c1] - columns[c0];
+    const dz = z1 - z0;
+    const length = Math.hypot(dx, dz) || 1;
+    const [nx, nz] = [dz / length, -dx / length]; // outwards, for this direction
+    const a = vertex(c0, 0, z0, nx, 0, nz);
+    const b = vertex(c0, t, z0, nx, 0, nz);
+    const d = vertex(c1, t, z1, nx, 0, nz);
+    const e = vertex(c1, 0, z1, nx, 0, nz);
+    indices.push(a, d, b, a, e, d);
+  });
+  geometry.addGroup(start, indices.length - start, 2);
+
+  geometry.setIndex(indices);
+  const positionAttribute = new THREE.Float32BufferAttribute(positions, 3).setUsage(THREE.DynamicDrawUsage);
+  const normalAttribute = new THREE.Float32BufferAttribute(normals, 3).setUsage(THREE.DynamicDrawUsage);
+  geometry.setAttribute('position', positionAttribute);
+  geometry.setAttribute('normal', normalAttribute);
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+
+  // Each column's place along the curve, and the way it faces.
+  const curveX = new Float32Array(columns.length);
+  const curveY = new Float32Array(columns.length);
+  const curveAngle = new Float32Array(columns.length);
+  let current = 0;
+  geometry.bend = (angle) => {
+    if (angle === current) return;
+    current = angle;
+    // The spine stays stiff; most of the curve is towards the outer edge.
+    const angleAt = (x) => angle * (x / W) ** 1.5;
+    for (let c = 1; c < columns.length; c++) {
+      const step = columns[c] - columns[c - 1];
+      const middle = angleAt(columns[c] - step / 2);
+      curveX[c] = curveX[c - 1] + step * Math.cos(middle);
+      curveY[c] = curveY[c - 1] + step * Math.sin(middle);
+      curveAngle[c] = angleAt(columns[c]);
+    }
+    for (let i = 0; i < column.length; i++) {
+      const c = column[i];
+      const cos = Math.cos(curveAngle[c]);
+      const sin = Math.sin(curveAngle[c]);
+      const y = positions[i * 3 + 1];
+      positionAttribute.setXY(i, curveX[c] - y * sin, curveY[c] + y * cos);
+      const nx = normals[i * 3];
+      const ny = normals[i * 3 + 1];
+      normalAttribute.setXY(i, nx * cos - ny * sin, nx * sin + ny * cos);
+    }
+    positionAttribute.needsUpdate = true;
+    normalAttribute.needsUpdate = true;
+  };
   return geometry;
 }
 
@@ -442,7 +556,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const board = isCover
       ? { cloth: canvasTexture(pages[k === 0 ? 0 : pages.length - 1].layers[0]), mirror: k !== 0 }
       : null;
-    const geometry = isCover ? boardGeometry(t, WC, DC, COVER_RADIUS) : boardGeometry(t);
+    const geometry = isCover ? boardGeometry(t, WC, DC, COVER_RADIUS) : bendablePage(t);
     const mesh = new THREE.Mesh(track(geometry), [
       pageMaterial(pages[2 * k + 1], true, board),
       pageMaterial(pages[2 * k], false, board),
@@ -450,10 +564,11 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     ]);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    mesh.frustumCulled = false; // a bent page leaves its flat bounds
     const pivot = new THREE.Group();
     pivot.add(mesh);
     book.add(pivot);
-    leaves.push({ pivot, mesh, t, theta: 0 });
+    leaves.push({ pivot, mesh, t, theta: 0, flex: 0, geometry });
   }
 
   // Spreads 1..N each use one layers array; find it for the parallax.
@@ -559,8 +674,25 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     coverLift = approach(coverLift, overCover ? HOVER_LIFT : 0, 6, dt);
   }
 
-  function layout() {
-    // Leaf angles from the timeline, plus whatever the mouse is lifting.
+  // How far each page wants to curve: its edge trails the way it is turning,
+  // and it sags while raised. Easing this gives the page a little follow-through.
+  function moveBends(dt) {
+    setLeafAngles();
+    let moved = false;
+    for (let i = 1; i < lastSpread; i++) {
+      const leaf = leaves[i];
+      const turning = progress > i && progress < i + 1;
+      const trail = turning ? clamp(-velocity * BEND_SPEED, -BEND_MAX, BEND_MAX) : 0;
+      const sag = -BEND_SAG * Math.sin(2 * leaf.theta);
+      const flex = approach(leaf.flex, reduceMotion ? 0 : trail + sag, 12, dt);
+      if (flex !== leaf.flex) moved = true;
+      leaf.flex = flex;
+    }
+    return moved;
+  }
+
+  // Leaf angles from the timeline, plus whatever the mouse is lifting.
+  function setLeafAngles() {
     leaves.forEach((leaf, i) => {
       leaf.theta = Math.PI * clamp(progress - i, 0, 1);
     });
@@ -572,6 +704,16 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       const k = liftSpread - 1 - depth;
       if (k > 0 || (k === 0 && depth === 0)) leaves[k].theta = clamp(leaves[k].theta - lift.left * share, 0, Math.PI);
     });
+  }
+
+  function layout() {
+    setLeafAngles();
+    // A page can only curve as far as it has room to above the pile below.
+    for (let i = 1; i < lastSpread; i++) {
+      const leaf = leaves[i];
+      const room = 1.5 * Math.sin(leaf.theta);
+      leaf.geometry.bend(clamp(leaf.flex, -room, room) || 0);
+    }
 
     // Stack heights: flat leaves rest on those below them on their side;
     // a turning board swings about a hinge between the two piles.
@@ -651,11 +793,12 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
     const before = [progress, coverLift, lift.left, lift.right];
     moveProgress(dt);
     moveLifts(dt);
+    const bent = moveBends(dt);
     const sheen = mouse.ex;
     // Mouse, eased: it only moves the light's sheen across the paper.
     mouse.ex = approach(mouse.ex, mouse.x, 3, dt);
     if (Math.abs(mouse.x - mouse.ex) < 0.005) mouse.ex = mouse.x;
-    const leavesMoved = [progress, coverLift, lift.left, lift.right].some((v, i) => v !== before[i]);
+    const leavesMoved = bent || [progress, coverLift, lift.left, lift.right].some((v, i) => v !== before[i]);
     if (leavesMoved) renderer.shadowMap.needsUpdate = true;
     const moving = leavesMoved || mouse.ex !== sheen;
     if (moving || dirty) draw();
