@@ -3,6 +3,8 @@
 // canvas, each page shows its half). Outer corners are cut round with
 // transparency, so the pages need no rounded geometry.
 
+import { buildCoverNormal } from './coverNormal';
+
 export const PAGE_ASPECT = 1.2 / 1.05; // page depth (along the spine) / page width, as the reference's boards
 
 // Hard covers overhang the pages by this much on the three outer sides.
@@ -656,7 +658,7 @@ function drawCover(cover, { width, fonts, leather, back = false }) {
 // The cover's normal map, at twice the colour's resolution so the grain
 // stays crisp: the leather scan tiled across it, flattened where the
 // pattern is pressed in, plus the pressing itself.
-function drawCoverNormal(cover, { w, h, fonts, leather }) {
+async function drawCoverNormal(cover, { w, h, fonts, leather }) {
   const s = 2;
   const nw = w * s;
   const nh = h * s;
@@ -681,58 +683,39 @@ function drawCoverNormal(cover, { w, h, fonts, leather }) {
   const press = sc.getImageData(0, 0, nw, nh).data;
 
   let grainData = null;
-  let ts = 0;
+  let grainSize = 0;
   if (leather.normal) {
-    ts = leather.normal.width;
+    grainSize = leather.normal.width;
     const t = document.createElement('canvas');
-    t.width = t.height = ts;
+    t.width = t.height = grainSize;
     const tc = t.getContext('2d', { willReadFrequently: true });
     tc.drawImage(leather.normal, 0, 0);
-    grainData = tc.getImageData(0, 0, ts, ts).data;
+    grainData = tc.getImageData(0, 0, grainSize, grainSize).data;
   }
-  const tile = nw / LEATHER_TILES;
 
-  const out = new ImageData(nw, nh);
-  const d = out.data;
-  const depth = 4; // how deep the pressing reads
-  const row = nw * 4;
-  for (let y = 0; y < nh; y++) {
-    const ty = Math.floor(((y % tile) / tile) * ts);
-    for (let x = 0; x < nw; x++) {
-      const i = y * row + x * 4;
-      const p = press[i] / 255;
-      const left = x > 0 ? press[i - 4] : press[i];
-      const right = x < nw - 1 ? press[i + 4] : press[i];
-      const up = y > 0 ? press[i - row] : press[i];
-      const down = y < nh - 1 ? press[i + row] : press[i];
-      // Pressed in: the height drops where the mask is white.
-      const ex = ((right - left) / 255) * depth;
-      const ey = ((up - down) / 255) * depth;
-
-      let lx = 0;
-      let ly = 0;
-      let lz = 1;
-      if (grainData) {
-        const j = (ty * ts + Math.floor(((x % tile) / tile) * ts)) * 4;
-        const flat = 2 * (1 - 0.85 * p);
-        lx = (grainData[j] / 127.5 - 1) * flat;
-        ly = (grainData[j + 1] / 127.5 - 1) * flat;
-        lz = grainData[j + 2] / 127.5 - 1;
-      }
-      const nx = lx + ex;
-      const ny = ly + ey;
-      const len = Math.hypot(nx, ny, lz) || 1;
-      d[i] = 127.5 * (nx / len + 1);
-      d[i + 1] = 127.5 * (ny / len + 1);
-      d[i + 2] = 127.5 * (lz / len + 1);
-      d[i + 3] = 255;
-    }
-  }
+  const job = { width: nw, height: nh, press, grain: grainData, grainSize, tiles: LEATHER_TILES };
+  const pixels = await inWorker(job).catch(() => buildCoverNormal(job));
   const normal = document.createElement('canvas');
   normal.width = nw;
   normal.height = nh;
-  normal.getContext('2d').putImageData(out, 0, 0);
+  normal.getContext('2d').putImageData(new ImageData(pixels, nw, nh), 0, 0);
   return normal;
+}
+
+// Runs the normal map's sums off the main thread, so the page stays smooth.
+function inWorker(job) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./coverNormal.worker.js', import.meta.url));
+    worker.onmessage = ({ data }) => {
+      worker.terminate();
+      resolve(data);
+    };
+    worker.onerror = (error) => {
+      worker.terminate();
+      reject(error);
+    };
+    worker.postMessage(job);
+  });
 }
 
 // Blue marks the foil (metal, smooth); green the pressing (burnished, a
@@ -833,7 +816,7 @@ export async function drawPages(book, { width, motifs, icons }) {
 
   const options = { width, fonts, motifs, icons, leather };
   const front = drawCover(book.cover, options);
-  const pages = [{ layers: [front.canvas], part: 'whole', normal: front.normal, foil: front.foil }];
+  const pages = [{ layers: [front.canvas], part: 'whole', foil: front.foil }];
   if (book.intro) {
     const layers = [await drawIntro(book.intro, options)];
     pages.push({ layers, part: 'left', edge: book.intro.paper });
@@ -849,5 +832,6 @@ export async function drawPages(book, { width, motifs, icons }) {
   pages.push({ layers: end, part: 'left', edge: '#f6f0e6' });
   pages.push({ layers: end, part: 'right', edge: '#f6f0e6', link: endArt.link });
   pages.push({ layers: [drawCover(book.cover, { ...options, back: true }).canvas], part: 'whole' });
+  pages[0].normal = await front.normal; // being built alongside the pages above
   return pages;
 }

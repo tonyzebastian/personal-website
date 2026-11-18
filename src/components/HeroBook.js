@@ -6,8 +6,8 @@ import { useReducedMotion } from 'motion/react';
 import { Motif, MOTIF_ICON } from '@/components/book/Motifs';
 
 // The storybook hero: a WebGL board book lying on the page, seen from above
-// (see book/scene.js). It starts open on the first spread; each spread is
-// one side of me. Dragging is the whole interface: drag left to open and turn
+// (see book/scene.js). It shows its cover, then opens itself onto the first
+// spread; each spread is one side of me. Dragging is the whole interface: drag left to open and turn
 // forward, right to turn back, and flick right fast to close. Keyboard: the
 // arrow keys turn pages, Enter opens and Escape closes.
 //
@@ -86,6 +86,8 @@ export default function HeroBook({ book }) {
           onSpread: setSpread,
         });
         sceneRef.current = scene;
+        await scene.ready;
+        if (cancelled) return;
         setStatus('ready');
       } catch (error) {
         console.error(error);
@@ -141,7 +143,7 @@ export default function HeroBook({ book }) {
         <canvas
           ref={canvasRef}
           aria-hidden
-          className="pointer-events-none absolute -top-[18%] -left-[7%] h-[156%] w-[114%] sm:-left-[14%] sm:w-[128%]"
+          className={`pointer-events-none absolute -top-[18%] -left-[7%] h-[156%] w-[114%] transition-opacity duration-300 ease-snappy motion-reduce:transition-none sm:-left-[14%] sm:w-[128%] ${status === 'ready' ? 'opacity-100' : 'opacity-0'}`}
         />
         {status === 'loading' && (
           <p className="absolute inset-0 flex items-center justify-center font-serif italic text-ink/40">Loading…</p>

@@ -59,6 +59,7 @@ const PAGE_FAN = [1, 0.86, 0.7, 0.52];
 const BEND_SPEED = 0.55; // radians a page's edge trails, per page per second
 const BEND_SAG = 0.18; // radians it sags under its weight when half raised
 const BEND_MAX = 0.85; // the most a page ever curves
+const INTRO_DELAY = 450; // ms the closed cover shows before the book opens itself
 const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
 const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
 const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
@@ -576,8 +577,9 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   for (let s = 1; s < leafCount; s++) spreadLayers[s] = pages[2 * s].layers;
 
   // State
-  // The book starts open on the first spread.
-  const startSpread = 1;
+  // The book shows its cover, then opens itself once it is ready. With
+  // reduced motion it simply starts open.
+  const startSpread = reduceMotion ? 1 : 0;
   let progress = startSpread; // the reading timeline: 0 closed, s = spread s open
   let velocity = 0; // of progress, in pages per second
   let target = startSpread; // the spread being turned to
@@ -587,7 +589,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   let hoverDirty = false;
   let hit = null; // where the mouse meets the book
   let coverLift = 0;
-  let liftSpread = startSpread; // the spread whose pages are lifted
+  let liftSpread = 1; // the spread whose pages are lifted
   const lift = { left: 0, right: 0 };
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
   let width = 1;
@@ -599,6 +601,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   let frameId = 0;
   let last = performance.now();
   let started = false;
+  let disposed = false;
+  let introTimer = 0;
   let dirty = true;
   renderer.shadowMap.needsUpdate = true;
 
@@ -610,6 +614,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   }
 
   function goTo(next) {
+    clearTimeout(introTimer);
     next = clamp(Math.round(next), 0, lastSpread);
     if (next === target && !drag) return;
     target = next;
@@ -829,6 +834,7 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
 
   function onPointerDown(event) {
     if (event.button !== 0 || event.target.closest('a, button')) return;
+    clearTimeout(introTimer);
     // A touch has no hover, so its page lifts from here.
     hit = hitsBook(event);
     drag = { startX: event.clientX, startProgress: progress, to: progress, moved: false, samples: [[performance.now(), progress]] };
@@ -957,13 +963,38 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
   };
   canvas.addEventListener('webglcontextrestored', onContextRestored);
 
+  // Gets everything onto the graphics card a little at a time, so the first
+  // frame does not hold the page up: shaders compile in the background, then
+  // each picture uploads, handing back to the browser between them.
+  async function prepare() {
+    layout();
+    await renderer.compileAsync(scene, camera).catch(() => {});
+    const uploaded = new Set();
+    let sliceStart = performance.now();
+    for (const thing of disposables) {
+      if (disposed) return;
+      if (!thing.isTexture || uploaded.has(thing.source)) continue;
+      uploaded.add(thing.source);
+      renderer.initTexture(thing);
+      if (performance.now() - sliceStart > 6) {
+        await new Promise((resolve) => setTimeout(resolve));
+        sliceStart = performance.now();
+      }
+    }
+    if (disposed) return;
+    measure();
+    draw();
+    started = true;
+    if (startSpread === 0) introTimer = setTimeout(() => goTo(1), INTRO_DELAY);
+  }
+
   measure();
   onSpread?.(startSpread);
-  draw();
-  started = true;
+  const ready = prepare();
 
   return {
     goTo,
+    ready, // resolves once the book has drawn its first frame
     // Where the printed link on the last page appears, as percentages of
     // the frame, for laying a real link over it. The book lies flat and
     // centred there, so this holds for as long as the frame keeps its size.
@@ -985,6 +1016,8 @@ export function createBookScene({ canvas, frame, eventTarget, pages, reduceMotio
       return { left, top, width: right - left, height: bottom - top };
     },
     dispose() {
+      disposed = true;
+      clearTimeout(introTimer);
       cancelAnimationFrame(frameId);
       resizeObserver.disconnect();
       visibility.disconnect();
