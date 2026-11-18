@@ -72,7 +72,7 @@ Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and ren
 - `Contact`: "Start a conversation" with X, LinkedIn and GitHub buttons, at the bottom of the About page
 - `YouTubeEmbed`: a YouTube video that shows only its thumbnail until played, then loads the privacy-enhanced player
 - `Expandable`: a button that unfolds a server-rendered section below it
-- `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip
+- `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip. `pauseOnScroll` also pauses it while its scroller moves (playing again 150ms after it stops); use it where several clips show at once (In Motion): with two or more videos playing, Chromium drops the page to the videos' frame rate (about 30fps) and scrolling judders
 - `MediaGrid`: media side by side in a row
 
 ## Performance

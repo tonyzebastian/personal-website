@@ -78,7 +78,7 @@ function Clip({ video, title, hint }) {
   return (
     <section aria-labelledby={headingId} className="group/item flex flex-col gap-2">
       <div className="overflow-hidden rounded-xl bg-body/[0.03]" style={{ aspectRatio: '4 / 3' }}>
-        <AutoVideo src={video} aria-label={title} className="size-full object-cover" />
+        <AutoVideo src={video} aria-label={title} pauseOnScroll className="size-full object-cover" />
       </div>
       <div className="flex min-h-8 items-center">
         <Caption headingId={headingId} title={title} hint={hint} />
