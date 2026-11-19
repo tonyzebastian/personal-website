@@ -4,7 +4,7 @@ import Hero from '@/components/Hero';
 import Musings from '@/components/Musings';
 import Playground from '@/components/Playground';
 import IntroFlow from '@/components/IntroFlow';
-import { musings } from '@/lib/content';
+import { bio, musings } from '@/lib/content';
 import { playground } from '@/lib/playground';
 
 // The reading column: 512px, centred, with the page gutters.
@@ -15,6 +15,13 @@ function Column({ className = '', children }) {
     </div>
   );
 }
+
+const FOOTER_LINKS = [
+  { label: bio.email, href: `mailto:${bio.email}` },
+  { label: 'X', href: bio.social.x },
+  { label: 'LinkedIn', href: bio.social.linkedin },
+  { label: 'GitHub', href: bio.social.github },
+];
 
 export default function HomeList() {
   return (
@@ -40,6 +47,25 @@ export default function HomeList() {
             cover: item.cover,
           }))}
         />
+      </Column>
+
+      {/* Footer, after shahimim.com: plain links in a row. */}
+      <Column>
+        <footer>
+          <ul className="flex flex-wrap gap-x-8 gap-y-2">
+            {FOOTER_LINKS.map(({ label, href }) => (
+              <li key={label}>
+                <a
+                  href={href}
+                  {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="rounded-sm text-body/80 outline-none transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </footer>
       </Column>
     </IntroFlow>
   );

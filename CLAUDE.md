@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Personal portfolio of Tony Sebastian, a visual product designer. One home page has my photo and a short about (which links to each job), then musings and the Playground grid; every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The address bar stays on `/` while a panel is open, so a refresh always lands on home.
+Personal portfolio of Tony Sebastian, a visual product designer. One home page has my photo and a short about (which links to each job), then musings, the Playground grid and a footer row of links (email and socials from `bio` in `content.js`); every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The address bar stays on `/` while a panel is open, so a refresh always lands on home.
 
 ## Technology stack
 

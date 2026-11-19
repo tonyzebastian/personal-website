@@ -192,6 +192,7 @@ export const musings = [
 
 export const bio = {
   intro: "I like to build things. I'm into design, art and cinematography. I believe in consistency, side projects and letting life shape my craft.",
+  email: "tonyzeb.design@gmail.com",
   social: {
     x: "https://x.com/tonyzebastian",
     linkedin: "https://www.linkedin.com/in/tonyzebastian/",
