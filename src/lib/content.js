@@ -267,14 +267,18 @@ export const homeAbout = [
   [
     'Most recently I led design at ',
     { label: 'Sundial', href: '/sundial' },
-    ', an AI analytics startup, where more and more of my design work happened directly in code. Before that I spent three years at ',
+    ' (acq. by Meta), where more and more of my work happened directly in code. Before that I spent three years designing for developers at ',
     { label: 'Postman', href: '/postman' },
-    ', designing for the developers who rely on it every day.',
+    '.',
   ],
   [
-    "My path here wasn't linear: a master's in marketing, a job at ",
+    'I started at ',
     { label: 'Infosys', href: '/infosys' },
-    ', then teaching myself design. Outside work I draw, film and keep a side project or two going.',
+    " after a master's in marketing, taught myself design, then worked at ",
+    { label: 'AVRL', href: '/avrl' },
+    ' and ',
+    { label: 'Hypersonix', href: '/hypersonix' },
+    '. Outside work I draw, film and keep a side project or two going.',
   ],
 ];
 
@@ -297,7 +301,7 @@ export const storybook = {
     kicker: 'Chapter one',
     title: "Hello, I'm Tony.",
     body: 'This page is still being written. Turn the page to meet the designer, the coder and the storyteller.',
-    label: "Hello, I'm Tony. A photo of me, smiling, on the first page.",
+    label: "Hello, I'm Tony. A photo of me in a green sweater by the water, on the first page.",
   },
   chapters: [
     {

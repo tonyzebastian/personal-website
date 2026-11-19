@@ -5,7 +5,7 @@ import Row from '@/components/Row';
 import ShowMore from '@/components/ShowMore';
 import CoverGrid from '@/components/CoverGrid';
 import IntroFlow from '@/components/IntroFlow';
-import { experience, musings } from '@/lib/content';
+import { musings } from '@/lib/content';
 import { playground } from '@/lib/playground';
 
 // Rows shown before "View more".
@@ -19,16 +19,6 @@ function Section({ id, title, children }) {
     </section>
   );
 }
-
-const jobRow = (job) => (
-  <Row
-    key={job.slug}
-    href={`/${job.slug}`}
-    icon={job.image}
-    title={job.name}
-    meta={[job.period, job.role]}
-  />
-);
 
 const musingRow = (musing) => (
   <Row key={musing.link} href={musing.link} title={musing.name} meta={[musing.date]} />
@@ -51,12 +41,6 @@ export default function HomeList() {
     <IntroFlow className="flex flex-col gap-16 pt-16 pb-24 lg:pt-24 lg:pb-20">
       <Column className="intro-hero">
         <Hero />
-      </Column>
-
-      <Column>
-        <Section id="experience" title="Experience">
-          {experience.map(jobRow)}
-        </Section>
       </Column>
 
       <Column>
