@@ -2,7 +2,7 @@
 // while a panel is open beside it.
 import Hero from '@/components/Hero';
 import Musings from '@/components/Musings';
-import CoverGrid from '@/components/CoverGrid';
+import Playground from '@/components/Playground';
 import IntroFlow from '@/components/IntroFlow';
 import { musings } from '@/lib/content';
 import { playground } from '@/lib/playground';
@@ -30,24 +30,16 @@ export default function HomeList() {
       </Column>
 
       <Column>
-        {/* Same heading as Musings; the row matches its height so the gap to
-            the content is the same. */}
-        <section aria-labelledby="playground" className="flex flex-col gap-2">
-          <div className="flex min-h-7 items-center">
-            <h2 id="playground" className="font-sans text-base font-semibold tracking-normal">
-              Playground
-            </h2>
-          </div>
-          <CoverGrid
-            items={playground.map((item) => ({
-              href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
-              external: item.type === 'link',
-              title: item.title,
-              size: item.size,
-              cover: item.cover,
-            }))}
-          />
-        </section>
+        <Playground
+          items={playground.map((item) => ({
+            href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
+            external: item.type === 'link',
+            title: item.title,
+            kind: item.kind,
+            size: item.size,
+            cover: item.cover,
+          }))}
+        />
       </Column>
     </IntroFlow>
   );

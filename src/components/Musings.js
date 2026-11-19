@@ -4,8 +4,9 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Columns, Rows } from '@phosphor-icons/react';
 import Row from '@/components/Row';
 import { ActivePathContext, PanelLink } from '@/components/panel/ActivePath';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { MUSINGS_VIEW_KEY } from '@/lib/musings-view';
+import ViewToggle from '@/components/ViewToggle';
+import { MORPH, STAGGER, cloneBox, cloneLayer, cloneText, finishMorph, flipBox, flipText, measure } from '@/lib/morph';
+import { VIEW_KEYS } from '@/lib/views';
 
 // The Musings section of the home page, after the Thoughts rail on
 // justinschueler.com. Two views of the same pieces, switched from the header:
@@ -16,7 +17,7 @@ import { MUSINGS_VIEW_KEY } from '@/lib/musings-view';
 //          card to bring it forward, the front one to read it
 //   list   the plain rows
 // The view lives on <html data-musings> (set before paint by
-// MUSINGS_VIEW_SCRIPT for returning visitors), so the server renders both and
+// VIEW_SCRIPT in lib/views.js for returning visitors), so the server renders both and
 // CSS shows one: no flash, nothing to hydrate first. globals.css has the styles
 // (.musings-*).
 //
@@ -24,9 +25,6 @@ import { MUSINGS_VIEW_KEY } from '@/lib/musings-view';
 // each title and date flies to its new place while a copy of the old one fades
 // out over it, the paper grows out of its row or shrinks back into it, and the
 // section's height eases to fit.
-
-const MORPH = { duration: 400, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }; // --ease-snappy
-const STAGGER = 30; // ms between pieces
 
 const getView = () =>
   typeof document !== 'undefined' && document.documentElement.dataset.musings === 'list' ? 'list' : 'cards';
@@ -56,7 +54,7 @@ export default function Musings({ items }) {
     document.documentElement.dataset.musings = next;
     setView(next);
     try {
-      localStorage.setItem(MUSINGS_VIEW_KEY, next);
+      localStorage.setItem(VIEW_KEYS.musings, next);
     } catch {}
 
     const toHeight = panes.getBoundingClientRect().height;
@@ -160,7 +158,15 @@ export default function Musings({ items }) {
         <h2 id="musings" className="font-sans text-base font-semibold tracking-normal">
           Musings
         </h2>
-        <ViewToggle view={view} onChange={switchTo} />
+        <ViewToggle
+          name="musings"
+          view={view}
+          onChange={switchTo}
+          options={[
+            { value: 'list', label: 'List view', Icon: Rows },
+            { value: 'cards', label: 'Card view', Icon: Columns },
+          ]}
+        />
       </div>
 
       <div data-panes>
@@ -176,47 +182,6 @@ export default function Musings({ items }) {
         </div>
       </div>
     </section>
-  );
-}
-
-// List and Cards as two icons; the one showing is ink on a light fill, the
-// other faded. They appear while the pointer is over the section (or focus is
-// inside it), and always on touch screens (.musings-toggle in globals.css).
-// Each names itself in a tooltip on hover or focus.
-function ViewToggle({ view, onChange }) {
-  const button =
-    'grid size-7 place-items-center rounded-md outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring';
-  const options = [
-    { value: 'list', label: 'List view', Icon: Rows },
-    { value: 'cards', label: 'Card view', Icon: Columns },
-  ];
-  return (
-    <TooltipProvider>
-      <div role="group" aria-label="Musings view" className="musings-toggle -mr-1.5 flex">
-        {options.map(({ value, label, Icon }) => (
-          <Tooltip key={value}>
-            {/* closeOnClick off: Base UI closes a tooltip on click and keeps
-                it shut until the pointer leaves, so after switching views the
-                icons looked dead to hover. */}
-            <TooltipTrigger
-              closeOnClick={false}
-              render={
-                <button
-                  type="button"
-                  aria-label={label}
-                  aria-pressed={view === value}
-                  onClick={() => onChange(value)}
-                  className={`musings-toggle-${value} ${button}`}
-                />
-              }
-            >
-              <Icon size={16} weight="bold" aria-hidden />
-            </TooltipTrigger>
-            <TooltipContent>{label}</TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-    </TooltipProvider>
   );
 }
 
@@ -617,99 +582,4 @@ function snapshot(section, view) {
       fades: [...item.querySelectorAll('[data-fade]')],
     };
   });
-}
-
-function measure(el, text = true) {
-  if (!el) return null;
-  const rect = el.getBoundingClientRect();
-  const k = el.offsetWidth ? rect.width / el.offsetWidth : 1;
-  const style = getComputedStyle(el);
-  // Text starts after any left padding (a row's date leaves room for a pipe).
-  const pad = text ? parseFloat(style.paddingLeft) * k || 0 : 0;
-  return {
-    el,
-    left: rect.left + pad,
-    top: rect.top,
-    width: rect.width,
-    height: rect.height,
-    k,
-    font: parseFloat(style.fontSize) * k,
-  };
-}
-
-// From old to new for text: move its top left onto the old one and size it
-// to the old font. Translation is in the element's own (possibly shrunk) space.
-function flipText(a, b) {
-  return `translate(${(a.left - b.left) / b.k}px, ${(a.top - b.top) / b.k}px) scale(${a.font / b.font})`;
-}
-
-// From old to new for a box: cover the old rectangle exactly.
-function flipBox(a, b) {
-  return `translate(${(a.left - b.left) / b.k}px, ${(a.top - b.top) / b.k}px) scale(${a.width / b.width}, ${a.height / b.height})`;
-}
-
-// A layer inside the section for the outgoing copies, so they scroll with the
-// page if it moves mid-morph; the list column's own overflow clips anything
-// flying past its edge, so nothing crosses over the panel. `origin` turns
-// screen positions into the layer's.
-function cloneLayer(section) {
-  const layer = document.createElement('div');
-  layer.setAttribute('aria-hidden', 'true');
-  layer.dataset.morphLayer = '';
-  Object.assign(layer.style, { position: 'absolute', inset: '0', pointerEvents: 'none', zIndex: '40' });
-  section.appendChild(layer);
-  const r = section.getBoundingClientRect();
-  layer.origin = { left: r.left, top: r.top };
-  return layer;
-}
-
-function cloneText(m, layer) {
-  const el = m.el;
-  const style = getComputedStyle(el);
-  const copy = el.cloneNode(true);
-  copy.removeAttribute('data-morph');
-  Object.assign(copy.style, {
-    position: 'absolute',
-    left: `${m.left - layer.origin.left}px`,
-    top: `${m.top - layer.origin.top}px`,
-    width: `${el.offsetWidth - parseFloat(style.paddingLeft)}px`,
-    margin: '0',
-    padding: '0',
-    transformOrigin: '0 0',
-    fontFamily: style.fontFamily,
-    fontSize: style.fontSize,
-    fontWeight: style.fontWeight,
-    lineHeight: style.lineHeight,
-    letterSpacing: style.letterSpacing,
-    color: style.color,
-    whiteSpace: style.whiteSpace,
-    overflow: 'hidden',
-    textOverflow: style.textOverflow,
-  });
-  layer.appendChild(copy);
-  return copy;
-}
-
-function cloneBox(el, m, layer) {
-  const copy = el.cloneNode(true);
-  copy.querySelectorAll('[data-morph]').forEach((node) => node.removeAttribute('data-morph'));
-  Object.assign(copy.style, {
-    position: 'absolute',
-    left: `${m.left - layer.origin.left}px`,
-    top: `${m.top - layer.origin.top}px`,
-    width: `${m.width / m.k}px`,
-    height: `${m.height / m.k}px`,
-    transformOrigin: '0 0',
-  });
-  layer.appendChild(copy);
-  return copy;
-}
-
-function finishMorph(busy) {
-  const run = busy.current;
-  if (!run) return;
-  busy.current = null;
-  run.animations.forEach((anim) => anim.cancel());
-  run.clones.forEach((node) => node.remove());
-  document.querySelectorAll('[data-panes]').forEach((panes) => (panes.style.overflowY = ''));
 }

@@ -60,7 +60,9 @@ export default function CoverGrid({ items }) {
                 )}
               </span>
               <span className="bento-title flex items-center gap-1">
-                <span className="truncate">{item.title}</span>
+                <span data-morph="title" className="truncate">
+                  {item.title}
+                </span>
                 {item.external && (
                   <>
                     <ArrowUpRight weight="bold" aria-hidden className="size-3 shrink-0" />

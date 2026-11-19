@@ -10,12 +10,14 @@
 //            no page here
 // `cover` is a short clip (`video`) or a still (`image`) in public/playground,
 // with an optional `position` for the part the tile's crop keeps (CSS
-// object-position) and `zoom` to crop in further, anchored at that position; or
+// object-position), `zoom` to crop in further, anchored at that position, and
+// `aspect` (width / height) for the hover preview in the home list; or
 // `{ placeholder: true }` for a plain card with the title until there's art.
 // `size` sets the tile in the home bento: 'tall' (one column, two rows),
 // 'wide' (both columns, one row), or square when left out. Tiles fill the two
 // columns in this order, so a tall tile needs two squares beside it and the
 // rows must close; reorder or resize entries together (see CoverGrid).
+// `kind` is the one or two words on the right of its row in the home list.
 // `tagline` (optional) follows the title in the panel's top row, after a pipe.
 // `links` (optional) { phrase: url } turns those words in the tagline and
 // description into highlight links (LinkedText).
@@ -27,20 +29,22 @@ export const playground = [
   {
     slug: 'flock-in-flight',
     title: 'Flock in Flight',
+    kind: 'Interactive',
     tagline: 'Press and hold to fly faster',
     type: 'single',
     piece: 'flock-in-flight',
     fill: true,
     size: 'wide',
-    cover: { image: '/playground/covers/flock-in-flight.webp' },
+    cover: { image: '/playground/covers/flock-in-flight.webp', aspect: '350 / 394' },
     description: 'A flock of birds gliding over landscapes that slowly change beneath them. Press and hold to fly faster.',
   },
   {
     slug: 'in-motion',
     title: 'In Motion',
+    kind: 'Animation',
     tagline: 'Animation work for clients, and some just for fun',
     type: 'clips',
-    cover: { video: '/playground/animation/1.mp4' },
+    cover: { video: '/playground/animation/1.mp4', aspect: '400 / 300' },
     description: "Animation lets me express emotions and ideas uniquely. I'm particularly fond of frame-by-frame animation, playful logo reveals, and creating small moments that connect with people.",
     clips: [
       {
@@ -58,10 +62,11 @@ export const playground = [
   {
     slug: 'light-and-shadow',
     title: 'Light and Shadow',
+    kind: 'Shaders',
     tagline: 'Shaders that recreate real scenes I loved',
     type: 'group',
     size: 'tall',
-    cover: { video: '/playground/covers/light-and-shadow.mp4' },
+    cover: { video: '/playground/covers/light-and-shadow.mp4', aspect: '600 / 748' },
     description: 'Two moods painted live in WebGL, one for a summer evening and one for a rainy night.',
     items: [
       {
@@ -81,9 +86,10 @@ export const playground = [
   {
     slug: 'gallery-pieces',
     title: 'Gallery Pieces',
+    kind: 'Components',
     tagline: 'Interactive components for showing images',
     type: 'group',
-    cover: { video: '/playground/covers/gallery-pieces.mp4' },
+    cover: { video: '/playground/covers/gallery-pieces.mp4', aspect: '800 / 534' },
     description: 'Small interactions for showing images: spin them, stack them, fan them out, light them up.',
     items: [
       {
@@ -127,10 +133,11 @@ export const playground = [
   {
     slug: 'pocket-worlds',
     title: 'Pocket Worlds',
+    kind: 'Illustration',
     tagline: 'Little isometric scenes, mostly made with the Colorfigures skill',
     links: { Colorfigures: 'https://april-zhu.com/colorfigures' },
     type: 'group',
-    cover: { image: '/playground/covers/pocket-worlds.webp' },
+    cover: { image: '/playground/covers/pocket-worlds.webp', aspect: '560 / 630' },
     description: 'Hand-inked isometric scenes where everyone is mid-motion, made mostly with the Colorfigures skill for Claude.',
     items: [
       {
@@ -156,55 +163,61 @@ export const playground = [
   {
     slug: 'mosaic-image-lab',
     title: 'Mosaic Image Lab',
+    kind: 'Tool',
     tagline: 'Turn a photo into mosaic, dither or reflection art and download it',
     type: 'single',
     piece: 'mosaic-image-lab',
     fill: true,
-    cover: { image: '/playground/covers/mosaic.webp' },
+    cover: { image: '/playground/covers/mosaic.webp', aspect: '800 / 420' },
     description: 'An image editor for mosaic, dither and water-reflection treatments. Pick a sample or add your own photo, then download the result as a PNG.',
   },
   {
     slug: 'school-of-fish',
     title: 'A School of Fish',
+    kind: 'Interactive',
     tagline: 'The fish follow your cursor; click to scatter them',
     type: 'single',
     piece: 'school-of-fish',
     fill: true,
     size: 'wide',
-    cover: { video: '/playground/covers/fish.mp4' },
+    cover: { video: '/playground/covers/fish.mp4', aspect: '960 / 636' },
     description: 'Fish that follow your cursor around the pond and scatter when you click.',
   },
   {
     slug: '365-days-of-drawing',
     title: '365 Days of Drawing',
+    kind: 'Illustration',
     tagline: 'One drawing a day, for a year',
     type: 'single',
     piece: 'drawing-wall',
     fill: true,
-    cover: { image: '/playground/covers/365-days-of-drawing.webp' },
+    cover: { image: '/playground/covers/365-days-of-drawing.webp', aspect: '1 / 1' },
     description: '365 illustrations from a year of drawing every day. Drag or scroll to explore, and click a drawing to take a closer look.',
   },
   {
     slug: 'build-your-truck',
     title: 'Build Your Truck',
+    kind: 'Interactive',
     tagline: 'Pick a build and watch the truck turn to show it',
     type: 'single',
     piece: 'car-configuration',
     fill: true,
-    cover: { video: '/playground/covers/build-your-truck.mp4', position: 'left top', zoom: 1.12 },
+    cover: { video: '/playground/covers/build-your-truck.mp4', position: 'left top', zoom: 1.12, aspect: '800 / 502' },
     description: 'A configurator modelled on Slate’s: pick a build and the truck turns to show it, frame by frame.',
   },
   {
     slug: 'ux-nudges',
     title: 'UX Nudges',
+    kind: 'Collection',
     type: 'link',
     href: 'https://ux-nudge.web.app/',
-    cover: { image: '/playground/covers/ux-nudges.webp' },
+    cover: { image: '/playground/covers/ux-nudges.webp', aspect: '464 / 522' },
     description: 'A collection of nudges from apps.',
   },
   {
     slug: 'dalal-prints',
     title: 'Dalal Prints',
+    kind: 'Coming soon',
     type: 'note',
     cover: { placeholder: true },
     description: 'Details coming soon.',

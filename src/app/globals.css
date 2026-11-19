@@ -398,32 +398,92 @@ html:not([data-musings='list']) .musings-list {
   display: none;
 }
 
-/* The toggle: two icons, the one showing in ink on a light fill. Hidden until the
-   pointer is over the section or keyboard focus is inside it; always shown on
-   touch. */
-.musings-toggle {
+/* Playground: <html data-playground="list"> picks the list; the bento is the
+   default. */
+html[data-playground='list'] .playground-grid,
+html:not([data-playground='list']) .playground-list {
+  display: none;
+}
+
+/* The list's hover preview (PeekList in Playground.js), after the hero links
+   on justinschueler.com: a card at the cover's own proportions (--r) that
+   trails the pointer. It grows in from 94% at its top left corner while it
+   sharpens and fades in (320ms), and leaves faster (150ms). */
+.playground-peek {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: min(280px, calc(220px * (var(--r, 1.6))));
+  aspect-ratio: var(--r, 1.6);
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 18px 40px -16px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.94;
+  transform-origin: left top;
+  filter: blur(4px);
+  transition:
+    opacity 150ms ease,
+    scale 150ms var(--ease-snappy),
+    filter 150ms ease;
+}
+.playground-peek[data-visible] {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
+  transition:
+    opacity 240ms ease,
+    scale 320ms var(--ease-snappy),
+    filter 240ms ease;
+}
+.playground-peek > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-peek,
+  .playground-peek[data-visible] {
+    scale: none;
+    filter: none;
+  }
+}
+
+/* The view toggle in a section's header (components/ViewToggle.js): two
+   icons, the one showing in ink on a light fill. Hidden until the pointer is
+   over the section or keyboard focus is inside it; always shown on touch. */
+.view-toggle {
   transition: opacity 150ms var(--ease-snappy);
 }
 @media (hover: hover) and (pointer: fine) {
-  .musings-toggle {
+  .view-toggle {
     opacity: 0;
   }
   /* Keyboard focus keeps them up, but not the focus a click leaves behind,
      or they would stay after the pointer has gone. */
-  section:hover > * > .musings-toggle,
-  section:has(:focus-visible) > * > .musings-toggle {
+  section:hover > * > .view-toggle,
+  section:has(:focus-visible) > * > .view-toggle {
     opacity: 1;
   }
 }
-.musings-toggle button {
+.view-toggle button {
   color: color-mix(in srgb, var(--body) 45%, transparent);
 }
-.musings-toggle button:hover {
+.view-toggle button:hover {
   color: color-mix(in srgb, var(--body) 80%, transparent);
   background: color-mix(in srgb, var(--body) 5%, transparent);
 }
-html[data-musings='list'] .musings-toggle-list,
-html:not([data-musings='list']) .musings-toggle-cards {
+html[data-musings='list'] [data-toggle='musings'] [data-option='list'],
+html:not([data-musings='list']) [data-toggle='musings'] [data-option='default'],
+html[data-playground='list'] [data-toggle='playground'] [data-option='list'],
+html:not([data-playground='list']) [data-toggle='playground'] [data-option='default'] {
   color: var(--ink);
   background: color-mix(in srgb, var(--body) 8%, transparent);
 }

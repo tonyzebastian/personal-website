@@ -1,7 +1,7 @@
 import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import { INTRO_SCRIPT } from '@/lib/intro';
-import { MUSINGS_VIEW_SCRIPT } from '@/lib/musings-view';
+import { VIEW_SCRIPT } from '@/lib/views';
 import "./globals.css";
 
 // Defaults for every page. Pages set their own title, description and
@@ -41,10 +41,10 @@ const caslon = localFont({
 
 export default function RootLayout({ children }) {
   return (
-      // The intro and musings-view scripts mark <html> before React starts.
+      // The intro and view scripts mark <html> before React starts.
       <html lang="en" className={`${figtree.variable} ${caslon.variable}`} suppressHydrationWarning>
           <head>
-              <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT + MUSINGS_VIEW_SCRIPT }} />
+              <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT + VIEW_SCRIPT }} />
           </head>
           <body className="flex flex-col min-h-screen">
               <main className="grow">
