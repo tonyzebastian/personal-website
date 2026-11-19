@@ -9,8 +9,13 @@
 //   link     an outside project: the card opens `href` in a new tab and has
 //            no page here
 // `cover` is a short clip (`video`) or a still (`image`) in public/playground,
-// with an optional `position` for the part the tile's crop keeps ('left'), or
-// `{ placeholder: true }` for a plain tile with the title until there's art.
+// with an optional `position` for the part the tile's crop keeps (CSS
+// object-position) and `zoom` to crop in further, anchored at that position; or
+// `{ placeholder: true }` for a plain card with the title until there's art.
+// `size` sets the tile in the home bento: 'tall' (one column, two rows),
+// 'wide' (both columns, one row), or square when left out. Tiles fill the two
+// columns in this order, so a tall tile needs two squares beside it and the
+// rows must close; reorder or resize entries together (see CoverGrid).
 // `tagline` (optional) follows the title in the panel's top row, after a pipe.
 // `links` (optional) { phrase: url } turns those words in the tagline and
 // description into highlight links (LinkedText).
@@ -20,14 +25,58 @@
 // Piece ids map to components in src/components/playground/pieces/index.js.
 export const playground = [
   {
-    slug: '365-days-of-drawing',
-    title: '365 Days of Drawing',
-    tagline: 'One drawing a day, for a year',
+    slug: 'flock-in-flight',
+    title: 'Flock in Flight',
+    tagline: 'Press and hold to fly faster',
     type: 'single',
-    piece: 'drawing-wall',
+    piece: 'flock-in-flight',
     fill: true,
-    cover: { image: '/playground/covers/365-days-of-drawing.webp' },
-    description: '365 illustrations from a year of drawing every day. Drag or scroll to explore, and click a drawing to take a closer look.',
+    size: 'wide',
+    cover: { image: '/playground/covers/flock-in-flight.webp' },
+    description: 'A flock of birds gliding over landscapes that slowly change beneath them. Press and hold to fly faster.',
+  },
+  {
+    slug: 'in-motion',
+    title: 'In Motion',
+    tagline: 'Animation work for clients, and some just for fun',
+    type: 'clips',
+    cover: { video: '/playground/animation/1.mp4' },
+    description: "Animation lets me express emotions and ideas uniquely. I'm particularly fond of frame-by-frame animation, playful logo reveals, and creating small moments that connect with people.",
+    clips: [
+      {
+        src: '/playground/animation/olympiade.mp4',
+        title: 'Sterrenkunde Olympiade',
+        hint: 'Official logo and animation for the 2019 Sterrenkunde Olympiade',
+      },
+      { src: '/playground/animation/chatwoot.mp4', title: 'Chatwoot', hint: 'Logo animation for Chatwoot' },
+      { src: '/playground/animation/5.mp4', title: 'Postman', hint: 'A logo animation I made when I joined Postman' },
+      { src: '/playground/animation/1.mp4', title: 'Slow Burn', hint: 'A frame-by-frame study, hand-drawn in Procreate' },
+      { src: '/playground/animation/polaroid.mp4', title: 'Polaroid', hint: 'Official logo and animation for a design studio' },
+      { src: '/playground/animation/wind.mp4', title: 'Wind', hint: 'A study' },
+    ],
+  },
+  {
+    slug: 'light-and-shadow',
+    title: 'Light and Shadow',
+    tagline: 'Shaders that recreate real scenes I loved',
+    type: 'group',
+    size: 'tall',
+    cover: { video: '/playground/covers/light-and-shadow.mp4' },
+    description: 'Two moods painted live in WebGL, one for a summer evening and one for a rainy night.',
+    items: [
+      {
+        id: 'evening-window',
+        title: 'Evening Window',
+        hint: 'Late sun and leaf shadows drifting across a wall',
+        description: 'Late light and leaf shadows on a wall, with a painterly Kuwahara finish.',
+      },
+      {
+        id: 'frosted-glass',
+        title: 'Frosted Glass',
+        hint: 'Rain on a fogged window above a night street',
+        description: 'A fogged skywalk window where every raindrop holds a tiny upside-down street.',
+      },
+    ],
   },
   {
     slug: 'gallery-pieces',
@@ -76,28 +125,6 @@ export const playground = [
     ],
   },
   {
-    slug: 'light-and-shadow',
-    title: 'Light and Shadow',
-    tagline: 'Shaders that recreate real scenes I loved',
-    type: 'group',
-    cover: { video: '/playground/covers/light-and-shadow.mp4' },
-    description: 'Two moods painted live in WebGL, one for a summer evening and one for a rainy night.',
-    items: [
-      {
-        id: 'evening-window',
-        title: 'Evening Window',
-        hint: 'Late sun and leaf shadows drifting across a wall',
-        description: 'Late light and leaf shadows on a wall, with a painterly Kuwahara finish.',
-      },
-      {
-        id: 'frosted-glass',
-        title: 'Frosted Glass',
-        hint: 'Rain on a fogged window above a night street',
-        description: 'A fogged skywalk window where every raindrop holds a tiny upside-down street.',
-      },
-    ],
-  },
-  {
     slug: 'pocket-worlds',
     title: 'Pocket Worlds',
     tagline: 'Little isometric scenes, mostly made with the Colorfigures skill',
@@ -127,26 +154,6 @@ export const playground = [
     ],
   },
   {
-    slug: 'in-motion',
-    title: 'In Motion',
-    tagline: 'Animation work for clients, and some just for fun',
-    type: 'clips',
-    cover: { video: '/playground/animation/1.mp4' },
-    description: "Animation lets me express emotions and ideas uniquely. I'm particularly fond of frame-by-frame animation, playful logo reveals, and creating small moments that connect with people.",
-    clips: [
-      {
-        src: '/playground/animation/olympiade.mp4',
-        title: 'Sterrenkunde Olympiade',
-        hint: 'Official logo and animation for the 2019 Sterrenkunde Olympiade',
-      },
-      { src: '/playground/animation/chatwoot.mp4', title: 'Chatwoot', hint: 'Logo animation for Chatwoot' },
-      { src: '/playground/animation/5.mp4', title: 'Postman', hint: 'A logo animation I made when I joined Postman' },
-      { src: '/playground/animation/1.mp4', title: 'Slow Burn', hint: 'A frame-by-frame study, hand-drawn in Procreate' },
-      { src: '/playground/animation/polaroid.mp4', title: 'Polaroid', hint: 'Official logo and animation for a design studio' },
-      { src: '/playground/animation/wind.mp4', title: 'Wind', hint: 'A study' },
-    ],
-  },
-  {
     slug: 'mosaic-image-lab',
     title: 'Mosaic Image Lab',
     tagline: 'Turn a photo into mosaic, dither or reflection art and download it',
@@ -157,14 +164,25 @@ export const playground = [
     description: 'An image editor for mosaic, dither and water-reflection treatments. Pick a sample or add your own photo, then download the result as a PNG.',
   },
   {
-    slug: 'flock-in-flight',
-    title: 'Flock in Flight',
-    tagline: 'Press and hold to fly faster',
+    slug: 'school-of-fish',
+    title: 'A School of Fish',
+    tagline: 'The fish follow your cursor; click to scatter them',
     type: 'single',
-    piece: 'flock-in-flight',
+    piece: 'school-of-fish',
     fill: true,
-    cover: { image: '/playground/covers/flock-in-flight.webp' },
-    description: 'A flock of birds gliding over landscapes that slowly change beneath them. Press and hold to fly faster.',
+    size: 'wide',
+    cover: { video: '/playground/covers/fish.mp4' },
+    description: 'Fish that follow your cursor around the pond and scatter when you click.',
+  },
+  {
+    slug: '365-days-of-drawing',
+    title: '365 Days of Drawing',
+    tagline: 'One drawing a day, for a year',
+    type: 'single',
+    piece: 'drawing-wall',
+    fill: true,
+    cover: { image: '/playground/covers/365-days-of-drawing.webp' },
+    description: '365 illustrations from a year of drawing every day. Drag or scroll to explore, and click a drawing to take a closer look.',
   },
   {
     slug: 'build-your-truck',
@@ -173,18 +191,8 @@ export const playground = [
     type: 'single',
     piece: 'car-configuration',
     fill: true,
-    cover: { video: '/playground/covers/build-your-truck.mp4', position: 'left' },
+    cover: { video: '/playground/covers/build-your-truck.mp4', position: 'left top', zoom: 1.12 },
     description: 'A configurator modelled on Slate’s: pick a build and the truck turns to show it, frame by frame.',
-  },
-  {
-    slug: 'school-of-fish',
-    title: 'A School of Fish',
-    tagline: 'The fish follow your cursor; click to scatter them',
-    type: 'single',
-    piece: 'school-of-fish',
-    fill: true,
-    cover: { video: '/playground/covers/fish.mp4' },
-    description: 'Fish that follow your cursor around the pond and scatter when you click.',
   },
   {
     slug: 'ux-nudges',

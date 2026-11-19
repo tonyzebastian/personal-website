@@ -19,8 +19,7 @@ function Column({ className = '', children }) {
 export default function HomeList() {
   return (
     // Each direct child of IntroFlow is one section of the page, and appears in
-    // turn on the first load. Add new sections here. The Playground grid is
-    // outside the reading column so it can grow to four covers across.
+    // turn on the first load. Add new sections here.
     <IntroFlow className="flex flex-col gap-16 pt-16 pb-24 lg:pt-24 lg:pb-20">
       <Column className="intro-hero">
         <Hero />
@@ -30,17 +29,26 @@ export default function HomeList() {
         <Musings items={musings} />
       </Column>
 
-      {/* No visible heading: the covers speak for themselves. */}
-      <section aria-label="Playground">
-        <CoverGrid
-          items={playground.map((item) => ({
-            href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
-            external: item.type === 'link',
-            title: item.title,
-            cover: item.cover,
-          }))}
-        />
-      </section>
+      <Column>
+        {/* Same heading as Musings; the row matches its height so the gap to
+            the content is the same. */}
+        <section aria-labelledby="playground" className="flex flex-col gap-2">
+          <div className="flex min-h-7 items-center">
+            <h2 id="playground" className="font-sans text-base font-semibold tracking-normal">
+              Playground
+            </h2>
+          </div>
+          <CoverGrid
+            items={playground.map((item) => ({
+              href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
+              external: item.type === 'link',
+              title: item.title,
+              size: item.size,
+              cover: item.cover,
+            }))}
+          />
+        </section>
+      </Column>
     </IntroFlow>
   );
 }
