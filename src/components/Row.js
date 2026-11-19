@@ -22,7 +22,7 @@ export default function Row({ href, icon, title, meta = [] }) {
       <span
         className={`flex min-w-0 items-center ${hasIcon ? 'col-start-2 row-start-1 self-end @lg:self-center' : ''}`}
       >
-        <span className="truncate font-medium text-ink" title={title}>
+        <span data-morph="title" className="truncate font-medium text-ink" title={title}>
           {title}
         </span>
         {isExternal && (
@@ -40,8 +40,12 @@ export default function Row({ href, icon, title, meta = [] }) {
             className={`overflow-hidden text-body/70 tabular-nums @lg:hidden ${hasIcon ? 'col-start-2 row-start-2 self-start' : ''}`}
           >
             <span className="-ml-[17px] flex flex-wrap">
-              {[...details].reverse().map((text) => (
-                <span key={text} className="relative pl-[17px] whitespace-nowrap">
+              {[...details].reverse().map((text, index) => (
+                <span
+                  key={text}
+                  data-morph={index === 0 ? 'date' : undefined}
+                  className="relative pl-[17px] whitespace-nowrap"
+                >
                   <span aria-hidden className="absolute left-[6px] text-body/25">
                     |
                   </span>
@@ -59,7 +63,7 @@ export default function Row({ href, icon, title, meta = [] }) {
           >
             {details.map((text, index) =>
               index === details.length - 1 ? (
-                <span key={text} className="text-body/70">
+                <span key={text} data-morph="date" className="text-body/70">
                   {text}
                 </span>
               ) : (

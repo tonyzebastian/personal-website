@@ -138,12 +138,54 @@ export const experience = [
   },
 ];
 
+// Home list of musings. `excerpt` is the opening of each piece, shown as the
+// page on its carousel card (it fades out, so a couple of paragraphs is plenty).
 export const musings = [
-  { name: 'Reduce perceived wait times through visual delight', date: 'May 2024', link: '/musings/perceived_wait'},
-  { name: 'Mnemonic Signages', date: 'Jan 2024', link: '/musings/mnemonic_signages' },
-  { name: '365 days of drawing - Some learnings', date: 'Jun 2021', link: '/musings/days_drawing'},
-  { name: '15 Months of remote work: A Recap', date: 'Nov 2020', link: '/musings/remote_work'},
-  { name: 'Reviving a legacy system at Infosys', date: 'Nov 2018', link: '/musings/infosys_legacy'}
+  {
+    name: 'Reduce perceived wait times through visual delight',
+    date: 'May 2024',
+    link: '/musings/perceived_wait',
+    excerpt: [
+      "Staring at a blank screen as an app slowly loads is a surefire way to lose user attention. Whether it's loading a webpage or launching an app, users expect speed and efficiency.",
+      'This is where visual delight comes into play. It is not just about aesthetics; it is about creating a memorable, engaging experience that captivates attention, reduces perceived wait times and leaves a lasting impression.',
+    ],
+  },
+  {
+    name: 'Mnemonic Signages',
+    date: 'Jan 2024',
+    link: '/musings/mnemonic_signages',
+    excerpt: [
+      'I used to have difficulty remembering where I parked my car in large parking lots. To solve this, I began taking pictures of the pillar near where I parked.',
+      'Recently, while photographing a pillar, I noticed an interesting pattern where illustrations are displayed next to the alphabet. These are known as mnemonic signages.',
+    ],
+  },
+  {
+    name: '365 days of drawing - Some learnings',
+    date: 'Jun 2021',
+    link: '/musings/days_drawing',
+    excerpt: [
+      'On 2nd May 2020, I decided to start a new project: draw something every day for a year. 365 days later, I completed it, and these are some of my learnings and realizations.',
+      "As expected, my drawing skills levelled up. Compared with last year's drawings, there is a massive improvement in colour usage and overall line quality.",
+    ],
+  },
+  {
+    name: '15 Months of remote work: A Recap',
+    date: 'Nov 2020',
+    link: '/musings/remote_work',
+    excerpt: [
+      "It wasn't a deliberate choice to go remote. Back in late 2018, I was looking to switch from being a senior business analyst at Infosys to trying my luck in the design field.",
+      'A friend had been working remotely for about a year and seemed to be thriving, working from their hometown with occasional travel. That inspired me to explore remote jobs.',
+    ],
+  },
+  {
+    name: 'Reviving a legacy system at Infosys',
+    date: 'Nov 2018',
+    link: '/musings/infosys_legacy',
+    excerpt: [
+      'As companies grow, asset management becomes crucial for smooth operations. Smaller firms manage with spreadsheets, but multinationals need dedicated systems.',
+      "This case study outlines how Infosys' asset management team revamped their legacy system to boost efficiency, cut costs, and enhance control and accountability.",
+    ],
+  },
 ];
 
 

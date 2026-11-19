@@ -390,26 +390,164 @@ html::after {
   }
 }
 
-/* ShowMore: rows revealed by "View more" fade and settle in one after
-   another while the panel grows; on close they fade out together, quickly. */
-.reveal-rows > * {
-  transition:
-    opacity 300ms var(--ease-snappy),
-    translate 300ms var(--ease-snappy);
-}
-.reveal-rows > :nth-child(2) { transition-delay: 40ms; }
-.reveal-rows > :nth-child(3) { transition-delay: 80ms; }
-.reveal-rows > :nth-child(n + 4) { transition-delay: 120ms; }
-[data-starting-style] > .reveal-rows > *,
-[data-ending-style] > .reveal-rows > * {
-  opacity: 0;
-  translate: 0 -6px;
-}
-[data-ending-style] > .reveal-rows > * {
-  transition-duration: 150ms;
-  transition-delay: 0ms;
+/* Musings (components/Musings.js), after the Thoughts rail on
+   justinschueler.com. <html data-musings="list"> picks the list; cards are the
+   default. */
+html[data-musings='list'] .musings-cards,
+html:not([data-musings='list']) .musings-list {
+  display: none;
 }
 
+/* The toggle: two icons, the one showing in ink on a light fill. Hidden until the
+   pointer is over the section or keyboard focus is inside it; always shown on
+   touch. */
+.musings-toggle {
+  transition: opacity 150ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .musings-toggle {
+    opacity: 0;
+  }
+  /* Keyboard focus keeps them up, but not the focus a click leaves behind,
+     or they would stay after the pointer has gone. */
+  section:hover > * > .musings-toggle,
+  section:has(:focus-visible) > * > .musings-toggle {
+    opacity: 1;
+  }
+}
+.musings-toggle button {
+  color: color-mix(in srgb, var(--body) 45%, transparent);
+}
+.musings-toggle button:hover {
+  color: color-mix(in srgb, var(--body) 80%, transparent);
+  background: color-mix(in srgb, var(--body) 5%, transparent);
+}
+html[data-musings='list'] .musings-toggle-list,
+html:not([data-musings='list']) .musings-toggle-cards {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--body) 8%, transparent);
+}
+
+/* The rail runs the full width of the list area (the @container), with the
+   first card lined up on the reading column. --col is that column's width. */
+.musings-rail {
+  --col: min(32rem, 100cqw - 3rem);
+  --full: 100cqw; /* both measured by Musings.js once it runs */
+  --edge: calc((100cqw - var(--col)) / 2);
+  --card-w: min(320px, 72cqw);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--card-w);
+  align-items: start;
+  gap: 0.75rem;
+  width: var(--full);
+  margin-left: calc(-1 * var(--edge));
+  /* Room for the shadows, given back with negative margins. */
+  padding: 1.25rem max(var(--edge), var(--full) - var(--edge) - var(--card-w)) 2.5rem var(--edge);
+  margin-block: -1.25rem -2.5rem;
+  /* Moved by Musings.js only (a spring, no native snapping), so no
+     scrollbar and no native horizontal panning; vertical page scroll on
+     touch still passes through. */
+  overflow-x: hidden;
+  touch-action: pan-y;
+  --side-scale: 0.94; /* first paint only; Musings.js sizes cards after */
+}
+.musings-rail::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .musings-rail {
+    --col: min(32rem, 100cqw - 4rem);
+    --side-scale: 0.88;
+    gap: 3rem;
+  }
+}
+.musings-rail[data-dragging] {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* Each card's scale and opacity are set every frame by Musings.js from its
+   distance to the front slot; nothing here transitions them. */
+
+/* The paper: a miniature page, laid out in units of its own width (--u) so
+   it reads the same at any card size. */
+.musings-doc {
+  container-type: inline-size;
+  transition: translate 450ms var(--ease-snappy);
+}
+.musings-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+  transition: box-shadow 300ms ease;
+}
+/* Cards away from the front sit flatter: an edge and a faint lift only. */
+.musings-card:not([data-current]) .musings-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.05),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+.musings-page {
+  --u: calc(100cqw / 400);
+  padding: calc(44 * var(--u)) calc(44 * var(--u)) 0;
+  font-size: calc(16 * var(--u));
+  line-height: 1.6;
+}
+.musings-page-title {
+  font-size: calc(26 * var(--u));
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.musings-page-date {
+  margin: calc(8 * var(--u)) 0 calc(24 * var(--u));
+}
+/* Only the body is clipped and fades out, so the title and date can fly in
+   from outside the card while the views morph. */
+.musings-page-body {
+  mask-image: linear-gradient(#000 25%, transparent 82%);
+}
+.musings-page-body > * + * {
+  margin-top: 1em;
+}
+@media (hover: hover) and (pointer: fine) {
+  .musings-card[data-current] .group\/card:hover .musings-doc {
+    translate: 0 -2px;
+  }
+  .musings-card[data-current] .group\/card:hover .musings-paper {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 2px 4px rgb(0 0 0 / 0.06),
+      0 20px 40px -18px rgb(0 0 0 / 0.28);
+  }
+  /* With a mouse, the date follows the cursor instead. */
+  .musings-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+.musings-card[data-current] .group\/card:active .musings-doc {
+  scale: 0.98;
+  transition: scale 160ms var(--ease-snappy);
+}
+/* The card whose musing is open in the panel (PanelLink marks it
+   data-active) gets a green outline, kept through the hover lift. */
+.musings-card .group\/card[data-active] .musings-paper,
+.musings-card .group\/card[data-active]:hover .musings-paper {
+  box-shadow:
+    0 0 0 1px var(--color-green-700),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+}
+.musings-card .group\/card:focus-visible .musings-paper {
+  box-shadow:
+    0 0 0 2px var(--ring),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+}
 /* CoverGrid (Playground), after officecommun.com: covers fade up 12px as they
    scroll in (RevealGroup adds .is-in and the stagger in --d), and the image
    eases up to 103% on hover. */

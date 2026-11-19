@@ -235,7 +235,9 @@ export default function SiteShell({
       setClosing(true);
     } else if (panelPaths.includes(url.pathname)) {
       setPendingPath(url.pathname);
-      focusPanel.current = true;
+      // A link marked data-keep-focus opens its page without moving focus
+      // into the panel (the Musings rail opens cards as you move through it).
+      focusPanel.current = !link.hasAttribute('data-keep-focus');
       if (pathname !== '/') {
         // Panel to panel: replace the entry instead of adding one.
         event.preventDefault();
