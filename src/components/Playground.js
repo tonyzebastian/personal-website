@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Rows, SquaresFour } from '@phosphor-icons/react';
 import CoverGrid from '@/components/CoverGrid';
 import Row from '@/components/Row';
 import ViewToggle from '@/components/ViewToggle';
@@ -173,8 +172,8 @@ export default function Playground({ items }) {
           view={view}
           onChange={switchTo}
           options={[
-            { value: 'list', label: 'List view', Icon: Rows },
-            { value: 'grid', label: 'Grid view', Icon: SquaresFour },
+            { value: 'list', label: 'List' },
+            { value: 'grid', label: 'Tile' },
           ]}
         />
       </div>

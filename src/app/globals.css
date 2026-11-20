@@ -19,8 +19,9 @@
   --canvas: #fcfaf8;
 
   /* Your green, used for highlight links and accents. */
-  --highlight: var(--color-green-100);
-  --highlight-strong: var(--color-green-200);
+  --highlight: rgb(40 237 60 / 0.25);
+  --highlight-strong: rgb(40 237 60 / 0.4);
+  --highlight-ink: #01270a;
 
   /* shadcn tokens, mapped onto the ink system. */
   --background: var(--paper);
@@ -66,6 +67,7 @@
   --color-canvas: var(--canvas);
   --color-highlight: var(--highlight);
   --color-highlight-strong: var(--highlight-strong);
+  --color-highlight-ink: var(--highlight-ink);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -457,8 +459,9 @@ html:not([data-playground='list']) .playground-list {
 }
 
 /* The view toggle in a section's header (components/ViewToggle.js): two
-   icons, the one showing in ink on a light fill. Hidden until the pointer is
-   over the section or keyboard focus is inside it; always shown on touch. */
+   words, the one showing in ink and underlined, the other faded. Hidden until
+   the pointer is over the section or keyboard focus is inside it; always
+   shown on touch. */
 .view-toggle {
   transition: opacity 150ms var(--ease-snappy);
 }
@@ -474,18 +477,22 @@ html:not([data-playground='list']) .playground-list {
   }
 }
 .view-toggle button {
-  color: color-mix(in srgb, var(--body) 45%, transparent);
+  color: color-mix(in srgb, var(--body) 70%, transparent);
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 150ms,
+    text-decoration-color 200ms var(--ease-snappy);
 }
 .view-toggle button:hover {
-  color: color-mix(in srgb, var(--body) 80%, transparent);
-  background: color-mix(in srgb, var(--body) 5%, transparent);
+  color: var(--ink);
 }
 html[data-musings='list'] [data-toggle='musings'] [data-option='list'],
 html:not([data-musings='list']) [data-toggle='musings'] [data-option='default'],
 html[data-playground='list'] [data-toggle='playground'] [data-option='list'],
 html:not([data-playground='list']) [data-toggle='playground'] [data-option='default'] {
   color: var(--ink);
-  background: color-mix(in srgb, var(--body) 8%, transparent);
+  text-decoration-color: currentColor;
 }
 
 /* The rail runs the full width of the list area (the @container), with the
@@ -700,4 +707,122 @@ html:not([data-playground='list']) [data-toggle='playground'] [data-option='defa
   .bento-tile:hover .bento-cover > * {
     scale: var(--zoom, 1);
   }
+}
+
+/* HiddenGallery: drawings in an invisible grid behind the home page. The page
+   above lets the pointer through everywhere but the reading column, so the
+   squares can be clicked. Each square's opacity and scale are set per frame
+   from the pointer's distance; the transition smooths a fast pointer. */
+.home-flow {
+  pointer-events: none;
+}
+.home-flow [data-reading-column] {
+  pointer-events: auto;
+}
+.hidden-gallery-square {
+  position: absolute;
+  padding: 1px;
+  opacity: 0;
+  scale: 0.85;
+  pointer-events: none;
+  transition:
+    opacity 300ms var(--ease-snappy),
+    scale 300ms var(--ease-snappy);
+}
+.hidden-gallery-square img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--body) 4%, transparent);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+  transition:
+    scale 150ms var(--ease-snappy),
+    box-shadow 150ms var(--ease-snappy);
+}
+/* Resting on a photo grows it to 2.5x, but only after 150ms, so a pointer just passing
+   over doesn't set it off; leaving shrinks it at once. */
+.hidden-gallery-square:hover {
+  z-index: 1;
+}
+.hidden-gallery-square:hover img {
+  scale: 2.5;
+  box-shadow:
+    0 0 0 0.4px rgb(0 0 0 / 0.08),
+    0 4px 8px -4px rgb(0 0 0 / 0.35);
+  transition:
+    scale 250ms var(--ease-snappy) 150ms,
+    box-shadow 250ms var(--ease-snappy) 150ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hidden-gallery-square {
+    scale: none !important;
+  }
+  .hidden-gallery-square:hover img {
+    scale: none;
+  }
+}
+
+/* SquareCursor: a small green square in place of the pointer, after
+   shahimim.com. Only on fine pointers, once the component is running (it sets
+   data-square-cursor on <html>), so the native cursor stays if it doesn't. */
+html[data-square-cursor],
+html[data-square-cursor] * {
+  cursor: none !important;
+}
+.square-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-snappy);
+}
+.square-cursor[data-shown] {
+  opacity: 1;
+}
+/* The square, centred on the pointer. Smaller over anything clickable, and
+   smaller still while pressed. */
+.square-cursor-mark {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  background: var(--color-green-700);
+  transition: scale 120ms var(--ease-snappy);
+}
+.square-cursor[data-over] .square-cursor-mark {
+  scale: 0.6;
+}
+.square-cursor[data-down] .square-cursor-mark {
+  scale: 0.45;
+}
+/* The label beside it over a link, after shahimim.com's pill: what a click
+   does ("Open", "Read", "Visit ↗"). It slides out from the square. */
+.square-cursor-label {
+  position: absolute;
+  top: -11px;
+  left: 10px;
+  padding: 0 7px;
+  background: var(--color-green-700);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity 150ms var(--ease-snappy),
+    translate 150ms var(--ease-snappy);
+}
+.square-cursor[data-label] .square-cursor-label {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 200ms var(--ease-snappy),
+    translate 200ms var(--ease-snappy);
 }

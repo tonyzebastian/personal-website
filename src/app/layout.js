@@ -2,6 +2,7 @@ import { Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import { INTRO_SCRIPT } from '@/lib/intro';
 import { VIEW_SCRIPT } from '@/lib/views';
+import SquareCursor from '@/components/SquareCursor';
 import "./globals.css";
 
 // Defaults for every page. Pages set their own title, description and
@@ -50,6 +51,7 @@ export default function RootLayout({ children }) {
               <main className="grow">
                   {children}
               </main>
+              <SquareCursor />
           </body>
       </html>
   );

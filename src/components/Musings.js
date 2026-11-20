@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Columns, Rows } from '@phosphor-icons/react';
 import Row from '@/components/Row';
 import { ActivePathContext, PanelLink } from '@/components/panel/ActivePath';
 import ViewToggle from '@/components/ViewToggle';
@@ -163,8 +162,8 @@ export default function Musings({ items }) {
           view={view}
           onChange={switchTo}
           options={[
-            { value: 'list', label: 'List view', Icon: Rows },
-            { value: 'cards', label: 'Card view', Icon: Columns },
+            { value: 'list', label: 'List' },
+            { value: 'cards', label: 'Tile' },
           ]}
         />
       </div>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { homeAbout, storybook } from '@/lib/content';
 import HeroBook from '@/components/HeroBook';
 
-const LINK = 'rounded-sm bg-highlight px-1 text-ink transition-colors hover:bg-highlight-strong';
+const LINK = 'rounded-sm bg-highlight px-1 text-highlight-ink transition-colors hover:bg-highlight-strong';
 
 const NAME = 'Tony Sebastian';
 const DESCRIPTION = 'A generalist who designs, codes and tells stories.';
@@ -25,18 +25,18 @@ function Words({ text, from = 0 }) {
 export default function Hero() {
   return (
     <header className="flex flex-col gap-5">
-      <div className="intro-photo">
+      <div data-gallery-avoid className="intro-photo">
         <HeroBook book={storybook} />
       </div>
-      <div className="flex flex-col gap-0.5">
+      <div data-gallery-avoid data-gallery-top className="flex flex-col gap-2">
         <h1>
           <Words text={NAME} />
         </h1>
-        <p className="text-body/70">
+        <p className="text-[17px] leading-snug text-body/90">
           <Words text={DESCRIPTION} from={NAME.split(' ').length} />
         </p>
       </div>
-      <div className="intro-after flex flex-col gap-3">
+      <div className="intro-after mt-3 flex flex-col gap-3">
         {homeAbout.map((paragraph, i) => (
           <p key={i}>
             {paragraph.map((part, j) =>
