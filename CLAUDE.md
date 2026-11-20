@@ -1,241 +1,107 @@
 # CLAUDE.md - Tony Sebastian Portfolio Website
 
-## Project Overview
+## Project overview
 
-This is a personal portfolio website for Tony Sebastian, a visual product designer. Built with Next.js 14, it showcases projects, experience, musings, and personal information through a modern, interactive interface.
+Personal portfolio of Tony Sebastian, a visual product designer. One home page has my photo and a short about (which links to each job), then musings, the Playground grid and a footer row of links ("Email", which copies the address, and socials from `bio` in `content.js`); every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The address bar stays on `/` while a panel is open, so a refresh always lands on home.
 
-## Technology Stack
+## Technology stack
 
-### Core Framework
-- **Next.js 14.2.18** - React framework with App Router
-- **React 18** - UI library
-- **JavaScript** - Primary language (no TypeScript)
+- **Next.js 15** (App Router) with **React 19**, JavaScript (no TypeScript)
+- **Tailwind CSS v4**: CSS-first config in `src/app/globals.css` (`@theme`), PostCSS via `@tailwindcss/postcss`, animations from `tw-animate-css`
+- **shadcn/ui on Base UI** (`@base-ui/react`): components live in `src/components/ui/`. Compose with `render={<el />}`, not `asChild`. To style a link like a button, use `buttonVariants()` on the link itself (rendering a link through `Button` gives it a button role)
+- **Phosphor icons** (`@phosphor-icons/react`): the only icon set. Import from `@phosphor-icons/react/ssr` in server components. Use `weight="bold"` for UI icons
+- **Motion** (`motion/react`): panel animations, loaded through `LazyMotion` with `m.` components; features load on demand from `src/lib/motion-features.js`
+- **Fonts**: Figtree (body, `next/font/google`) and Libre Caslon Condensed (headings, self-hosted in `src/fonts/` via `next/font/local`, SIL OFL)
+- **react-plock**: masonry layout for the about galleries
 
-### Styling & UI
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **Tailwind CSS Animate** - Animation utilities
-- **CSS Variables** - Custom design system colors and spacing
-- **Progressive Blur** - Custom blur effects
-- **Geist Font** - Sans-serif typography
-- **Instrument Serif** - Serif typography for headings
+## Design system
 
-### UI Components & Libraries
-- **@headlessui/react** - Unstyled accessible components
-- **@radix-ui/react-slot** - Component composition utilities
-- **Lucide React** - Icon library
-- **React Feather** - Additional icons
-- **Class Variance Authority** - Component variant management
-- **clsx & tailwind-merge** - Conditional class utilities
+Tokens are defined in `src/app/globals.css`. Type scale follows rachelchen.tech; text colours and the paper texture follow flowjam.com. Light mode only.
 
-### Interactions & Animations
-- **Motion (Framer Motion v12)** - Animation library
-- **Progressive Blur** - Custom blur effects for navigation
-- **React Plock** - Masonry layout for image grids
+- **Ink**: `#160216`, a plum-tinted near-black for headings and titles (`text-ink`). Body copy is `--body` `#363636` (`text-body`); faded text, hover fills and lines are built from it so greys stay neutral: `text-body/80`, `text-body/70` (the lightest that passes AA for text, 4.7:1), and `text-body/40`, `text-body/25` only for decoration (pipes, list markers, icons)
+- **Highlight**: the green link style, `bg-highlight` / `bg-highlight-strong` (`HighlightLink`, or the Button `highlight` variant)
+- **Type**: body 15px with 1.5 line height; serif headings h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
+- **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8), from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). A paper texture (fine grain plus soft fibre, SVG noise tuned to flowjam.com) sits over the whole screen on `html::before`/`::after`, fixed and click-through. The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
+- **Motion**: one curve for UI, `--ease-snappy` `cubic-bezier(0.23, 1, 0.32, 1)` (Tailwind `ease-snappy`; `EASE_SNAPPY` in `src/components/panel/config.js` for Motion), for anything appearing, leaving or changing state. Colour-only hovers keep Tailwind's default curve; the side panel slides on a drawer curve (`EASE_DRAWER`). Durations: 150ms hover reveals and exits, 200ms small fades and state changes, 300ms height changes and row reveals, 400ms the panel slide; only decorative motion runs longer. Never plain `ease-out`/`ease-in-out`, and name the properties rather than `transition-all`. The scale is written out at the top of `globals.css`
+- **shadcn tokens** (`--background`, `--primary`, `--border`, ...) are mapped onto ink and paper
 
-### Development Tools
-- **ESLint** - Code linting (warnings ignored in builds)
-- **Autoprefixer** - CSS vendor prefixing
-- **PostCSS** - CSS processing
-
-### Performance & Analytics
-- **Next.js Image Optimization** - Built-in image optimization
-
-## Project Structure
+## How pages and the panel work
 
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── layout.js          # Root layout with fonts and navigation
-│   ├── page.js            # Homepage with projects, experience, musings
-│   ├── globals.css        # Global styles and CSS variables
-│   ├── about/             # About page route
-│   ├── craft/             # Craft/design work showcase
-│   ├── AI/                # AI-related projects
-│   └── musings/           # Blog-style content pages
-├── components/            # Reusable UI components
-│   ├── DockNavigation.js  # Bottom navigation with blur effect
-│   ├── Hero.js            # Hero section with video
-│   ├── CaseStudyTemplate.js # Reusable case study page template
-│   ├── list/              # List components (ListItem, Title, SubText)
-│   ├── ui/                # UI primitives and utilities
-│   ├── fancy/             # Advanced interactive components
-│   └── unused/            # Archived unused components
-├── lib/                   # Utilities and content
-│   ├── content.js         # All site content and data
-│   └── utils.js           # Utility functions
-└── public/                # Static assets
-    ├── images/            # Organized by category (AI, Craft, about, etc.)
-    ├── icons/             # Company/project icons
-    └── hero.gif           # Hero animation
+src/app/
+├── layout.js              # Root: fonts, viewport, globals
+├── (site)/                # Everything that shares the home list
+│   ├── layout.js          # SiteShell: home list + panel for the current route
+│   ├── page.js            # "/": metadata only, renders nothing (no panel)
+│   ├── [company]/page.js  # /sundial, /postman, /hypersonix, /avrl, /infosys
+│   ├── about/             # About me panel
+│   └── musings/*          # One folder per musing
+├── experience/            # Standalone timeline page (unlisted, noindex)
+├── project/*              # Postman sub case studies, full pages
+├── film/                  # Standalone film site (own font)
+└── craft/                 # Old craft page (to be replaced)
 ```
 
-## Key Features
+- `src/components/panel/SiteShell.js` draws the home list and, for any route other than `/`, a panel. From 1024px wide the panel opens beside the list and pushes it aside (the layout changes in one step, then the list and the panel card slide into place with transforms only, a FLIP done with Web Animations, so the list never re-wraps mid-slide); below that `PanelSheet.js` shows it as a bottom sheet (Base UI Dialog, drag to close, loaded only on small screens)
+- Panel pages still open through the router, but `SiteShell` sets the address bar back to `/` as each one opens (`history.replaceState`, which Next follows while keeping the page's route tree). The open page is read from `useSelectedLayoutSegments()`, not `usePathname()`, which says `/`. Back and Forward still close and reopen the panel
+- Arriving straight on a page (typed link, new tab, the panel's expand button) shows it full width on its own, keeping its URL, under a breadcrumb in the top left ("Tony Sebastian › page", shadcn `breadcrumb` in `src/components/ui/`, titles from `pageTitles` in the `(site)` layout). Pages that `fill` (`fillPaths`: the drawing wall, Flock, Mosaic, Fish) take the whole screen below it with their heading hidden; both the side panel and that view carry `data-fills`, and fill styles use Tailwind `in-data-fills:`. `PanelPage` also takes `heading={false}` to hide a page's title and description anywhere; once the visitor reaches `/`, the list and panel take over for the rest of the visit (`fullPage` in `SiteShell.js`)
+- The panel is one layer over home: switching panels replaces the history entry, and closing steps back when the panel was opened from home, so Back always returns home
+- Split, breakpoint, the side panel's slide (`PANEL_SLIDE`) and the sheet's spring live in `src/components/panel/config.js`. So does `SKELETON_DELAY`: a page that loads faster than that replaces the panel's content directly, and `PanelSkeleton` shows only for slower loads
+- `FrozenRouter.js` keeps the outgoing page rendered while a panel closes or swaps. It relies on a Next.js internal (`LayoutRouterContext`), which is why `next` is pinned to 15.5.x; recheck it before upgrading
+- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (logo and title on one line, details line split by pipes, with an optional `href` shown at its end as a "Website" link), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
 
-### Content Management
-- **Centralized Content**: All site content managed in `src/lib/content.js`
-- **Structured Data**: Projects, experience, musings, and bio information
-- **Dynamic Rendering**: Content rendered dynamically throughout the site
+## Content
 
-### Navigation & UX
-- **Sticky Bottom Navigation**: Modern mobile-first navigation pattern
-- **Progressive Blur**: Advanced blur effect behind navigation
-- **Active State Management**: Automatic route-based active states
-- **Responsive Design**: Mobile-first approach with desktop enhancements
+All copy lives in `src/lib/content.js`:
 
-### Performance Optimizations
-- **Next.js Image Optimization**: Automatic image optimization and lazy loading
-- **React Memoization**: Extensive use of React.memo(), useMemo(), and useCallback() in client components
-- **Suspense Boundaries**: Proper Suspense wrapping for useSearchParams() to enable static generation
-- **Static Helper Functions**: Helper functions moved outside components to prevent recreation
-- **Client-side Mounting**: Prevents hydration issues with proper SSR handling
-- **ESLint Bypass**: Build optimization (errors ignored during builds)
+- `homeAbout`: the about text on the home page, with its links to the company pages
+- `experience`: the `[company]` pages (`role`, `period`, `description` for metadata, `overview` paragraphs for the page, where an object like `{ youtube, title }` embeds a video, optional `related` links). Hypersonix folds its case studies behind "More about my work here" (`Expandable`); Postman's live on the full-width `/postman/work` page (listed in `FULL_PAGE_PATHS` in the `(site)` layout). Entries with `timeline: false` are left off `/experience`. The overview copy is drafted in the wiki (`areas/career/overview/website-experience-drafts.md`)
+- `musings`: the home Musings section (the article itself is its own route); `excerpt` is the opening shown on each carousel card
+- Playground entries live in `src/lib/playground.js`, not here (each with its bento `size`, its `cover` and the cover's `aspect` for the hover preview, and a `kind` shown on its list row): groups (`gallery-pieces`, `light-and-shadow`, `pocket-worlds`) list live pieces one below the other, singles show one piece, `clips` (In Motion, the Animation section moved here from About) lists short videos, `note` is a plain text page (Dalal Prints, for now) and `link` is an outside project whose card opens its site in a new tab (UX Nudges; no page here, see `playgroundPages`). The rest open `/playground/<slug>` in the panel. The old Pet Projects section is gone: UX Nudges and Dalal Prints became Playground cards
+- `bio`, `aboutBio`, `aboutFunThings`, `aboutPrinciples`, `now`, `junymade`, `photography`, `aboutConversation`
 
-## Available Scripts
+Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and rendered by `src/components/CaseStudy.js`. The three Postman sub case studies under `src/app/project/` still use `CaseStudyTemplate.js`.
 
-```bash
-# Development
-npm run dev          # Start development server on localhost:3000
+## Key components
 
-# Production
-npm run build        # Build for production
-npm run start        # Start production server
+- First load: on the first visit to `/` in a tab, things blur in one at a time from the top, sections rising slightly as they arrive (`.intro-*` in globals.css, `lib/intro.js`). Every direct child of `IntroFlow` in `HomeList` joins in automatically, and sections below the fold skip the wait
+- `Row`: every home list row (icon, title, details). External links get an ↗ on hover; internal ones have no arrow. On links, the dates (every detail but the last) fade in on hover with a pipe before the role. Stacks when its column is narrow, using container queries (`@lg:`) rather than the window width
+- `Playground`: the home Playground section. Its header has the same `ViewToggle` as Musings (List / Tile); the bento (`CoverGrid`) is the default, the list is plain `Row`s (title, `kind` on the right), and the choice is saved like Musings' (`<html data-playground="list">`). Switching morphs: each tile, copied with its video frozen on the current frame, slides onto its row while a clip-path closes it down to the row's height and it fades; going back, each tile opens out of its row the same way, and titles fly between the tile's label and the row (400ms `ease-snappy`, 30ms stagger). Hovering a list row floats a preview of its cover beside the pointer, after the hero links on justinschueler.com (`PeekList`): one shared card at the cover's proportions (up to 280px wide), 20px below and right of the pointer, trailing it (16% of the way each frame), flipping side near the window edges; it grows in from 94% at its top left while sharpening from a 4px blur (320ms), leaves in 150ms, swaps covers between rows without replaying that, and hides on scroll. Pointer devices only. Styles are `.playground-*` in globals.css
+- `CoverGrid`: the Playground bento, in the look of shahimim.com. Two columns at the reading width (also with the panel open and on phones), square cells, and tiles sized per entry in `playground.js` (`size: 'tall'` spans two rows, `'wide'` both columns); entries fill the grid in order, so sizes and order are chosen together so every row closes. Each cover fills its tile edge to edge (16px corners, a hairline edge drawn over it) and eases to 103% on hover; the name sits on a small white label in the bottom-left (↗ on outside links). The tile whose page is open gets a 1px green-700 outline. Tiles fade up as they scroll in (`RevealGroup`, `.cover-reveal`); styles are `.bento-*` in globals.css
+- Playground pieces (`src/components/playground/`): code copied from the playground repo (`../playground`) and adapted to fill a box. `pieces/index.js` maps each piece id to a lazily loaded component; `Stage` mounts a piece only while it is near the screen; `GroupItem` shows it live in the panel with a line below: its name, then "| hint" (the short `hint` from `playground.js`, fainter, cut short on narrow pages) and outline buttons on the right; the hint and buttons show on hover or focus (always on touch). Replay (pieces marked `replay` in the registry; it remounts the piece) and Expand, which opens it in a lightbox (Base UI Dialog) with its description, where pieces with DialKit controls show them (`Controls`). Playground pages use `PanelPage` with `wide` (body up to `max-w-5xl`), `description` in place of the details line, and `compact`: in the side panel their heading is hidden (kept for screen readers) and the title shows in the panel's top row beside expand and close (`panelTitles` from the `(site)` layout to `PanelHeader`); the sheet and full-page view still show the heading Pieces built at a fixed size use `Fit` to scale down. WebGL pieces call `releaseContext` (`src/lib/webgl.js`) in their cleanup so contexts are freed once their canvas leaves the page. Single-piece pages are `bare` (no line below; the panel header names them); clips have a name and hint but no actions. Assets are in `public/playground/` (WebP, converted with sharp)
+- 365 Days of Drawing (`pieces/drawings/DrawingWall.js`): an endless drag wall after thiings.co, laid out like the About galleries (react-plock masonry: 160px columns, each drawing at its own proportions, 12px gaps), with every column an endless stack so it packs without seams. One layer moved with a translate, only the drawings near the screen rendered, momentum with friction (5% a 60fps frame, release speed capped). Images are WebP built by `node scripts/import-drawings.mjs <folder of originals>` into `public/playground/drawings/thumbs` (360px) and `large` (1600px), listed in `src/lib/drawings.json`. The 1.7 GB originals are kept outside the repo, never in `public/`
+- Never run a second `next dev` in this folder while one is running: they share `.next` and break each other
+- `Musings`: the home Musings section, after the Thoughts rail on justinschueler.com. Two words at the right of its header (`ViewToggle`: List / Tile; the one showing is ink and underlined, the other faded, shown only while the pointer is over the section or focus is inside it, always on touch) switch between the rows and a rail of paper cards that are miniatures of each article (title, date, `excerpt` fading out). The rail lines up with the reading column and runs to the edge of the list area (edges measured in JS, since `cqw` counts the scrollbar). It does not use native scroll snapping (a trackpad fling overshoots and pulls back): its position is driven by a critically damped spring (`SPRING`), and each frame every card's scale and opacity come from its distance to the front slot (`SIDE`: 0.88, 0.94 below 768px), so cards grow continuously as they slide forward. Drag with any pointer: on release the throw is projected forward (`THROW`, 0.22s) and the rail glides to the nearest card from there, starting at the hand's speed (a critically damped spring with ω = speed ÷ distance, so it only slows down), so a harder flick travels further. A horizontal wheel/trackpad gesture is counted in cards as it arrives (momentum included), so a fast swipe glides across several; the rail always heads for a whole card and the panel only follows once the gesture ends. Arrow keys; clicking a side card slides it forward and opens its musing at the same moment, so the panel comes in while the card travels (the click lands on an overlay outside the link, and the rail opens the link itself; when the panel narrows the list mid-glide, the resize handler rescales the running glide to the new card spacing instead of jumping), and the front card opens the musing. While a musing is open in the panel, the rail and panel move together: when the rail settles on a card its musing opens (through the shell like a click, but the link carries `data-keep-focus` so focus stays on the rail), opening a musing any other way brings its card to the front, and that card gets a 1px green-700 outline. Other panel pages (a job, About) are never replaced by browsing the rail; a caption under each card shows on touch screens only. Cards are the default; the choice is saved in localStorage and applied before paint as `<html data-musings="list">` (`VIEW_SCRIPT` in `lib/views.js`, shared with Playground), and CSS shows one view from that attribute. Switching is a FLIP morph with Web Animations (helpers in `lib/morph.js`, shared with Playground): titles and dates fly to their new places while copies of the old ones fade over them, the paper grows out of its row or shrinks back into it, and the section height eases (400ms `ease-snappy`, 30ms stagger). Styles are `.musings-*` in globals.css
+- `HiddenGallery`: my photographs hidden behind the home page (the About page's photography set, `src/lib/photos.json`, with 96px WebP thumbnails in `public/images/visuals/thumbs`). The list area is an invisible grid of 16px squares; 50 of them hold a photo (`COUNT`), in two bands: the top of the page down to the hero's name (`data-gallery-top`), from just left of the reading column to the right edge, and from the end of Playground (`data-gallery-bottom`) to the bottom, full width around the footer. Anything marked `data-gallery-avoid` (the hero photo, the name, the footer links) is kept clear. Photos are spaced evenly (blue noise: a minimum gap between centres, 44px at the page's edge widening to 88px towards the content), tried in a fixed hashed order so a resize keeps most of the layout, and neighbours never repeat a picture. Each fades and grows in as the pointer comes near (fully shown within 56px of its centre, gone beyond 190px), loads its thumbnail only once the pointer is within 420px, grows to 2.5× once the pointer rests on it for 150ms (so passing over doesn't set it off), and opens the full photo in a dialog on click. The layer covers the whole list behind its content and scrolls with it; the page above lets the pointer through everywhere but the reading column (`.home-flow` in globals.css). Pointer devices from 1024px wide only
+- `SquareCursor` (root layout, every page): the pointer drawn as a 14px green-700 square, after shahimim.com, sitting exactly on the pointer; it shrinks over anything clickable and further while pressed, and hides when the pointer leaves the window. Over a link a small green label slides out beside it saying what a click does (`labelFor`: Open for Playground pieces, Read for every other page (jobs, musings, About), Visit ↗ for outside links, Email); any element can name its own with `data-cursor="…"` (the hidden photos say View); buttons get no label. Fine pointers from 768px wide only, and the native cursor is hidden only once it runs (`<html data-square-cursor>`)
+- `CopyEmail`: the footer's "Email": a click copies `bio.email` and a small green-900 "Copied" pill rises above it for 1.5s (falls back to a mailto if the clipboard is blocked); the square cursor says Copy
+- `Contact`: "Start a conversation" with X, LinkedIn and GitHub buttons, at the bottom of the About page
+- `YouTubeEmbed`: a YouTube video that shows only its thumbnail until played, then loads the privacy-enhanced player
+- `Expandable`: a button that unfolds a server-rendered section below it
+- `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip. `pauseOnScroll` also pauses it while its scroller moves (playing again 150ms after it stops); use it where several clips show at once (In Motion): with two or more videos playing, Chromium drops the page to the videos' frame rate (about 30fps) and scrolling judders
+- `MediaGrid`: media side by side in a row
 
-# Code Quality
-npm run lint         # Run ESLint (currently configured to ignore errors in builds)
-```
+## Performance
 
-## Development Setup
-
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Start Development**:
-   ```bash
-   npm run dev
-   ```
-
-3. **Environment**: 
-   - Development server runs on `http://localhost:3000`
-   - Hot reload enabled for all file changes
-
-## Content Structure
-
-### Main Sections
-- **Projects**: Personal projects and side ventures
-- **Experience**: Professional work history with company details
-- **Musings**: Blog-style articles and thoughts
-- **About**: Personal information and philosophy
-- **Now**: Current activities and learning
-
-### Data Organization
-All content is exported from `src/lib/content.js`:
-- `projects` - Project showcase data
-- `experience` - Work experience
-- `designAreas` - Additional experience areas
-- `musings` - Blog posts/articles
-- `bio` - Personal information
-- `now` - Current status updates
-
-## Design System
-
-### Typography
-- **Geist Sans**: Primary sans-serif font
-- **Instrument Serif**: Headings and emphasis
-
-### Color Palette
-- Uses Tailwind CSS default color system
-- Primary colors: Slate for text and borders
-- Accent colors: Green for highlights and active states
-- Background colors: Default white with slate hover states
-
-### Component Patterns
-- **ListItem**: Consistent item display pattern
-- **HighlightLink**: Styled external/internal links
-- **Badge**: Status indicators
-- **ImageGridWithLightbox**: Gallery components
-
-## Image Management
-
-### Organization
-- `public/images/AI/` - AI-related project images
-- `public/images/Craft/` - Design craft showcase
-- `public/images/about/` - Personal/about section images
-- `public/images/musings/` - Blog article images
-- `public/images/visuals/` - General visual content
-- `public/icons/` - Company and project icons
-
-### Optimization
-- Next.js automatic image optimization
-- WebP conversion where supported
-- Responsive image sizing
-- Lazy loading by default
+- Static export (`output: 'export'`), so there is no image server: images are served as they are in `public/`. Convert them to WebP and size them before adding
+- Keep pages as server components; client code is limited to the panel shell, `Musings`, `Playground`, `HiddenGallery`, `SquareCursor`, `CopyEmail`, `RevealGroup`, `AutoVideo` and the galleries
+- Lazy-load anything below the fold (`loading="lazy"` on images and iframes); the hero image uses `fetchPriority="high"`
+- Do not autoplay video with a plain `<video autoPlay>`; use `AutoVideo`
 
 ## Deployment
 
-### Cloudflare Pages
-- Deployed to Cloudflare Pages (project `tonyzebdesign`); pushes to Git trigger builds and pull requests get preview deployments
-- Static export: `output: 'export'` in `next.config.mjs`, so `npm run build` writes the site to `out/`, which is the build output directory
-- Images are unoptimized (`images.unoptimized: true`) because there is no Next.js image server on a static host
-- Static export rules out server features: API routes, middleware, ISR and on-demand image optimization
-- Node.js 22 or newer (see `engines` in `package.json` and `.nvmrc`)
-- Vercel is no longer used; Vercel Speed Insights and Analytics were removed
+- Cloudflare Pages (project `tonyzebdesign`); pushes build automatically and pull requests get preview deployments
+- `npm run build` writes the static site to `out/`
+- `public/_redirects` holds redirects for moved URLs (Cloudflare format); keep `public/sitemap.xml` in step with the routes
+- Static export rules out API routes, middleware, ISR and on-demand image optimisation
+- Node.js 22 or newer (`engines` in `package.json` and `.nvmrc`)
 
-### Build Configuration
-- ESLint errors ignored during builds for flexibility
-- PostCSS processing for Tailwind CSS
-- Next.js optimization features enabled
+## Scripts
 
-## SEO & Meta
+```bash
+npm run dev     # Development server on localhost:3000
+npm run build   # Production build to out/
+npm run lint    # ESLint (errors do not block builds)
+```
 
-### Homepage SEO
-- Comprehensive meta tags
-- Open Graph integration
-- Twitter Card support
-- Structured data for social sharing
-
-### Performance
-- Core Web Vitals optimization
-- Progressive loading strategies
-
-## Future Considerations
-
-### Potential Improvements
-- Add TypeScript for better type safety
-- Implement proper error handling
-- Add automated testing
-- Consider adding a CMS for content management
-- Implement proper loading states
-- Add more interactive animations
-
-### Content Management
-- Currently all content is hardcoded in `content.js`
-- Consider migrating to a headless CMS for easier updates
-- Implement dynamic content loading for better performance
-
-## Performance Best Practices
-
-### Component Optimization
-- **Server Components by Default**: Most pages are server components for optimal performance
-- **Client Components**: Only use 'use client' when needed for interactivity
-- **React.memo()**: Applied to frequently re-rendered components (CaseStudyTemplate child components, list items)
-- **useMemo()**: Used for expensive calculations and static arrays in client components
-- **useCallback()**: Applied to event handlers passed as props
-- **Static Data**: Helper functions and data arrays moved outside components
-
-### Build Optimizations
-- **Suspense Boundaries**: useSearchParams() wrapped in Suspense for proper static generation
-- **Viewport Export**: Separate viewport export (not in metadata) for Next.js 14 compatibility
-- **Image Optimization**: All images use Next.js Image component with proper sizing
-- **Code Splitting**: Components lazy loaded where appropriate
-
-## Notes for Development
-
-- The project uses JavaScript instead of TypeScript
-- ESLint is configured to allow builds with warnings/errors
-- All animations use Framer Motion v12 (latest major version)
-- Navigation uses client-side routing with Next.js App Router
-- Images are manually optimized and organized by content type
-- The site follows a mobile-first responsive design approach
-- Node.js version: >=22.0.0 (specified in package.json)
+Running `npm run build` while the dev server is running overwrites its `.next` cache; restart the dev server afterwards.

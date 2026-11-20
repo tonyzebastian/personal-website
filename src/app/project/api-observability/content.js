@@ -6,7 +6,7 @@ export const postobvdata = {
     role: "Lead Product Designer", 
     duration: "8 months",
     company: "Postman",
-    logo: "/icons/postman.png",
+    logo: "/icons/postman.webp",
   },
 
   // Projects data
