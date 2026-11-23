@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { m, AnimatePresence } from 'motion/react'
+import { m } from 'motion/react'
 import Fit from '../Fit'
+import PhotoModal from './PhotoModal'
+import { SPHERE_IMAGES } from './sphere-images'
 
 // ==========================================
 // CONSTANTS & CONFIGURATION
@@ -29,22 +30,6 @@ const SPHERE_MATH = {
     while (angle > 180) angle -= 360
     while (angle < -180) angle += 360
     return angle
-  }
-}
-
-const ANIMATION_CONFIG = {
-  modal: {
-    backdrop: {
-      initial: { opacity: 0 },
-      animate: { opacity: 1 },
-      exit: { opacity: 0 }
-    },
-    content: {
-      initial: { scale: 0.8, opacity: 0 },
-      animate: { scale: 1, opacity: 1 },
-      exit: { scale: 0.8, opacity: 0 },
-      transition: { ease: "easeOut", duration: 0.3 }
-    }
   }
 }
 
@@ -271,47 +256,6 @@ const SphereImageGrid = ({
     state.last = { x: event.clientX, y: event.clientY }
   }
 
-  const renderSpotlightModal = () => {
-    return (
-      createPortal(<AnimatePresence>
-        {selectedImage && (
-          <m.div
-            className="fixed inset-0 bg-black/80 z-[80] flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
-            {...ANIMATION_CONFIG.modal.backdrop}
-          >
-            <m.div
-              className="bg-white rounded-xl max-w-md w-full overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-              {...ANIMATION_CONFIG.modal.content}
-            >
-              <div className="relative aspect-square">
-                <img
-                  src={selectedImage.src}
-                  alt={selectedImage.alt}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  aria-label="Close photo"
-                  onClick={() => setSelectedImage(null)}
-                  className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2">{selectedImage.title}</h3>
-                <p className="text-gray-600">{selectedImage.description}</p>
-              </div>
-            </m.div>
-          </m.div>
-        )}
-      </AnimatePresence>, document.body)
-    )
-  }
-
   if (!images.length) return null
 
   return (
@@ -364,7 +308,7 @@ const SphereImageGrid = ({
         </div>
       </m.div>
 
-      {renderSpotlightModal()}
+      <PhotoModal image={selectedImage} onClose={() => setSelectedImage(null)} />
     </>
   )
 }
@@ -375,84 +319,10 @@ export default SphereImageGrid
 // PLAYGROUND PIECE (from the playground repo's img-sphere page)
 // ==========================================
 
-const BASE_IMAGES = [
-  {
-    src: "https://images.unsplash.com/photo-1758178309498-036c3d7d73b3?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 1",
-    title: "Mountain Landscape",
-    description: "A beautiful landscape captured at golden hour with mountains in the background."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1757647016230-d6b42abc6cc9?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2072",
-    alt: "Image 2",
-    title: "Portrait Photography",
-    description: "Stunning portrait photography showcasing natural lighting and composition."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1757906447358-f2b2cb23d5d8?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 3",
-    title: "Urban Architecture",
-    description: "Modern architectural design featuring clean lines and geometric patterns."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1742201877377-03d18a323c18?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1064",
-    alt: "Image 4",
-    title: "Nature Scene",
-    description: "Peaceful nature scene with vibrant colors and natural beauty."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1757081791153-3f48cd8c67ac?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 5",
-    title: "Abstract Art",
-    description: "Creative abstract composition with bold colors and unique patterns."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1757626961383-be254afee9a0?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 6",
-    title: "Mountain Landscape",
-    description: "A beautiful landscape captured at golden hour with mountains in the background."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1756748371390-099e4e6683ae?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 7",
-    title: "Portrait Photography",
-    description: "Stunning portrait photography showcasing natural lighting and composition."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1755884405235-5c0213aa3374?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 8",
-    title: "Urban Architecture",
-    description: "Modern architectural design featuring clean lines and geometric patterns."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1757495404191-e94ed7e70046?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 9",
-    title: "Nature Scene",
-    description: "Peaceful nature scene with vibrant colors and natural beauty."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1756197256528-f9e6fcb82b04?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1064",
-    alt: "Image 10",
-    title: "Abstract Art",
-    description: "Creative abstract composition with bold colors and unique patterns."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1534083220759-4c3c00112ea0?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=987",
-    alt: "Image 11",
-    title: "Abstract Art",
-    description: "Creative abstract composition with bold colors and unique patterns."
-  },
-  {
-    src: "https://images.unsplash.com/photo-1755278338891-e8d8481ff087?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1674",
-    alt: "Image 12",
-    title: "Abstract Art",
-    description: "Creative abstract composition with bold colors and unique patterns."
-  }
-]
 
 const IMAGES = Array.from({ length: 60 }, (_, i) => {
-  const baseImage = BASE_IMAGES[i % BASE_IMAGES.length]
-  return { id: `img-${i + 1}`, ...baseImage, alt: `${baseImage.alt} (${Math.floor(i / BASE_IMAGES.length) + 1})` }
+  const baseImage = SPHERE_IMAGES[i % SPHERE_IMAGES.length]
+  return { id: `img-${i + 1}`, ...baseImage, alt: `${baseImage.alt} (${Math.floor(i / SPHERE_IMAGES.length) + 1})` }
 })
 
 const CONFIG = {

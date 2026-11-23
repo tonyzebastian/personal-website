@@ -709,22 +709,6 @@ html:not([data-playground='list']) [data-toggle='playground'] [data-option='defa
   }
 }
 
-/* HiddenGallery: photos that bloom out from a press and hold on the home
-   list, drawn in WebGL (lib/bloom-gl.js). The page above lets the pointer
-   through everywhere but the reading column, so a press beside it reaches the
-   list itself. */
-.home-flow {
-  pointer-events: none;
-}
-.home-flow [data-reading-column] {
-  pointer-events: auto;
-}
-/* No text selection while a bloom is up (set by HiddenGallery). */
-html[data-blooming],
-html[data-blooming] * {
-  user-select: none;
-}
-
 /* SquareCursor: a small green square in place of the pointer, after
    shahimim.com. Only on fine pointers, once the component is running (it sets
    data-square-cursor on <html>), so the native cursor stays if it doesn't. */

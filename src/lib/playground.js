@@ -99,6 +99,12 @@ export const playground = [
         description: 'Images spread over a sphere. Drag to spin it; it keeps some momentum, then drifts on its own. Click an image to see it larger.',
       },
       {
+        id: 'image-goo',
+        title: 'Image Goo',
+        hint: 'Move your cursor and the photos ooze out around it',
+        description: 'Four photos in green bubbles around a drop under your cursor, all one liquid. Move and new photos ooze out of the drop while the old ones are drawn back in; nudge toward one and a thread reaches out to it. Rest on a photo to grow it, click to see it larger.',
+      },
+      {
         id: 'vision-reveal',
         title: 'Vision Reveal',
         hint: 'A shader that brings the photo through wherever your cursor wanders',

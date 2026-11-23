@@ -19,6 +19,7 @@ const isometric = (name) => piece(() => import('./isometric/Isometric'), name);
 export const PIECES = {
   'drawing-wall': { Component: piece(() => import('./drawings/DrawingWall')), aspectClass: 'aspect-[3/5] @xl:aspect-[4/3]', bare: true },
   'image-sphere': { Component: piece(() => import('./SphereImageGrid')), aspect: '16 / 10' },
+  'image-goo': { Component: piece(() => import('./image-goo/ImageGoo')), aspect: '16 / 10' },
   'image-loading': { Component: piece(() => import('./ImageLoader')), aspect: '16 / 10', replay: true },
   'image-stack': { Component: piece(() => import('./ImgStack')), aspect: '16 / 10' },
   'image-tiles': { Component: piece(() => import('./ImgTiles')), aspect: '16 / 10', replay: true },

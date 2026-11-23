@@ -1,23 +1,23 @@
-// The WebGL renderer for HiddenGallery's bloom: paper bubbles holding photos
-// that run together like a liquid.
+// The WebGL renderer for Image Goo: photos in squircle bubbles that run
+// together with a drop under the pointer like a liquid.
 //
-// Every bubble (and the drop under the pointer) is a shape described by its
-// signed distance (negative inside, positive outside, in CSS px). The shader
-// joins them with a smooth minimum (Inigo Quilez's polynomial smin), which
-// rounds the seam between two shapes over a blend radius K: far apart they
-// stay round, near each other a neck grows between them. Because the shape
-// is a true distance, its edge is anti-aliased to one device pixel, and the
-// border is read off the same distance, so it follows the necks too. To
-// look like liquid rather than geometry, the edge wobbles with slow noise
-// (most in the necks), and the bridges to the drop pinch and bead. The
-// shapes can be rounded boxes (square to circle, by corner radius) or
-// squircles. Per pixel, bottom to top:
+// Every bubble (and the drop) is a shape described by its signed distance
+// (negative inside, positive outside, in CSS px). The shader joins them with
+// a smooth minimum (Inigo Quilez's polynomial smin), which rounds the seam
+// between two shapes over a blend radius K: far apart they stay apart, near
+// each other a neck grows between them. Because the shape is a true
+// distance, its edge is anti-aliased to one device pixel. To look like liquid
+// rather than geometry, the outer edge wobbles with slow noise (only in the
+// necks and while the pointer moves), and the bridges to the drop pinch and
+// bead. The shapes can be rounded boxes (square to circle, by corner radius)
+// or squircles. Per pixel, bottom to top:
 //   - an optional outline just outside the edge,
 //   - the goo (fill), a touch darker deep in the necks so they read as liquid,
-//   - each bubble's photo, a circle inset INSET px, from one texture atlas.
-// The scene is drawn into a fixed full-screen canvas, but only inside the
-// scissor box around the shapes, so the cost follows the bloom, not the
-// screen. WebGL 2 (for mipmaps on the atlas); without it the bloom is off.
+//   - each bubble's photo, its shape inset by the frame width, from one
+//     texture atlas.
+// The canvas fills the piece's box, but only the scissor box around the
+// shapes is drawn, so the cost follows the goo. WebGL 2 (for mipmaps on the
+// atlas); without it the piece shows nothing.
 
 export const MAX = 24; // bubbles drawn at once (shown and leaving)
 
@@ -187,8 +187,11 @@ void main() {
   color = result;
 }`;
 
-// Sets up the canvas. Returns null when WebGL 2 is missing or fails.
-export function createBloomRenderer(canvas, atlasUrl, cols) {
+// Sets up the canvas. atlas: a promise of the photo atlas (an image or
+// canvas holding a cols x cols grid of square photos); onReady runs once it is
+// on the GPU, so a still scene can be drawn again with photos in it. Returns
+// null when WebGL 2 is missing or fails.
+export function createGooRenderer(canvas, atlas, cols, onReady) {
   const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false, alpha: true });
   if (!gl) return null;
 
@@ -245,15 +248,13 @@ export function createBloomRenderer(canvas, atlasUrl, cols) {
     ringWidth: u('uRingWidth'),
   };
 
-  // The atlas: a grid of cols x cols photos (scripts/build-bloom-atlas.mjs).
+  // The atlas, grey until it arrives.
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([235, 235, 235, 255]));
   gl.uniform1i(U.atlas, 0);
   let ready = 0;
-  const image = new Image();
-  image.decoding = 'async';
-  image.onload = () => {
+  atlas.then((image) => {
     if (gl.isContextLost()) return;
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
@@ -264,8 +265,8 @@ export function createBloomRenderer(canvas, atlasUrl, cols) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     ready = 1;
-  };
-  image.src = atlasUrl;
+    onReady?.();
+  }, () => {}); // if the photos can't load, the bubbles stay grey
 
   gl.enable(gl.SCISSOR_TEST);
   gl.clearColor(0, 0, 0, 0);
@@ -277,8 +278,8 @@ export function createBloomRenderer(canvas, atlasUrl, cols) {
 
   const resize = () => {
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.round(innerWidth * dpr);
-    canvas.height = Math.round(innerHeight * dpr);
+    canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
     gl.viewport(0, 0, canvas.width, canvas.height);
     drawn = true; // a resize clears the canvas; make sure the next frame clears its scissor too
   };
