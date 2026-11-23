@@ -41,13 +41,13 @@ const R = 20.5; // px, half a bubble's size (a 38px photo and its frame)
 const INSET = 1.5; // px of green frame around each photo, at rest
 const HOT_R = 46.5; // px, half the size of the bubble under the pointer
 const REACH = 3.5; // px the frame swells on the side facing the pointer as it comes close
-const DROP = 11; // px, the radius of the drop under the pointer
+const DROP = 7; // px, half the size of the drop under the pointer (a 14px squircle, the square cursor's size)
 const K = 18; // px, the neck's reach: two shapes join when under K / 2 apart
 // A bridge: a line from the drop to a bubble once the gap between them is
-// under BRIDGE px. At rest (PITCH 52) the gap is 20.5px, so there's none; a
+// under BRIDGE px. At rest (PITCH 52) the gap is 24.5px, so there's none; a
 // nudge of a couple of px toward a bubble draws a hairline, which thickens
 // to BRIDGE_W px across as the gap closes.
-const BRIDGE = 20;
+const BRIDGE = 24;
 const BRIDGE_W = 6;
 const WAIT = 120; // ms of holding before the first four appear, so a plain click shows nothing
 const SLOP = 6; // px the pointer may move during WAIT before it counts as a drag (selecting text)

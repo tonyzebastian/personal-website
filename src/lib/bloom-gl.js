@@ -110,7 +110,8 @@ float bridge(vec2 p, vec2 a, float ra, vec2 b, float hb, float w, float seed) {
 // a neck. Unlike a longer blend radius, a bridge doesn't swell the drop.
 // hard is the plain union of the shapes, without necks or bridges.
 float field(vec2 p, out float hard) {
-  float d = length(p - uSource.xy) - uSource.z;
+  // The drop is the bubbles' shape too (a squircle), like the square cursor.
+  float d = shape(p - uSource.xy, uSource.z, uSource.z * uRound);
   hard = d;
   float bridges = 1e5;
   for (int i = 0; i < MAX; i++) {
