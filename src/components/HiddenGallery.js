@@ -10,8 +10,8 @@ import { releaseContext } from '@/lib/webgl';
 
 // A hidden gallery on the home page. Press and hold anywhere on the home list
 // that isn't a link, a control or media, and four of my photographs come out
-// of the pointer in paper bubbles, one on each side, pulling out of a drop of
-// paper under the pointer like a liquid: each stays joined to the drop by a
+// of the pointer in green-framed bubbles, one on each side, pulling out of a
+// green drop under the pointer like a liquid: each stays joined to it by a
 // neck that stretches thin and lets go. Drag, and the group follows: on each
 // new empty square the four around it come out of the drop, and the ones left
 // behind are drawn back into it, so only the photos beside the pointer are
@@ -29,31 +29,48 @@ import { releaseContext } from '@/lib/webgl';
 //
 // How it's drawn: lib/bloom-gl.js renders every bubble and the drop as one
 // liquid shape in WebGL (signed distances joined by a smooth minimum), with a
-// hairline, a soft shadow and the photos from one texture atlas
+// green frame round each photo and the photos from one texture atlas
 // (public/images/visuals/bloom-atlas.webp, built by
 // scripts/build-bloom-atlas.mjs). Here each bubble is a set of springs
 // (place, size, hover growth), stepped once a frame while anything moves.
 // Which square the pointer is on comes from a grid of PITCH px lined up on the
 // press point. Mouse and pen from 1024px wide, with WebGL 2, only.
 
-const PITCH = 60; // px between bubble centres
-const R = 22; // px, a bubble's radius
-const INSET = 4; // px of paper around each photo
-const HOT_R = 48; // px, the radius of the bubble under the pointer
+const PITCH = 52; // px between bubble centres: the closest at which bubbles and the drop sit apart at rest (gap >= K)
+const R = 20.5; // px, half a bubble's size (a 38px photo and its frame)
+const INSET = 1.5; // px of green frame around each photo, at rest
+const HOT_R = 46.5; // px, half the size of the bubble under the pointer
+const REACH = 3.5; // px the frame swells on the side facing the pointer as it comes close
 const DROP = 11; // px, the radius of the drop under the pointer
-const K = 18; // px, how far apart two shapes start to join (the neck's reach)
+const K = 18; // px, the neck's reach: two shapes join when under K / 2 apart
+// A bridge: a line from the drop to a bubble once the gap between them is
+// under BRIDGE px. At rest (PITCH 52) the gap is 20.5px, so there's none; a
+// nudge of a couple of px toward a bubble draws a hairline, which thickens
+// to BRIDGE_W px across as the gap closes.
+const BRIDGE = 20;
+const BRIDGE_W = 6;
 const WAIT = 120; // ms of holding before the first four appear, so a plain click shows nothing
 const SLOP = 6; // px the pointer may move during WAIT before it counts as a drag (selecting text)
-const STAGGER = 0.04; // s between the bubbles of a step, and between them on release
+const STAGGER = 0.04; // s between the bubbles of a step
 // Springs: [stiffness, damping], for a mass of 1. Coming out is a little
 // underdamped so the bubble settles like a drop; going back in is quicker.
 const OUT_MOVE = [140, 18];
 const OUT_SIZE = [190, 21];
 const IN_MOVE = [210, 26];
 const IN_SIZE = [170, 24];
+// Letting go: stiffer and without a bounce, so everything is back in the drop
+// and gone in about a quarter of a second.
+const RELEASE_MOVE = [560, 48];
+const RELEASE_SIZE = [520, 46];
+const RELEASE_STAGGER = 0.015; // s between bubbles on release, nearest first
 const HOVER = [320, 30];
 const FOLLOW = [600, 46]; // the drop trailing the pointer
 const ATLAS = '/images/visuals/bloom-atlas.webp';
+// The look: squircles, the goo green-700 throughout (the frame round each
+// photo, the necks and the drop), no outline.
+const GREEN = [0, 130 / 255, 54 / 255]; // green-700, the square cursor's colour
+const LOOK = { kind: 'squircle', round: 0, fill: GREEN, wobble: 1 }; // wobble: px the edges wander at most
+const ENERGY_SPEED = 400; // px/s of pointer movement for the full wobble
 const COLS = Math.ceil(Math.sqrt(photos.length)); // the atlas grid (as in the build script)
 // Presses on these don't start a bloom: links, controls, media, the Musings
 // rail (it drags) and Playground tiles.
@@ -108,6 +125,7 @@ export default function HiddenGallery() {
     let cells = []; // every bubble on screen, shown and leaving
     let frame = 0;
     let last = 0;
+    let energy = 0; // 0 to 1, how much the pointer is moving (wakes the wobble)
     const drop = { x: spring(0, FOLLOW), y: spring(0, FOLLOW), r: spring(0, OUT_SIZE), wait: 0 };
 
     const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -202,10 +220,33 @@ export default function HiddenGallery() {
       if (gl) {
         const bubbles = cells.map((cell) => {
           const r = Math.max(0, (R + cell.g.x * (HOT_R - R)) * cell.s.x);
-          return { x: cell.x.x, y: cell.y.x, r, photo: Math.max(0, r - INSET * Math.min(1, cell.s.x)), index: cell.index, hot: cell === run?.hot };
+          // The line to the drop, by how close it is (none while leaving).
+          const gap = Math.hypot(cell.x.x - drop.x.x, cell.y.x - drop.y.x) - r - drop.r.x;
+          const near =
+            cell.leaving || cell === run?.hot || drop.r.x < 1 ? 0 : Math.min(1, Math.max(0, (BRIDGE - gap) / BRIDGE));
+          const bridge = near > 0 ? 0.4 + (BRIDGE_W / 2 - 0.4) * near : 0;
+          // The frame also swells toward the pointer as it comes close.
+          const reach = near * REACH;
+          return {
+            x: cell.x.x,
+            y: cell.y.x,
+            r,
+            photo: Math.max(0, r - INSET * Math.min(1, cell.s.x)),
+            index: cell.index,
+            hot: cell === run?.hot,
+            bridge,
+            reach,
+          };
         });
         bubbles.sort((a, b) => a.hot - b.hot); // the grown one's photo on top
-        gl.draw(bubbles, { x: drop.x.x, y: drop.y.x, r: Math.max(0, drop.r.x) }, K);
+        // Movement wakes the wobble: it rises with the drop's speed and fades
+        // about half a second after the pointer stops.
+        const speed = Math.hypot(drop.x.v, drop.y.v);
+        const target = Math.min(1, speed / ENERGY_SPEED);
+        energy += (target - energy) * Math.min(1, dt * (target > energy ? 10 : 3));
+        LOOK.time = now / 1000;
+        LOOK.energy = calm ? 0 : energy;
+        gl.draw(bubbles, { x: drop.x.x, y: drop.y.x, r: Math.max(0, drop.r.x) }, K, LOOK);
       }
       if (moving || run?.started) frame = requestAnimationFrame(tick);
       else gl?.clear();
@@ -214,6 +255,20 @@ export default function HiddenGallery() {
       if (frame) return;
       last = performance.now();
       frame = requestAnimationFrame(tick);
+    };
+
+    // The next photo from this press's shuffled deck, skipping any already on
+    // screen, so each press starts differently and nothing repeats until the
+    // whole set has been round.
+    const deal = (r) => {
+      const showing = new Set([...r.shown.values()].map((cell) => cell.index));
+      for (let k = 0; k < r.deck.length; k++) {
+        const index = r.deck[(r.dealt + k) % r.deck.length];
+        if (showing.has(index)) continue;
+        r.dealt += k + 1;
+        return index;
+      }
+      return r.deck[r.dealt++ % r.deck.length];
     };
 
     // Puts a bubble on grid square (i, j), coming out of the drop, unless one
@@ -225,10 +280,7 @@ export default function HiddenGallery() {
       const hx = r.px + i * PITCH;
       const hy = r.py + j * PITCH;
       if (!r.free(hx, hy)) return;
-      // A picture, but not the same as a neighbour's.
-      const taken = SIDES.map(([di, dj]) => r.shown.get(`${i + di},${j + dj}`)?.index);
-      let index = Math.floor(hash(key) * photos.length);
-      for (let k = 0; k < photos.length && taken.includes(index); k++) index = (index + 1) % photos.length;
+      const index = deal(r);
 
       const calm = reduce();
       const cell = {
@@ -253,14 +305,15 @@ export default function HiddenGallery() {
       cells.push(cell);
     };
 
-    const leave = (cell, delay = 0) => {
+    // fast: letting go, which closes quicker than a bubble left behind by a drag.
+    const leave = (cell, delay = 0, fast = false) => {
       cell.leaving = true;
       cell.wait = reduce() ? 0 : delay;
       cell.s.t = 0;
       cell.g.t = 0;
-      tune(cell.x, IN_MOVE);
-      tune(cell.y, IN_MOVE);
-      tune(cell.s, reduce() ? [400, 40] : IN_SIZE);
+      tune(cell.x, fast ? RELEASE_MOVE : IN_MOVE);
+      tune(cell.y, fast ? RELEASE_MOVE : IN_MOVE);
+      tune(cell.s, reduce() ? [400, 40] : fast ? RELEASE_SIZE : IN_SIZE);
     };
 
     // The bubble under the pointer grows, outward: away from the square the
@@ -310,7 +363,9 @@ export default function HiddenGallery() {
       const r = run;
       // Anywhere on the grown bubble still counts as on it.
       const hot = r.hot;
-      if (hot && Math.hypot(r.x - hot.x.t, r.y - hot.y.t) <= HOT_R) return;
+      const dx = Math.abs(r.x - hot?.x.t);
+      const dy = Math.abs(r.y - hot?.y.t);
+      if (hot && Math.max(dx, dy) <= HOT_R) return;
       const i = Math.round((r.x - r.px) / PITCH);
       const j = Math.round((r.y - r.py) / PITCH);
       if (i === r.at.i && j === r.at.j) return;
@@ -339,6 +394,7 @@ export default function HiddenGallery() {
         drop.x.v = drop.y.v = 0;
       }
       drop.wait = 0;
+      tune(drop.r, OUT_SIZE);
       drop.r.t = DROP;
       visit(0, 0);
       follow();
@@ -357,8 +413,11 @@ export default function HiddenGallery() {
       drop.x.t = x;
       drop.y.t = y;
       const shown = [...r.shown.values()].sort((a, b) => Math.hypot(a.hx - x, a.hy - y) - Math.hypot(b.hx - x, b.hy - y));
-      shown.forEach((cell, n) => leave(cell, Math.min(n, 4) * STAGGER));
-      drop.wait = reduce() ? 0 : 0.18 + Math.min(shown.length, 4) * STAGGER;
+      shown.forEach((cell, n) => leave(cell, Math.min(n, 4) * RELEASE_STAGGER, true));
+      // Bubbles still leaving from earlier drags hurry up too.
+      cells.forEach((cell) => cell.leaving && leave(cell, 0, true));
+      drop.wait = reduce() ? 0 : 0.06 + Math.min(shown.length, 4) * RELEASE_STAGGER;
+      tune(drop.r, RELEASE_SIZE);
       drop.r.t = 0;
       wake();
     };
@@ -382,6 +441,8 @@ export default function HiddenGallery() {
         started: false,
         free: null,
         timer: 0,
+        deck: shuffle(photos.map((_, index) => index)),
+        dealt: 0,
       };
       run.timer = setTimeout(begin, WAIT);
     };
@@ -481,15 +542,11 @@ export default function HiddenGallery() {
 
 const full = (id) => `/images/visuals/${id}.jpg`;
 
-// A stable number in [0, 1) for a string.
-function hash(text) {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+// The list, in a random order (Fisher–Yates).
+function shuffle(list) {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
   }
-  h ^= h >>> 13;
-  h = Math.imul(h, 0x5bd1e995);
-  h ^= h >>> 15;
-  return (h >>> 0) / 4294967296;
+  return list;
 }
