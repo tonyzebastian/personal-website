@@ -32,7 +32,7 @@ const FOOTER_LINKS = [
 export default function HomeList() {
   return (
     <div className="relative">
-      {/* Photos hidden behind the page, shown as the pointer comes near. */}
+      {/* Photos that bloom out from a press and hold beside the content. */}
       <HiddenGallery />
       {/* Each direct child of IntroFlow is one section of the page, and appears
           in turn on the first load. Add new sections here. */}
@@ -45,7 +45,7 @@ export default function HomeList() {
           <Musings items={musings} />
         </Column>
 
-        <Column data-gallery-bottom>
+        <Column>
           <Playground
             items={playground.map((item) => ({
               href: item.type === 'link' ? item.href : `/playground/${item.slug}`,
@@ -62,7 +62,7 @@ export default function HomeList() {
             the address. */}
         <Column>
           <footer>
-            <ul data-gallery-avoid className="flex flex-wrap gap-x-8 gap-y-2">
+            <ul className="flex flex-wrap gap-x-8 gap-y-2">
               <li>
                 <CopyEmail email={bio.email} className={FOOTER_LINK} />
               </li>

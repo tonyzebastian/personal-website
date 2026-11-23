@@ -25,10 +25,10 @@ function Words({ text, from = 0 }) {
 export default function Hero() {
   return (
     <header className="flex flex-col gap-5">
-      <div data-gallery-avoid className="intro-photo">
+      <div className="intro-photo">
         <HeroBook book={storybook} />
       </div>
-      <div data-gallery-avoid data-gallery-top className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <h1>
           <Words text={NAME} />
         </h1>

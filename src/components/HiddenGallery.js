@@ -1,41 +1,94 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Dialog } from '@base-ui/react/dialog';
 import { X } from '@phosphor-icons/react';
 import photos from '@/lib/photos.json';
+import { createBloomRenderer } from '@/lib/bloom-gl';
+import { releaseContext } from '@/lib/webgl';
 
-// A hidden gallery behind the home page. The list area is split into an
-// invisible grid of CELL px squares; a few squares, in two bands at the top
-// and bottom of the page (layout), hold one of my photographs (the About page's
-// photography set; small square thumbnails in public/images/visuals/thumbs). They
-// can't be seen until the pointer comes near: each one fades and grows in as
-// the pointer approaches (fully shown within NEAR px, gone beyond FAR) and
-// fades away again as it leaves. Click one to see the photo in a dialog.
+// A hidden gallery on the home page. Press and hold anywhere on the home list
+// that isn't a link, a control or media, and four of my photographs come out
+// of the pointer in paper bubbles, one on each side, pulling out of a drop of
+// paper under the pointer like a liquid: each stays joined to the drop by a
+// neck that stretches thin and lets go. Drag, and the group follows: on each
+// new empty square the four around it come out of the drop, and the ones left
+// behind are drawn back into it, so only the photos beside the pointer are
+// ever shown. Resting on a photo grows it outward, away from the others, and
+// holds the group still; let go there to open it in a dialog. Letting go
+// draws them all back into the release point.
 //
-// The layer covers the whole home list behind its content and scrolls with
-// it, narrowing with the list when the side panel opens. Content sits above it
-// (.home-flow in globals.css lets pointer events through everywhere but the
-// column). Pointer devices from 1024px wide only: on touch there's nothing to
-// come near with.
+// Bubbles keep clear of the content (CONTENT: text, images, cards, tiles,
+// links) and stay within the home list, off the side panel. A scroll clears
+// them, since they are fixed to the screen.
+//
+// A press on text can also be the start of selecting it, so the bloom waits
+// WAIT ms and gives up if the pointer moves more than SLOP px first; once it
+// starts, text selection is turned off until the release.
+//
+// How it's drawn: lib/bloom-gl.js renders every bubble and the drop as one
+// liquid shape in WebGL (signed distances joined by a smooth minimum), with a
+// hairline, a soft shadow and the photos from one texture atlas
+// (public/images/visuals/bloom-atlas.webp, built by
+// scripts/build-bloom-atlas.mjs). Here each bubble is a set of springs
+// (place, size, hover growth), stepped once a frame while anything moves.
+// Which square the pointer is on comes from a grid of PITCH px lined up on the
+// press point. Mouse and pen from 1024px wide, with WebGL 2, only.
 
-const CELL = 16; // px, one square
-const COUNT = 50; // squares that hold a photo
-const NEAR = 56; // px from a square's centre at which it is fully shown
-const FAR = 190; // px beyond which it is hidden
-const LOAD = 420; // px: a square's image starts loading once the pointer is this close
-const MARGIN = 24; // px kept clear around the content the photos avoid
-const GAP_NEAR = 44; // px between photo centres at the page's edge (an empty square between)
-const GAP_FAR = 88; // px between photo centres at a band's inner side
+const PITCH = 60; // px between bubble centres
+const R = 22; // px, a bubble's radius
+const INSET = 4; // px of paper around each photo
+const HOT_R = 48; // px, the radius of the bubble under the pointer
+const DROP = 11; // px, the radius of the drop under the pointer
+const K = 18; // px, how far apart two shapes start to join (the neck's reach)
+const WAIT = 120; // ms of holding before the first four appear, so a plain click shows nothing
+const SLOP = 6; // px the pointer may move during WAIT before it counts as a drag (selecting text)
+const STAGGER = 0.04; // s between the bubbles of a step, and between them on release
+// Springs: [stiffness, damping], for a mass of 1. Coming out is a little
+// underdamped so the bubble settles like a drop; going back in is quicker.
+const OUT_MOVE = [140, 18];
+const OUT_SIZE = [190, 21];
+const IN_MOVE = [210, 26];
+const IN_SIZE = [170, 24];
+const HOVER = [320, 30];
+const FOLLOW = [600, 46]; // the drop trailing the pointer
+const ATLAS = '/images/visuals/bloom-atlas.webp';
+const COLS = Math.ceil(Math.sqrt(photos.length)); // the atlas grid (as in the build script)
+// Presses on these don't start a bloom: links, controls, media, the Musings
+// rail (it drags) and Playground tiles.
+const IGNORE =
+  'a, button, input, textarea, select, label, summary, img, video, canvas, iframe, svg, [role="button"], .musings-rail, .bento-tile, [data-no-bloom]';
+// Bubbles never land on these, so they fill the empty space around the content.
+const CONTENT = 'h1, h2, h3, p, li, a, button, img, video, canvas, figure, .bento-tile, [data-doc], [data-bloom-avoid]';
+const CLEAR = 6; // px kept between a bubble and the content
+const SIDES = [
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+];
+
+const spring = (x, [k, c]) => ({ x, v: 0, t: x, k, c });
+const tune = (s, [k, c]) => {
+  s.k = k;
+  s.c = c;
+};
+const step = (s, dt) => {
+  s.v += (-s.k * (s.x - s.t) - s.c * s.v) * dt;
+  s.x += s.v * dt;
+};
+const still = (s) => Math.abs(s.x - s.t) < 0.02 && Math.abs(s.v) < 0.02;
 
 export default function HiddenGallery() {
   const [enabled, setEnabled] = useState(false);
-  const [cells, setCells] = useState([]);
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(null); // the photo in the dialog
-  const layer = useRef(null);
+  const anchor = useRef(null); // sits in the home list: presses must start inside it
+  const surface = useRef(null); // the canvas
 
   useEffect(() => {
-    // Pointer devices with room beside the column (lg and up) only.
+    setMounted(true);
     const query = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px)');
     const update = () => setEnabled(query.matches);
     update();
@@ -43,91 +96,356 @@ export default function HiddenGallery() {
     return () => query.removeEventListener('change', update);
   }, []);
 
-  // Lay the squares out for the layer's size and the column's place.
   useEffect(() => {
-    if (!enabled) return;
-    const el = layer.current;
-    const lay = () => setCells(layout(el));
-    lay();
-    const observer = new ResizeObserver(lay);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [enabled]);
-
-  // Show each square by how near the pointer is.
-  useEffect(() => {
-    if (!enabled || !cells.length) return;
-    const el = layer.current;
-    const squares = [...el.querySelectorAll('[data-square]')];
+    if (!enabled || !mounted) return;
+    const scope = anchor.current?.parentElement;
+    const canvas = surface.current;
+    if (!scope || !canvas) return;
+    const html = document.documentElement;
+    let gl = null; // the renderer, set up when the browser is idle or on the first press
+    let failed = false; // no WebGL 2: the bloom stays off
+    let run = null; // the press, then the bloom, under way
+    let cells = []; // every bubble on screen, shown and leaving
     let frame = 0;
-    let px = -1e4;
-    let py = -1e4;
+    let last = 0;
+    const drop = { x: spring(0, FOLLOW), y: spring(0, FOLLOW), r: spring(0, OUT_SIZE), wait: 0 };
 
-    const draw = () => {
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const setup = () => {
+      if (gl || failed) return gl;
+      gl = createBloomRenderer(canvas, ATLAS, COLS);
+      if (!gl) failed = true;
+      return gl;
+    };
+    const idle = window.requestIdleCallback?.(setup, { timeout: 3000 }) ?? setTimeout(setup, 1500);
+    const lost = (event) => {
+      event.preventDefault();
+      gl = null;
+      cells = [];
+    };
+    const restored = () => setup();
+    canvas.addEventListener('webglcontextlost', lost);
+    canvas.addEventListener('webglcontextrestored', restored);
+    const resize = () => gl?.resize();
+    window.addEventListener('resize', resize);
+
+    // Where bubbles may go, measured when the bloom starts: on screen, inside
+    // the home list (so never over the side panel) and clear of the content.
+    const measure = () => {
+      const list = scope.getBoundingClientRect();
+      const bounds = {
+        left: Math.max(0, list.left),
+        right: Math.min(innerWidth, list.right),
+        top: Math.max(0, list.top),
+        bottom: Math.min(innerHeight, list.bottom),
+      };
+      const avoid = [...scope.querySelectorAll(CONTENT)]
+        .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width && r.height && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth);
+      return (x, y) => {
+        const l = x - R;
+        const t = y - R;
+        if (l < bounds.left || l + 2 * R > bounds.right || t < bounds.top || t + 2 * R > bounds.bottom) return false;
+        return !avoid.some(
+          (r) => l + 2 * R > r.left - CLEAR && l < r.right + CLEAR && t + 2 * R > r.top - CLEAR && t < r.bottom + CLEAR,
+        );
+      };
+    };
+
+    // One frame: step every spring, drop bubbles that have gone back in, draw.
+    const tick = (now) => {
       frame = 0;
-      const box = el.getBoundingClientRect();
-      squares.forEach((square, i) => {
-        const cell = cells[i];
-        const cx = box.left + cell.x + CELL / 2;
-        const cy = box.top + cell.y + CELL / 2;
-        const d = Math.hypot(px - cx, py - cy);
-        const t = 1 - smoothstep(NEAR, FAR, d);
-        square.style.opacity = t.toFixed(3);
-        square.style.scale = (0.85 + 0.15 * t).toFixed(3);
-        square.style.pointerEvents = t > 0.2 ? 'auto' : 'none';
-        if (d < LOAD) {
-          const img = square.firstElementChild;
-          if (!img.getAttribute('src')) img.setAttribute('src', img.dataset.src);
+      const dt = Math.min(1 / 30, (now - last) / 1000 || 1 / 60);
+      last = now;
+      const calm = reduce();
+      let moving = false;
+
+      for (const s of [drop.x, drop.y]) {
+        step(s, dt);
+        moving ||= !still(s);
+      }
+      if (drop.wait > 0) drop.wait -= dt;
+      else {
+        step(drop.r, dt);
+        moving ||= !still(drop.r);
+      }
+
+      cells = cells.filter((cell) => {
+        if (cell.leaving) {
+          if (cell.wait > 0) {
+            cell.wait -= dt;
+            return true;
+          }
+          // Drawn back into the drop, wherever it has got to.
+          if (!calm) {
+            cell.x.t = drop.x.x;
+            cell.y.t = drop.y.x;
+          }
+          if (cell.s.x < 0.05 && cell.s.t === 0) return false;
+        } else if (cell.hold > 0) {
+          // Waiting its turn inside the drop.
+          cell.hold -= dt;
+          const out = cell.hold <= 0;
+          cell.x.x = out ? cell.x.x : drop.x.x;
+          cell.y.x = out ? cell.y.x : drop.y.x;
+          if (!out) return true;
         }
+        for (const s of [cell.x, cell.y, cell.s, cell.g]) {
+          if (calm && (s === cell.x || s === cell.y)) s.x = s.t;
+          else step(s, dt);
+          moving ||= !still(s);
+        }
+        return true;
       });
+
+      if (gl) {
+        const bubbles = cells.map((cell) => {
+          const r = Math.max(0, (R + cell.g.x * (HOT_R - R)) * cell.s.x);
+          return { x: cell.x.x, y: cell.y.x, r, photo: Math.max(0, r - INSET * Math.min(1, cell.s.x)), index: cell.index, hot: cell === run?.hot };
+        });
+        bubbles.sort((a, b) => a.hot - b.hot); // the grown one's photo on top
+        gl.draw(bubbles, { x: drop.x.x, y: drop.y.x, r: Math.max(0, drop.r.x) }, K);
+      }
+      if (moving || run?.started) frame = requestAnimationFrame(tick);
+      else gl?.clear();
+    };
+    const wake = () => {
+      if (frame) return;
+      last = performance.now();
+      frame = requestAnimationFrame(tick);
+    };
+
+    // Puts a bubble on grid square (i, j), coming out of the drop, unless one
+    // is there or the square isn't free.
+    const place = (i, j, delay) => {
+      const r = run;
+      const key = `${i},${j}`;
+      if (r.shown.has(key)) return;
+      const hx = r.px + i * PITCH;
+      const hy = r.py + j * PITCH;
+      if (!r.free(hx, hy)) return;
+      // A picture, but not the same as a neighbour's.
+      const taken = SIDES.map(([di, dj]) => r.shown.get(`${i + di},${j + dj}`)?.index);
+      let index = Math.floor(hash(key) * photos.length);
+      for (let k = 0; k < photos.length && taken.includes(index); k++) index = (index + 1) % photos.length;
+
+      const calm = reduce();
+      const cell = {
+        key,
+        i,
+        j,
+        hx,
+        hy,
+        index,
+        x: spring(calm ? hx : drop.x.x, OUT_MOVE),
+        y: spring(calm ? hy : drop.y.x, OUT_MOVE),
+        s: spring(calm ? 0.6 : 0.25, calm ? [400, 40] : OUT_SIZE),
+        g: spring(0, HOVER),
+        leaving: false,
+        wait: 0,
+        hold: calm ? 0 : delay, // s it waits in the drop before coming out, to stagger the four
+      };
+      cell.x.t = hx;
+      cell.y.t = hy;
+      cell.s.t = 1;
+      r.shown.set(key, cell);
+      cells.push(cell);
+    };
+
+    const leave = (cell, delay = 0) => {
+      cell.leaving = true;
+      cell.wait = reduce() ? 0 : delay;
+      cell.s.t = 0;
+      cell.g.t = 0;
+      tune(cell.x, IN_MOVE);
+      tune(cell.y, IN_MOVE);
+      tune(cell.s, reduce() ? [400, 40] : IN_SIZE);
+    };
+
+    // The bubble under the pointer grows, outward: away from the square the
+    // group is gathered around, so it doesn't cover the others.
+    const heat = (cell) => {
+      const r = run;
+      if (cell === r.hot) return;
+      if (r.hot) {
+        r.hot.g.t = 0;
+        r.hot.x.t = r.hot.hx;
+        r.hot.y.t = r.hot.hy;
+      }
+      if (cell) {
+        const dx = Math.sign(cell.i - r.center.i);
+        const dy = Math.sign(cell.j - r.center.j);
+        cell.g.t = 1;
+        cell.x.t = cell.hx + dx * (HOT_R - R);
+        cell.y.t = cell.hy + dy * (HOT_R - R);
+        tune(cell.x, HOVER);
+        tune(cell.y, HOVER);
+      }
+      r.hot = cell;
+    };
+
+    // The pointer moved to square (i, j). On a bubble, it grows and the group
+    // holds still. On an empty square, the four around it come out and every
+    // other bubble is drawn back in.
+    const visit = (i, j) => {
+      const r = run;
+      const cell = r.shown.get(`${i},${j}`) ?? null;
+      heat(cell);
+      if (cell) return;
+      r.center = { i, j };
+      const keep = new Set(SIDES.map(([di, dj]) => `${i + di},${j + dj}`));
+      for (const [key, other] of r.shown) {
+        if (keep.has(key)) continue;
+        r.shown.delete(key);
+        leave(other);
+      }
+      let n = 0;
+      for (const [di, dj] of SIDES) {
+        if (!r.shown.has(`${i + di},${j + dj}`)) place(i + di, j + dj, n++ * STAGGER);
+      }
+    };
+
+    const follow = () => {
+      const r = run;
+      // Anywhere on the grown bubble still counts as on it.
+      const hot = r.hot;
+      if (hot && Math.hypot(r.x - hot.x.t, r.y - hot.y.t) <= HOT_R) return;
+      const i = Math.round((r.x - r.px) / PITCH);
+      const j = Math.round((r.y - r.py) / PITCH);
+      if (i === r.at.i && j === r.at.j) return;
+      r.at = { i, j };
+      visit(i, j);
+    };
+
+    // The bloom starts: the drop swells under the pointer, four come out of
+    // it, and no text selection from here on.
+    const begin = () => {
+      const r = run;
+      if (!setup()) {
+        run = null;
+        return;
+      }
+      r.free = measure();
+      r.started = true;
+      getSelection()?.removeAllRanges();
+      html.dataset.blooming = '';
+      // A drop still fading from the last bloom glides over; otherwise it starts here.
+      drop.x.t = r.x;
+      drop.y.t = r.y;
+      if (drop.r.x < 0.5) {
+        drop.x.x = r.x;
+        drop.y.x = r.y;
+        drop.x.v = drop.y.v = 0;
+      }
+      drop.wait = 0;
+      drop.r.t = DROP;
+      visit(0, 0);
+      follow();
+      wake();
+    };
+
+    // Everything is drawn back into the release point, the nearest first, and
+    // the drop goes last.
+    const dismiss = (x, y) => {
+      const r = run;
+      if (!r) return;
+      run = null;
+      clearTimeout(r.timer);
+      delete html.dataset.blooming;
+      if (!r.started) return;
+      drop.x.t = x;
+      drop.y.t = y;
+      const shown = [...r.shown.values()].sort((a, b) => Math.hypot(a.hx - x, a.hy - y) - Math.hypot(b.hx - x, b.hy - y));
+      shown.forEach((cell, n) => leave(cell, Math.min(n, 4) * STAGGER));
+      drop.wait = reduce() ? 0 : 0.18 + Math.min(shown.length, 4) * STAGGER;
+      drop.r.t = 0;
+      wake();
+    };
+
+    const down = (event) => {
+      if (event.button !== 0 || !event.isPrimary || failed) return;
+      if (event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
+      if (!scope.contains(event.target) || event.target.closest(IGNORE)) return;
+      if (run) dismiss(event.clientX, event.clientY);
+      const x = event.clientX;
+      const y = event.clientY;
+      run = {
+        px: x,
+        py: y,
+        x,
+        y,
+        at: { i: 0, j: 0 },
+        center: { i: 0, j: 0 },
+        shown: new Map(),
+        hot: null,
+        started: false,
+        free: null,
+        timer: 0,
+      };
+      run.timer = setTimeout(begin, WAIT);
     };
     const move = (event) => {
-      px = event.clientX;
-      py = event.clientY;
-      if (!frame) frame = requestAnimationFrame(draw);
+      const r = run;
+      if (!r) return;
+      r.x = event.clientX;
+      r.y = event.clientY;
+      if (r.started) {
+        drop.x.t = r.x;
+        drop.y.t = r.y;
+        follow();
+        wake();
+      }
+      // Moved before the bloom began: a drag, most likely selecting text.
+      else if (Math.hypot(r.x - r.px, r.y - r.py) > SLOP) dismiss(r.x, r.y);
     };
-    const away = () => {
-      px = py = -1e4;
-      if (!frame) frame = requestAnimationFrame(draw);
+    const up = (event) => {
+      const r = run;
+      if (!r) return;
+      const picked = event.type === 'pointerup' && r.hot ? photos[r.hot.index] : null;
+      dismiss(event.clientX, event.clientY);
+      if (picked) setOpen(picked);
     };
-    // Scrolling moves the page over the squares, so look again.
-    const scroll = () => {
-      if (!frame) frame = requestAnimationFrame(draw);
-    };
+    const away = () => run && dismiss(run.x, run.y);
+
+    window.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move, { passive: true });
-    window.addEventListener('scroll', scroll, { capture: true, passive: true });
-    document.documentElement.addEventListener('pointerleave', away);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    window.addEventListener('blur', away);
+    // The bubbles are fixed to the screen, so a scroll would slide the content under them.
+    window.addEventListener('scroll', away, { capture: true, passive: true });
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', scroll, { capture: true });
+      window.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
-      document.documentElement.removeEventListener('pointerleave', away);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      window.removeEventListener('blur', away);
+      window.removeEventListener('scroll', away, { capture: true });
+      window.removeEventListener('resize', resize);
+      canvas.removeEventListener('webglcontextlost', lost);
+      canvas.removeEventListener('webglcontextrestored', restored);
+      window.cancelIdleCallback?.(idle);
+      clearTimeout(idle);
+      if (run) clearTimeout(run.timer);
+      cancelAnimationFrame(frame);
+      run = null;
+      cells = [];
+      delete html.dataset.blooming;
+      gl?.clear();
+      releaseContext(gl?.gl);
     };
-  }, [enabled, cells]);
+  }, [enabled, mounted]);
 
   return (
     <>
-      <div
-        ref={layer}
-        className="hidden-gallery pointer-events-none absolute inset-0 z-0 overflow-hidden"
-      >
-        {enabled &&
-          cells.map((cell) => (
-            <button
-              key={`${cell.x},${cell.y}`}
-              type="button"
-              data-square
-              data-cursor="View"
-              tabIndex={-1}
-              aria-label="Open photo"
-              onClick={() => setOpen(cell.photo)}
-              className="hidden-gallery-square"
-              style={{ left: cell.x, top: cell.y, width: CELL, height: CELL }}
-            >
-              <img data-src={thumb(cell.photo.id)} alt="" decoding="async" />
-            </button>
-          ))}
-      </div>
+      <span ref={anchor} hidden />
+      {mounted &&
+        enabled &&
+        createPortal(
+          <canvas ref={surface} aria-hidden className="pointer-events-none fixed inset-0 z-[60] size-full" />,
+          document.body,
+        )}
 
       <Dialog.Root open={!!open} onOpenChange={(next) => !next && setOpen(null)}>
         <Dialog.Portal>
@@ -161,93 +479,7 @@ export default function HiddenGallery() {
   );
 }
 
-const thumb = (id) => `/images/visuals/thumbs/${id}.webp`;
 const full = (id) => `/images/visuals/${id}.jpg`;
-
-const smoothstep = (a, b, x) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
-
-// The COUNT squares that hold a photo, for the layer's current size. Photos
-// go in two bands of the page:
-//   top     from the top of the page down to the hero's name and tagline
-//           ([data-gallery-top]), from just left of the reading column to the
-//           right edge
-//   bottom  from the end of Playground ([data-gallery-bottom]) to the bottom
-//           of the page, the full width, around the footer
-// keeping clear of anything marked [data-gallery-avoid] (my photo, the name,
-// the footer links). In each band photos are packed at the page's edge and
-// thin out towards the content: they are spaced evenly (blue noise, so none
-// touch or clump), GAP_NEAR px between centres at the edge widening to GAP_FAR
-// at the band's inner side. Candidates are tried in a fixed random order (a
-// hash of each square's place, weighted towards the edge), so a resize keeps
-// most of the layout. Neighbouring photos are never the same picture.
-function layout(el) {
-  const width = el.clientWidth;
-  const height = el.clientHeight;
-  const box = el.getBoundingClientRect();
-  const local = (rect) => ({
-    left: rect.left - box.left,
-    right: rect.right - box.left,
-    top: rect.top - box.top,
-    bottom: rect.bottom - box.top,
-  });
-  const find = (selector) => {
-    const node = el.parentElement.querySelector(selector);
-    return node ? local(node.getBoundingClientRect()) : null;
-  };
-  const column = find('[data-reading-column]');
-  const top = find('[data-gallery-top]');
-  const bottom = find('[data-gallery-bottom]');
-  const avoid = [...el.parentElement.querySelectorAll('[data-gallery-avoid]')].map((node) =>
-    local(node.getBoundingClientRect()),
-  );
-
-  const bands = [];
-  if (top) bands.push({ from: 0, to: top.bottom + MARGIN, left: column ? column.left - 96 : 0, edge: 'top' });
-  if (bottom) bands.push({ from: bottom.bottom + MARGIN, to: height, left: 0, edge: 'bottom' });
-
-  const cols = Math.floor(width / CELL);
-  const x0 = (width - cols * CELL) / 2;
-  const candidates = [];
-  for (const band of bands) {
-    const size = band.to - band.from;
-    if (size < CELL) continue;
-    for (let y = band.from; y + CELL <= band.to; y += CELL) {
-      for (let col = 0; col < cols; col++) {
-        const x = x0 + col * CELL;
-        if (x < band.left) continue;
-        const clash = avoid.some(
-          (r) => x + CELL > r.left - MARGIN && x < r.right + MARGIN && y + CELL > r.top - MARGIN && y < r.bottom + MARGIN,
-        );
-        if (clash) continue;
-        const cx = x + CELL / 2;
-        const cy = y + CELL / 2;
-        // 0 at the page's edge, 1 at the band's inner side.
-        const t = Math.min(1, (band.edge === 'top' ? cy - band.from : band.to - cy) / size);
-        // Keyed by column and distance from the band's edge, so photos stay
-        // put as the page grows or shrinks.
-        const key = `${band.edge}:${col}:${Math.round((band.edge === 'top' ? y - band.from : band.to - y) / CELL)}`;
-        const weight = 1 + 3 * (1 - t) ** 2;
-        candidates.push({ x, y, cx, cy, key, gap: GAP_NEAR + (GAP_FAR - GAP_NEAR) * t, score: hash(key) ** (1 / weight) });
-      }
-    }
-  }
-  candidates.sort((a, b) => b.score - a.score);
-
-  const cells = [];
-  for (const c of candidates) {
-    if (cells.length === COUNT) break;
-    if (cells.some((o) => Math.hypot(o.cx - c.cx, o.cy - c.cy) < Math.max(c.gap, o.gap))) continue;
-    // A picture, but not one already used close by.
-    const near = new Set(cells.filter((o) => Math.hypot(o.cx - c.cx, o.cy - c.cy) < 6 * CELL).map((o) => o.photo));
-    let index = Math.floor(hash(`${c.key}#`) * photos.length);
-    for (let i = 0; i < photos.length && near.has(photos[index]); i++) index = (index + 1) % photos.length;
-    cells.push({ ...c, photo: photos[index] });
-  }
-  return cells;
-}
 
 // A stable number in [0, 1) for a string.
 function hash(text) {
