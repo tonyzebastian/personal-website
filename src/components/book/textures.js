@@ -355,37 +355,9 @@ async function drawHeroSpread(intro, { width }) {
   return canvas;
 }
 
-// The photo with a handwritten caption under it, on the Figma "00 Cover"
-// frame (700-wide page units, `u` pixels each): a 374 x 447 photo with 8
-// corners, `x` from the spread's left and 114 down, and the caption 36
-// below it in Caveat, centred.
-function photoWithCaption(ctx, picture, caption, { x, u, fonts }) {
-  const py = 114 * u;
-  const pw = 374 * u;
-  const ph = 447 * u;
-  if (picture) {
-    ctx.save();
-    roundedRect(ctx, x, py, pw, ph, [8 * u, 8 * u, 8 * u, 8 * u]);
-    ctx.clip();
-    const scale = Math.max(pw / picture.width, ph / picture.height);
-    ctx.drawImage(picture, x + (pw - picture.width * scale) / 2, py + (ph - picture.height * scale) / 2, picture.width * scale, picture.height * scale);
-    ctx.restore();
-  }
-  // Set a little larger than the Figma (24 on 30) for reading on screen.
-  ctx.fillStyle = '#363636';
-  ctx.font = `400 ${29 * u}px ${fonts.hand}`;
-  ctx.letterSpacing = '0px';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  wrapText(ctx, caption, 350 * u).forEach((line, i) => {
-    ctx.fillText(line, x + pw / 2, py + ph + 36 * u + 18 * u + i * 35 * u);
-  });
-  ctx.textAlign = 'left';
-}
-
-// The first spread, under the cover, laid out as the Figma "00 Cover" frame
-// (700 x 800 pages): my logo on the left page (the inside of the cover); on
-// the right, my photo with a handwritten line under it, centred as a group.
+// The first spread, under the cover, after the Figma "00 Cover" frame
+// (700 x 800 pages): my logo and a handwritten line on the left page (the
+// inside of the cover), and my photo on the right.
 async function drawIntro(intro, { width, fonts }) {
   const w = width * 2;
   const h = Math.round(width * PAGE_ASPECT);
@@ -401,10 +373,37 @@ async function drawIntro(intro, { width, fonts }) {
   ctx.fillRect(0, 0, w, h);
 
   const [logo, picture] = await Promise.all([loadImage(intro.logo), loadImage(intro.picture)]);
-  if (logo) ctx.drawImage(logo, 290 * u, 370 * u, 75.4 * u, 78 * u);
 
-  // My photo and the line under it, 170 in from the spine.
-  photoWithCaption(ctx, picture, intro.caption, { x: width + 170 * u, u, fonts });
+  // Left page: the logo where the Figma has it across, with the
+  // handwritten line 36 below it, the pair centred down the page.
+  const lineHeight = 42 * u;
+  ctx.font = `400 ${35 * u}px ${fonts.hand}`; // larger than the Figma's 24, for reading on screen
+  ctx.letterSpacing = '0px';
+  const lines = wrapText(ctx, intro.caption, 430 * u);
+  const logoCx = 327.7 * u;
+  const groupTop = (h - (78 * u + 36 * u + lines.length * lineHeight)) / 2;
+  if (logo) ctx.drawImage(logo, logoCx - 37.7 * u, groupTop, 75.4 * u, 78 * u);
+  ctx.fillStyle = '#363636';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  lines.forEach((line, i) => ctx.fillText(line, logoCx, groupTop + 78 * u + 36 * u + lineHeight / 2 + i * lineHeight));
+  ctx.textAlign = 'left';
+
+  // Right page: my photo, larger than the Figma's 374 x 447 (480 x 574),
+  // with 8 corners, centred on the Figma's line 357 from the spine and
+  // centred down the page.
+  if (picture) {
+    const pw = 480 * u;
+    const ph = 574 * u;
+    const px = width + 357 * u - pw / 2;
+    const py = (h - ph) / 2;
+    ctx.save();
+    roundedRect(ctx, px, py, pw, ph, [8 * u, 8 * u, 8 * u, 8 * u]);
+    ctx.clip();
+    const scale = Math.max(pw / picture.width, ph / picture.height);
+    ctx.drawImage(picture, px + (pw - picture.width * scale) / 2, py + (ph - picture.height * scale) / 2, picture.width * scale, picture.height * scale);
+    ctx.restore();
+  }
 
   grain(ctx, w, h, 0.01); // a light grain: the pages are a smooth stock
   return canvas;

@@ -24,8 +24,10 @@
 //   turns.
 // - Dragging is the only control: drag left to open and turn forward, right
 //   to turn back. On the first spread, the cover follows a drag to the
-//   right, and a short pull or flick closes the book (and the dialog); a fast
-//   flick does so from any spread. Hovering an open page lifts its outer edge
+//   right, and a short pull or flick closes the book (and the dialog). From
+//   later spreads a swipe back only turns pages, stopping on the first, so
+//   the close button or the cover are the only ways to close. Hovering an
+//   open page lifts its outer edge
 //   towards the hand, and pressing lifts it further.
 // - Nothing runs at rest: frames are drawn only while something moves.
 //
@@ -59,16 +61,15 @@ const PRESS_LIFT = 1.2; // how much further it lifts while pressed
 // fan out. From straight above a page only shows its edge once it is well
 // lifted, which is why these stay close together.
 const PAGE_FAN = [1, 0.86, 0.7, 0.52];
-const BEND_SPEED = 0.55; // radians a page's edge trails, per page per second
-const BEND_SAG = 0.18; // radians it sags under its weight when half raised
-const BEND_MAX = 0.85; // the most a page ever curves
+const BEND_SPEED = 0.9; // radians a page's edge trails, per page per second
+const BEND_SAG = 0.3; // radians it sags under its weight when half raised
+const BEND_MAX = 1.2; // the most a page ever curves
 const HOVER_GROW = 0.18; // how much bigger the closed book is than my photo
 const HOVER_SPRING = 11;
 const HOVER_OUT_SPRING = 24; // quicker on the way back to my photo
 const MORPH_SPRING = 9; // how quickly the book becomes the dialog
 const REVEAL_TIME = 0.2; // seconds the page behind takes to dim
 const DIALOG_PAGE_MAX = 400; // the widest a page gets in the dialog, in pixels
-const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
 const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
 const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
 const CLOSE_NUDGE_SPEED = -0.6; // pages per second, rightwards
@@ -1111,10 +1112,12 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
     const [t0, p0] = samples[0] ?? [now, progress];
     const [t1, p1] = samples[samples.length - 1] ?? [now, progress];
     const handSpeed = t1 > t0 ? ((p1 - p0) / (t1 - t0)) * 1000 : 0;
-    const wasOpen = d.startProgress >= 0.99;
-    const closing =
-      wasOpen &&
-      (handSpeed < CLOSE_FLICK || d.to < CLOSE_PULL || (d.to < CLOSE_NUDGE && handSpeed < CLOSE_NUDGE_SPEED));
+    // Only the cover closes the book: a drag that started on the first
+    // spread and pulled it most of the way shut (or nearly shut, with a light
+    // flick). Swiping back from a later spread never closes it, however fast;
+    // it stops on the first spread.
+    const onFirstSpread = d.startProgress >= 0.99 && d.startProgress < 1.5;
+    const closing = onFirstSpread && (d.to < CLOSE_PULL || (d.to < CLOSE_NUDGE && handSpeed < CLOSE_NUDGE_SPEED));
     if (closing) {
       hit = null;
       closedByHand = progress <= 1;
