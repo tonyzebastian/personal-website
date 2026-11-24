@@ -394,7 +394,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
               roughnessMap: roughMap,
               metalnessMap: roughMap,
               normalMap,
-              normalScale: new THREE.Vector2(0.3, 0.3),
+              normalScale: new THREE.Vector2(0.1, 0.1), // a smooth stock: the grain is barely felt
             }
       )
     );
@@ -531,6 +531,15 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
             'getAmbientLightIrradiance( ambientLightColor )',
             'getAmbientLightIrradiance( ambientLightColor ) * 0.35'
           )
+        );
+      }
+      if (!cloth) {
+        // Paper is a smooth stock: its sheen barely varies from fleck to fleck.
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <metalnessmap_fragment>',
+          `#include <metalnessmap_fragment>
+          roughnessFactor = mix(roughness, roughnessFactor, 0.2);
+          metalnessFactor *= 0.2;`
         );
       }
       if (insidePage) {

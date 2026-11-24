@@ -217,7 +217,7 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
     ctx.fillText(line, x, y);
   }
   ctx.globalAlpha = 1;
-  grain(ctx, w, h, 0.08);
+  grain(ctx, w, h, 0.01); // a light grain: the pages are a smooth stock
 
   // Middle layer: the motif drawing and the big chalky word.
   const mid = blank();
@@ -406,7 +406,7 @@ async function drawIntro(intro, { width, fonts }) {
   // My photo and the line under it, 170 in from the spine.
   photoWithCaption(ctx, picture, intro.caption, { x: width + 170 * u, u, fonts });
 
-  grain(ctx, w, h, 0.05);
+  grain(ctx, w, h, 0.01); // a light grain: the pages are a smooth stock
   return canvas;
 }
 
@@ -496,7 +496,7 @@ function drawEnd(end, { width, fonts }) {
     bottom: (y + size * 0.3 + pad * 0.4) / h,
   };
 
-  grain(ctx, w, h, 0.08);
+  grain(ctx, w, h, 0.01); // a light grain: the pages are a smooth stock
   return { canvas, link };
 }
 

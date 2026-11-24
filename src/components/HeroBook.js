@@ -215,7 +215,7 @@ export default function HeroBook({ book }) {
               ref={backdropRef}
               aria-hidden
               style={{ visibility: 'hidden', opacity: 0 }}
-              className="pointer-events-none fixed inset-0 z-[80] bg-canvas/20 backdrop-blur-[6px]"
+              className="book-backdrop pointer-events-none fixed inset-0 z-[80] bg-canvas/20 backdrop-blur-[6px]"
             />
             <canvas
               ref={canvasRef}
