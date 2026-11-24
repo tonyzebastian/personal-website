@@ -83,7 +83,7 @@ export default function HeroBook({ book }) {
           import('@/components/book/textures'),
         ]);
         if (cancelled) return;
-        const inks = Object.fromEntries(chapters.map((c) => [c.motif, c.ink]));
+        const inks = Object.fromEntries(chapters.filter((c) => c.motif).map((c) => [c.motif, c.ink]));
         const pages = await drawPages(book, {
           width: window.innerWidth < 640 ? 600 : 900,
           motifs: svgMarkup('svg[data-motif]'),
@@ -215,7 +215,7 @@ export default function HeroBook({ book }) {
               ref={backdropRef}
               aria-hidden
               style={{ visibility: 'hidden', opacity: 0 }}
-              className="pointer-events-none fixed inset-0 z-[80] bg-ink/25"
+              className="pointer-events-none fixed inset-0 z-[80] bg-canvas/20 backdrop-blur-[6px]"
             />
             <canvas
               ref={canvasRef}
@@ -270,14 +270,14 @@ export default function HeroBook({ book }) {
             <X weight="bold" aria-hidden className="size-3.5" />
           </Dialog.Close>
           <p className="sr-only" aria-live="polite">
-            {onIntro ? intro.label : chapter ? `${chapter.title}. ${chapter.body}` : spread > 1 ? `${end.word}. ${end.intro}` : ''}
+            {onIntro ? intro.label : chapter ? `${chapter.title}. ${chapter.paragraphs?.join(' ') ?? chapter.body}` : spread > 1 ? `${end.word}. ${end.intro}` : ''}
           </p>
         </Dialog.Popup>
       </Dialog.Portal>
 
       {/* Sources for the page drawings; serialised into the textures. */}
       <div ref={sourcesRef} hidden>
-        {chapters.map((c) => {
+        {chapters.filter((c) => c.motif).map((c) => {
           const Icon = MOTIF_ICON[c.motif];
           return (
             <div key={c.id}>

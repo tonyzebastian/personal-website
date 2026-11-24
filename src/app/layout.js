@@ -1,4 +1,4 @@
-import { Figtree } from 'next/font/google';
+import { Caveat, Figtree } from 'next/font/google';
 import localFont from 'next/font/local';
 import { INTRO_SCRIPT } from '@/lib/intro';
 import { VIEW_SCRIPT } from '@/lib/views';
@@ -27,6 +27,16 @@ const figtree = Figtree({
   display: 'swap',
 });
 
+// Handwriting, only for the storybook's pages (drawn on a canvas once the
+// book opens), so it is not preloaded.
+const caveat = Caveat({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-caveat',
+  display: 'swap',
+  preload: false,
+});
+
 // Headings. Self-hosted because next/font/google does not list it yet
 // (SIL Open Font License, see src/fonts/OFL-LibreCaslonCondensed.txt).
 const caslon = localFont({
@@ -43,7 +53,7 @@ const caslon = localFont({
 export default function RootLayout({ children }) {
   return (
       // The intro and view scripts mark <html> before React starts.
-      <html lang="en" className={`${figtree.variable} ${caslon.variable}`} suppressHydrationWarning>
+      <html lang="en" className={`${figtree.variable} ${caslon.variable} ${caveat.variable}`} suppressHydrationWarning>
           <head>
               <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT + VIEW_SCRIPT }} />
           </head>

@@ -327,36 +327,42 @@ export const homeAbout = [
 
 // The storybook in the hero: a cover, one spread per side of me, and an end
 // spread. `word` is the big lettering across the spread; `motif` picks the
-// placeholder drawing in book/Motifs.js. Add `image` (a 2:1.12 WebP spanning
-// both pages, e.g. '/images/book/designer.webp') to replace the placeholder
-// scene with a real illustration.
+// placeholder drawing in book/Motifs.js. A painted scene instead has `image`
+// (a 7:4 WebP spanning both pages, in public/book/) and `paragraphs`, drawn
+// on its left page.
 export const storybook = {
   // The leather cover: `lines` are stamped in gold foil, one under the other.
   cover: {
     title: 'A book about Tony',
     lines: ['A book', 'about', 'Tony'],
   },
-  // The first spread: a note on the inside of the cover (placeholder copy
-  // for now) and my photo on the right.
+  // The first spread, as in Figma: my logo on the inside of the cover, and
+  // on the right a photo of me among my plants with a handwritten line under
+  // it. `photo` is the hero picture on the home page, which the book opens
+  // out of: the cover closes over it on hover, and the first page only shows
+  // once the book opens.
   intro: {
     photo: '/book/tony.webp',
+    logo: '/book/logo.svg',
+    picture: '/book/garden.webp',
+    caption: 'This is a short book about where I come from, and the small things that make me happy.',
     paper: '#f6f1e8',
-    kicker: 'Chapter one',
-    title: "Hello, I'm Tony.",
-    body: 'This page is still being written. Turn the page to meet the designer, the coder and the storyteller.',
-    label: "Hello, I'm Tony. A photo of me in a green sweater by the water, on the first page.",
+    label: 'My logo, and a photo of me among plants. This is a short book about where I come from, and the small things that make me happy.',
   },
   chapters: [
     {
-      id: 'designer',
-      kicker: 'The',
-      word: 'Designer',
-      title: 'The Designer',
-      body: 'Seven years of shaping products, from Infosys to Hypersonix to Postman. I care about systems, craft and things that feel right.',
-      motif: 'designer',
-      paper: '#dde8d6',
-      ink: '#2f4a32',
-      accent: '#9fc394',
+      // Scene one, painted: the words sit on the left page over the picture,
+      // placed as in Figma (a 700-wide page; see `drawSpread`).
+      id: 'house',
+      title: 'The house on the mountain',
+      image: '/book/scene-1.webp',
+      paragraphs: [
+        'I grew up in an old house on the side of a mountain, with trees all around and nobody else nearby.',
+        'My parents were farmers. We had hens, cows, dogs and a cat.',
+        'If you climbed up behind the house, you could see the next valleys.',
+      ],
+      paper: '#fffaf3',
+      ink: '#363636',
     },
     {
       id: 'coder',

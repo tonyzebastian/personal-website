@@ -46,6 +46,8 @@ const RADIUS = 0.07;
 const OVERHANG = COVER_OVERHANG;
 const WC = W + OVERHANG; // cover board width
 const DC = D + 2 * OVERHANG; // cover board depth
+const PAPER_LIFT = 1.06; // inside pages, back towards their true colour; much more and the lit middle of a page clips to white
+const LEATHER_TILES = 1.7; // the leather scan repeats this often across a cover, as in textures.js
 const COVER_RADIUS = RADIUS * (WC / W);
 // A long lens from far away: the book looks flat and top-down, and a page
 // standing up mid-turn grows only a little, so it stays inside the canvas.
@@ -65,7 +67,7 @@ const HOVER_SPRING = 11;
 const HOVER_OUT_SPRING = 24; // quicker on the way back to my photo
 const MORPH_SPRING = 9; // how quickly the book becomes the dialog
 const REVEAL_TIME = 0.2; // seconds the page behind takes to dim
-const DIALOG_PAGE_MAX = 330; // the widest a page gets in the dialog, in pixels
+const DIALOG_PAGE_MAX = 400; // the widest a page gets in the dialog, in pixels
 const CLOSE_FLICK = -3.5; // pages per second, rightwards, that close the book from any spread
 const CLOSE_PULL = 0.88; // letting go of the cover below this closes the book
 const CLOSE_NUDGE = 0.97; // below this, a light flick is enough
@@ -311,6 +313,14 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
   // The covers are bookcloth: matte, with a finer, deeper weave.
   const clothNormal = surface(paper.normal);
   clothNormal.repeat.set(9, 9);
+  // The leather scan's normal map, for the leather turned in round the endpapers.
+  let leatherNormal = null;
+  if (pages[0].leatherNormal) {
+    leatherNormal = track(new THREE.Texture(pages[0].leatherNormal));
+    leatherNormal.wrapS = leatherNormal.wrapT = THREE.RepeatWrapping;
+    leatherNormal.anisotropy = anisotropy;
+    leatherNormal.needsUpdate = true;
+  }
 
   // Shared uniforms: the crease shade near the spine, and one parallax
   // offset per illustration.
@@ -402,19 +412,21 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
             vec2 clothUv = vec2(cu, pu.y * ${f(D / DC)} + ${f(OVERHANG / DC)});
             ${
               insidePage
-                ? `// Outside the page block, show the cover cloth turned in, darkened
-            // where the pages sit on it.
+                ? `// Outside the endpaper, show the cover leather turned in.
             if (pu.x > 1.0 || pu.y < 0.0 || pu.y > 1.0 || art.a < 0.5) {
+              turnIn = 1.0;
               vec4 cloth = texture2D(uCloth, clothUv);
               art = vec4(cloth.rgb / max(cloth.a, 0.0001), 1.0);
-              // The turn-in catches more light than the outside of the cover.
-              art.rgb *= 1.18;
+              // The turn-in faces the room, so it reads lighter than the
+              // outside of the cover, which lies in its own shade.
+              art.rgb *= 1.7;
 
               // Board coordinates in world units: x from the spine, y from
               // the bottom edge of the board.
               vec2 bp = vec2(pu.x * ${f(W)}, (pu.y + ${f(OVERHANG / D)}) * ${f(D)});
               float toOuter = ${f(WC)} - bp.x;
               float toEnd = min(bp.y, ${f(DC)} - bp.y);
+              leatherUv = bp * ${f(LEATHER_TILES / WC)};
 
               // Soft scuffs across the cloth.
               float blot = (texture2D(roughnessMap, vRoughnessMapUv * 0.35).g - 0.75) / 0.25;
@@ -434,14 +446,19 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
               art.rgb *= 1.0 - 0.32 * exp(-pow(mitre / 0.0028, 2.0)) * nearCorner;
               art.rgb *= 1.0 + 0.18 * exp(-pow((mitre - 0.0045) / 0.0025, 2.0)) * nearCorner;
 
+              // The board's rounded outer edge catches the light.
+              float rim = min(toOuter, toEnd);
+              art.rgb *= 1.0 + 0.55 * exp(-pow((rim - 0.004) / 0.0035, 2.0));
+              art.rgb *= 1.0 - 0.25 * exp(-pow(rim / 0.0012, 2.0));
+
               // The hinge: a groove where the cover bends at the spine.
               float hinge = exp(-pow((bp.x - 0.014) / 0.004, 2.0));
               art.rgb *= 1.0 - 0.35 * hinge;
               art.rgb *= 1.0 + 0.12 * exp(-pow((bp.x - 0.022) / 0.003, 2.0));
 
-              // Shadow where the page block sits on the board.
-              vec2 gap = max(vec2(max(-pu.x, pu.x - 1.0) * ${f(W)}, max(-pu.y, pu.y - 1.0) * ${f(D)}), 0.0);
-              art.rgb *= 1.0 - 0.5 * (1.0 - smoothstep(0.0, 0.03, length(gap)));
+              // A thin shadow along the endpaper's edge, where it lies on the leather.
+              vec2 gap = max(vec2((pu.x - 1.0) * ${f(W)}, max(0.0 - pu.y, pu.y - 1.0) * ${f(D)}), 0.0);
+              art.rgb *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.006, length(gap)));
             }`
                 : ''
             }
@@ -482,6 +499,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       if (board) {
         shader.uniforms.uCloth = { value: board.cloth };
         shader.uniforms.uMirror = { value: board.mirror ? 1 : 0 };
+        shader.uniforms.uLeatherN = { value: leatherNormal };
       }
       layers.forEach((texture, i) => {
         shader.uniforms[`uLayer${i}`] = { value: texture };
@@ -515,14 +533,39 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
           )
         );
       }
+      if (insidePage) {
+        // The turn-in is the cover leather, with its grain and sheen; the
+        // endpaper is left as every other page.
+        shader.fragmentShader = shader.fragmentShader
+          .replace(
+            '#include <metalnessmap_fragment>',
+            `#include <metalnessmap_fragment>
+          if (turnIn > 0.5) {
+            metalnessFactor = 0.0;
+            roughnessFactor = 0.4;
+          }`
+          )
+          .replace(
+            '#include <normal_fragment_maps>',
+            THREE.ShaderChunk.normal_fragment_maps.replace(
+              'mapN.xy *= normalScale;',
+              `mapN.xy *= normalScale;
+          if (turnIn > 0.5) {
+            ${leatherNormal ? 'mapN = texture2D(uLeatherN, leatherUv).xyz * 2.0 - 1.0; mapN.xy *= 0.8;' : 'mapN.xy *= 2.0;'}
+          }`
+            )
+          );
+      }
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
-          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\n${samplers}`
+          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\nuniform sampler2D uLeatherN;\n${samplers}`
         )
         .replace(
           '#include <map_fragment>',
-          `#ifdef USE_MAP
+          `float turnIn = 0.0;
+          vec2 leatherUv = vec2(0.0);
+          #ifdef USE_MAP
             vec4 art = texture2D(map, vMapUv);
             art.rgb /= max(art.a, 0.0001);
             ${mixes}
@@ -531,14 +574,25 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
           #endif
           ${
             spine
-              ? `// The fold: a hint when the book lies still, deeper while pages turn.
-          diffuseColor.rgb *= 1.0 - (0.05 + 0.3 * uCrease) * (1.0 - smoothstep(0.0, 0.09 + 0.06 * uCrease, vPageUv.x));`
+              ? `// The gutter: the page curves down into the spine, into its own
+          // shade. Its width stays put while pages turn (a band that grew and
+          // shrank read as the page sliding), and it deepens only a little.
+          float gutter = 1.0 - smoothstep(0.0, 0.12, vPageUv.x);
+          diffuseColor.rgb *= 1.0 - (0.16 + 0.06 * uCrease) * gutter * gutter;
+          // The room light: brighter towards the top left where it comes
+          // from, falling off to the bottom right and the outer corners.
+          // The lift brings paper back towards its own colour.
+          vec2 spread = vec2(${page.part === 'left' ? '-1.0' : '1.0'} * vPageUv.x, vPageUv.y - 0.5);
+          // (Only ever darkens: the lit side is already at full strength.)
+          float slope = max(0.0, 0.5 * spread.x - spread.y + 0.5);
+          float corners = smoothstep(0.6, 1.25, length(spread * vec2(1.0, 1.5)));
+          diffuseColor.rgb *= ${f(PAPER_LIFT)} * (1.0 - 0.06 * slope) * (1.0 - 0.1 * corners);`
               : ''
           }`
         );
     };
     material.customProgramCacheKey = () =>
-      `page-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${leather ? 'leather' : ''}`;
+      `page-${page.part}-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${leather ? 'leather' : ''}`;
     return material;
   }
 
@@ -563,9 +617,28 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
         normalScale: new THREE.Vector2(0.9, 0.9),
       })
     );
+    if (!isCover) {
+      // The page block's edges at the spine sit deep in the gutter: in shade,
+      // so a turning cover uncovers a dark fold, not a lit white strip. The
+      // top and bottom edges darken towards the spine the same way.
+      edge.onBeforeCompile = (shader) => {
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying float vSpineX;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSpineX = position.x;');
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nvarying float vSpineX;')
+          .replace(
+            '#include <color_fragment>',
+            '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.22, 1.0, smoothstep(0.0, 0.06, vSpineX));'
+          );
+      };
+      edge.customProgramCacheKey = () => 'page-edge';
+    }
     // Covers are bigger boards; their rim shows the cover's own texture.
     const board = isCover
-      ? { cloth: canvasTexture(pages[k === 0 ? 0 : pages.length - 1].layers[0]), mirror: k !== 0 }
+      ? // Both turn-ins show the plain back cover leather (the front has the
+        // pressed frame near its edges), mirrored so its outer edge is outermost.
+        { cloth: canvasTexture(pages[pages.length - 1].layers[0]), mirror: true }
       : null;
     const geometry = isCover ? boardGeometry(t, WC, DC, COVER_RADIUS) : bendablePage(t);
     const mesh = new THREE.Mesh(track(geometry), [
@@ -580,6 +653,33 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
     pivot.add(mesh);
     book.add(pivot);
     leaves.push({ pivot, mesh, t, theta: 0, flex: 0, geometry });
+  }
+
+  // The first page has two faces: the page itself, and my hero photo, which
+  // is what the cover closes over beside my photo. They swap only while the
+  // cover is shut, so the first page is seen only inside the dialog.
+  const firstPage = leaves[1]?.mesh.material[1];
+  let heroFace = null;
+  if (firstPage && pages[2].hero) {
+    const hero = track(new THREE.CanvasTexture(pages[2].hero));
+    hero.anisotropy = anisotropy;
+    hero.premultiplyAlpha = true;
+    hero.repeat.copy(firstPage.map.repeat);
+    hero.offset.copy(firstPage.map.offset);
+    heroFace = { page: firstPage.map, hero, showing: 'hero' };
+    firstPage.map = hero;
+  }
+  function swapFirstPage() {
+    if (!heroFace) return;
+    const inside = morph.to === 1 && !closing;
+    const shut = leaves[0].theta < 0.15;
+    // (If the cover never quite shuts on the way in, the page still arrives
+    // before it is far open.)
+    const want = inside ? (shut || progress > 0.3 ? 'page' : heroFace.showing) : shut ? 'hero' : heroFace.showing;
+    if (want === heroFace.showing) return;
+    heroFace.showing = want;
+    firstPage.map = heroFace[want];
+    renderer.shadowMap.needsUpdate = true;
   }
 
   // Spreads 1..N each use one layers array; find it for the parallax.
@@ -777,6 +877,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
 
   function layout() {
     setLeafAngles();
+    swapFirstPage();
     const shown = Math.max(hover.x, morph.x);
     leaves[0].mesh.visible = shown > 0;
     // The back board tucks in behind my photo, then grows to its full size.
@@ -790,17 +891,20 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       leaf.geometry.bend(clamp(leaf.flex, -room, room) || 0);
     }
 
-    // Stack heights: flat leaves rest on those below them on their side;
-    // a turning board swings about a hinge between the two piles.
+    // Stack heights: flat leaves rest on those below them on their side.
+    // A turning leaf swings about its own spine edge, which rides from the
+    // top of the right pile to the top of the left one as it turns, so the
+    // leaf stays against the spine all the way over. (Swinging about a point
+    // halfway between the piles moved its spine edge sideways, opening a
+    // gap at the spine that was widest on the first spreads.)
     leaves.forEach((leaf, i) => {
       let right = 0;
       let left = 0;
       for (let j = i + 1; j < leafCount; j++) if (progress - j <= 0) right += leaves[j].t;
       for (let j = 0; j < i; j++) if (progress - j >= 1) left += leaves[j].t;
-      const hinge = (right + left + leaf.t) / 2;
-      leaf.pivot.position.y = hinge;
+      const over = (1 - Math.cos(leaf.theta)) / 2;
+      leaf.pivot.position.y = right + (left + leaf.t - right) * over;
       leaf.pivot.rotation.z = leaf.theta;
-      leaf.mesh.position.y = right - hinge;
     });
 
     // The fold darkens while any page is in the air.
@@ -870,7 +974,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
     // (Only the picture hides: the button must stay focusable.)
     anchor.firstElementChild.style.visibility = shown > 0.16 ? 'hidden' : '';
 
-    // The page behind dims.
+    // The page behind blurs.
     backdrop.style.visibility = reveal > 0 ? 'visible' : 'hidden';
     backdrop.style.opacity = String(1 - (1 - reveal) ** 3);
   }

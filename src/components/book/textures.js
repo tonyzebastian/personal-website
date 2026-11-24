@@ -31,6 +31,7 @@ function fontFamilies() {
   return {
     serif: style.getPropertyValue('--font-caslon').trim() || 'Georgia, serif',
     sans: style.getPropertyValue('--font-figtree').trim() || 'system-ui, sans-serif',
+    hand: style.getPropertyValue('--font-caveat').trim() || 'cursive',
   };
 }
 
@@ -164,11 +165,30 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
   roundedRect(ctx, 0, 0, w, h, [r, r, r, r]);
   ctx.clip();
 
+  // A painted scene: the picture across both pages, and its words on the
+  // left page, placed as in the Figma layout (a 700-wide page: text 97 in
+  // and 71 down, set a little larger than Figma for reading on screen:
+  // Figtree 23 on 34, up to 430 wide, 16 between paragraphs).
   if (chapter.image) {
     const img = await loadImage(chapter.image);
     if (img) {
+      ctx.fillStyle = chapter.paper;
+      ctx.fillRect(0, 0, w, h);
       const scale = Math.max(w / img.width, h / img.height);
       ctx.drawImage(img, (w - img.width * scale) / 2, (h - img.height * scale) / 2, img.width * scale, img.height * scale);
+      const u = width / 700;
+      ctx.fillStyle = chapter.ink;
+      ctx.font = `${23 * u}px ${fonts.sans}`;
+      ctx.letterSpacing = '0px';
+      ctx.textBaseline = 'middle';
+      let y = 71 * u;
+      for (const paragraph of chapter.paragraphs ?? []) {
+        for (const line of wrapText(ctx, paragraph, 430 * u)) {
+          ctx.fillText(line, 97 * u, y + 17 * u);
+          y += 34 * u;
+        }
+        y += 16 * u;
+      }
       return [base];
     }
   }
@@ -311,9 +331,9 @@ export function drawPaperMaps() {
   return { rough, normal };
 }
 
-// The first spread, under the cover. Right: my photo, full bleed. Left (the
-// inside of the cover): a short note.
-async function drawIntro(intro, { width, fonts }) {
+// The first spread as my hero photo: the photo across the right page, as it
+// sits on the home page (same proportions, so it lines up exactly).
+async function drawHeroSpread(intro, { width }) {
   const w = width * 2;
   const h = Math.round(width * PAGE_ASPECT);
   const canvas = document.createElement('canvas');
@@ -325,8 +345,6 @@ async function drawIntro(intro, { width, fonts }) {
   ctx.clip();
   ctx.fillStyle = intro.paper;
   ctx.fillRect(0, 0, w, h);
-  wash(ctx, w, h, '#e9dfcf', 23);
-
   const photo = await loadImage(intro.photo);
   if (photo) {
     const scale = Math.max(width / photo.width, h / photo.height);
@@ -334,28 +352,59 @@ async function drawIntro(intro, { width, fonts }) {
     const ph = photo.height * scale;
     ctx.drawImage(photo, width + (width - pw) / 2, (h - ph) / 2, pw, ph);
   }
+  return canvas;
+}
 
-  // The note, centred on the left page.
-  const ink = '#2b3a2f';
-  const cx = width / 2;
-  const top = h * 0.4;
-  ctx.textAlign = 'center';
-  ctx.fillStyle = ink;
-  ctx.globalAlpha = 0.6;
-  ctx.font = `600 ${width * 0.026}px ${fonts.sans}`;
-  ctx.letterSpacing = `${width * 0.026 * 0.24}px`;
-  ctx.fillText(intro.kicker.toUpperCase(), cx, top);
-  ctx.globalAlpha = 1;
-  serif(ctx, width * 0.075, fonts.serif);
-  ctx.fillText(intro.title, cx, top + width * 0.095);
-  ctx.font = `${width * 0.036}px ${fonts.sans}`;
+// The photo with a handwritten caption under it, on the Figma "00 Cover"
+// frame (700-wide page units, `u` pixels each): a 374 x 447 photo with 8
+// corners, `x` from the spread's left and 114 down, and the caption 36
+// below it in Caveat, centred.
+function photoWithCaption(ctx, picture, caption, { x, u, fonts }) {
+  const py = 114 * u;
+  const pw = 374 * u;
+  const ph = 447 * u;
+  if (picture) {
+    ctx.save();
+    roundedRect(ctx, x, py, pw, ph, [8 * u, 8 * u, 8 * u, 8 * u]);
+    ctx.clip();
+    const scale = Math.max(pw / picture.width, ph / picture.height);
+    ctx.drawImage(picture, x + (pw - picture.width * scale) / 2, py + (ph - picture.height * scale) / 2, picture.width * scale, picture.height * scale);
+    ctx.restore();
+  }
+  // Set a little larger than the Figma (24 on 30) for reading on screen.
+  ctx.fillStyle = '#363636';
+  ctx.font = `400 ${29 * u}px ${fonts.hand}`;
   ctx.letterSpacing = '0px';
-  ctx.globalAlpha = 0.75;
-  wrapText(ctx, intro.body, width * 0.6).forEach((line, i) => {
-    ctx.fillText(line, cx, top + width * 0.16 + i * width * 0.054);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  wrapText(ctx, caption, 350 * u).forEach((line, i) => {
+    ctx.fillText(line, x + pw / 2, py + ph + 36 * u + 18 * u + i * 35 * u);
   });
-  ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
+}
+
+// The first spread, under the cover, laid out as the Figma "00 Cover" frame
+// (700 x 800 pages): my logo on the left page (the inside of the cover); on
+// the right, my photo with a handwritten line under it, centred as a group.
+async function drawIntro(intro, { width, fonts }) {
+  const w = width * 2;
+  const h = Math.round(width * PAGE_ASPECT);
+  const u = width / 700;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const r = width * 0.07;
+  roundedRect(ctx, 0, 0, w, h, [r, r, r, r]);
+  ctx.clip();
+  ctx.fillStyle = intro.paper;
+  ctx.fillRect(0, 0, w, h);
+
+  const [logo, picture] = await Promise.all([loadImage(intro.logo), loadImage(intro.picture)]);
+  if (logo) ctx.drawImage(logo, 290 * u, 370 * u, 75.4 * u, 78 * u);
+
+  // My photo and the line under it, 170 in from the spine.
+  photoWithCaption(ctx, picture, intro.caption, { x: width + 170 * u, u, fonts });
 
   grain(ctx, w, h, 0.05);
   return canvas;
@@ -812,10 +861,11 @@ export async function drawPages(book, { width, motifs, icons }) {
     document.fonts.load(`400 64px ${fonts.serif}`),
     document.fonts.load(`italic 400 64px ${fonts.serif}`),
     document.fonts.load(`400 32px ${fonts.sans}`),
+    document.fonts.load(`400 24px ${fonts.hand}`),
   ]).catch(() => {});
   // Make sure the site's own faces are in, not just their fallbacks: load
   // every face of the serif and sans families outright, then wait for all.
-  const families = [fonts.serif, fonts.sans].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
+  const families = [fonts.serif, fonts.sans, fonts.hand].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
   await Promise.all(
     [...document.fonts].filter((face) => families.includes(face.family)).map((face) => face.load().catch(() => {}))
   );
@@ -835,7 +885,9 @@ export async function drawPages(book, { width, motifs, icons }) {
   if (book.intro) {
     const layers = [await drawIntro(book.intro, options)];
     pages.push({ layers, part: 'left', edge: book.intro.paper });
-    pages.push({ layers, part: 'right', edge: book.intro.paper });
+    // Outside the dialog the cover closes over my hero photo, not this page,
+    // so the page also comes as the photo alone, full bleed (`hero`).
+    pages.push({ layers, part: 'right', edge: book.intro.paper, hero: await drawHeroSpread(book.intro, options) });
   }
   for (const chapter of book.chapters) {
     const layers = await drawSpread(chapter, options);
@@ -848,5 +900,6 @@ export async function drawPages(book, { width, motifs, icons }) {
   pages.push({ layers: end, part: 'right', edge: '#f6f0e6', link: endArt.link });
   pages.push({ layers: [drawCover(book.cover, { ...options, back: true }).canvas], part: 'whole' });
   pages[0].normal = await front.normal; // being built alongside the pages above
+  pages[0].leatherNormal = leather.normal; // for the leather turned in round the endpapers
   return pages;
 }
