@@ -102,8 +102,11 @@ export default function HeroBook({ book }) {
         ]);
         if (cancelled) return;
         const inks = Object.fromEntries(chapters.filter((c) => c.motif).map((c) => [c.motif, c.ink]));
+        // Page drawings at about the resolution they show at: the dialog's
+        // pages are at most 400px wide, so 900px suits 2x screens and 600px
+        // phones and 1x screens (less than half the memory).
         const pages = await drawPages(book, {
-          width: window.innerWidth < 640 ? 600 : 900,
+          width: window.innerWidth >= 640 && window.devicePixelRatio >= 1.5 ? 900 : 600,
           motifs: svgMarkup('svg[data-motif]'),
           icons: svgMarkup('span[data-motif]', inks),
         });
@@ -118,6 +121,7 @@ export default function HeroBook({ book }) {
           onReveal: setRevealed,
           onLayout: (rect, pad) => setBox({ ...rect, pad }),
           onRequestClose: closeBook,
+          onContextLost: rebuild,
         });
         sceneRef.current = scene;
         await scene.ready;
@@ -143,6 +147,20 @@ export default function HeroBook({ book }) {
       }
     };
     startRef.current = start;
+
+    // The browser dropped the book's graphics context (it does under memory
+    // pressure) and has given it back: the scene let its page drawings go
+    // once they were uploaded, so it is built again from the start.
+    const rebuild = () => {
+      if (cancelled) return;
+      closeBook();
+      scene?.dispose();
+      scene = null;
+      sceneRef.current = null;
+      started = false;
+      setStatus('idle');
+      start();
+    };
 
     let introTimer = 0;
     const whenIdle = () => {

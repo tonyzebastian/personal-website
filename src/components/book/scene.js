@@ -36,6 +36,7 @@
 // shadow-casting light, so a turning page shades the pages below it.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { releaseContext } from '@/lib/webgl';
 import { COVER_OVERHANG, drawContactShadow, drawPaperMaps, PAGE_ASPECT } from './textures';
 
 const W = 1; // page width
@@ -51,6 +52,11 @@ const DC = D + 2 * OVERHANG; // cover board depth
 const PAPER_LIFT = 1.06; // inside pages, back towards their true colour; much more and the lit middle of a page clips to white
 const LEATHER_TILES = 1.7; // the leather scan repeats this often across a cover, as in textures.js
 const COVER_RADIUS = RADIUS * (WC / W);
+// How far the contact shadow visibly reaches past the book's footprint, as
+// shares of it. Its widest blur (18px on a 448 x 256 spread, see
+// drawContactShadow) fades out within three blur widths of a shape nudged
+// 6px right and 28px down: 48px on the left, 60 right, 26 up, 82 down.
+const SHADOW_REACH = { left: 48 / 448, right: 60 / 448, up: 26 / 256, down: 82 / 256 };
 // A long lens from far away: the book looks flat and top-down, and a page
 // standing up mid-turn grows only a little, so it stays inside the canvas.
 const FOV = 12;
@@ -251,7 +257,18 @@ float cutAway(vec2 uv, vec2 cut) {
 }
 `;
 
-export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion = false, onSpread, onLayout, onReveal, onRequestClose }) {
+export function createBookScene({
+  canvas,
+  anchor,
+  backdrop,
+  pages,
+  reduceMotion = false,
+  onSpread,
+  onLayout,
+  onReveal,
+  onRequestClose,
+  onContextLost,
+}) {
   // Treat colours as the reference does: textures straight to screen, no
   // colour-space conversion, so pages print exactly as drawn.
   THREE.ColorManagement.enabled = false;
@@ -842,7 +859,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
   const lift = { left: 0, right: 0 };
   const mouse = { x: 0, y: 0, ex: 0, ey: 0 };
   let view = null; // the window's measurements; see measureView
-  let sized = false;
+  let canvasBox = null; // the canvas's drawing size, { w, h, mode }; see fitCanvas
   let frameId = 0;
   let last = performance.now();
   let started = false;
@@ -1126,7 +1143,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
     camera.aspect = vw / vh;
     camera.near = Math.max(0.05, distance - 4);
     camera.far = distance + 2;
-    camera.updateProjectionMatrix();
+    fitCanvas();
 
     // The canvas and my photo trade places while the cover is still on edge.
     canvas.style.visibility = shown > 0 ? 'visible' : 'hidden';
@@ -1139,12 +1156,91 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
     backdrop.style.opacity = String(1 - (1 - reveal) ** 3);
   }
 
-  function draw() {
-    // The full-window drawing surface is only made once it is needed.
-    if (!sized) {
-      renderer.setSize(view.vw, view.vh);
-      sized = true;
+  // The canvas covers only the book and its shadow, not the whole window: it
+  // sits over that part of the window, and the camera renders just that
+  // part of its full-window view (a view offset), so nothing else changes.
+  // A full-window canvas at 2x with antialiasing took hundreds of megabytes
+  // of graphics memory, and cleared and composited every pixel each frame.
+  // Its size changes only when the book changes mode (by my photo, or in
+  // the dialog and on the way there), never frame by frame mid-flight: in
+  // the dialog it is sized for the open book at full size, which the
+  // travelling book never exceeds, so only its position moves.
+  const corner = new THREE.Vector3();
+  function fitCanvas() {
+    const { vw, vh, page } = view;
+    camera.clearViewOffset();
+    camera.updateMatrixWorld();
+    stage.updateMatrixWorld();
+    // Where the book and its shadow are. A leaf standing up mid-turn rises
+    // at the spine, so that is where the height is counted. The shadow's
+    // picture has wide empty margins; only the part that shows counts
+    // (SHADOW_REACH).
+    const lift = WC + 0.1;
+    const footW = contactShadow.scale.x / contact.scaleX;
+    const footD = contactShadow.scale.y / contact.scaleY;
+    let left = Infinity;
+    let top = Infinity;
+    let right = -Infinity;
+    let bottom = -Infinity;
+    const take = (x, y, z) => {
+      corner.set(x, y, z).applyMatrix4(stage.matrixWorld).project(camera);
+      const px = ((corner.x + 1) / 2) * vw;
+      const py = ((1 - corner.y) / 2) * vh;
+      left = Math.min(left, px);
+      right = Math.max(right, px);
+      top = Math.min(top, py);
+      bottom = Math.max(bottom, py);
+    };
+    for (const z of [-DC / 2, DC / 2]) {
+      take(book.position.x - WC, 0, z);
+      take(book.position.x + WC, 0, z);
+      take(book.position.x, lift, z);
     }
+    // (Screen down is +z.)
+    for (const z of [-footD * (0.5 + SHADOW_REACH.up), footD * (0.5 + SHADOW_REACH.down)]) {
+      take(contactShadow.position.x - footW * (0.5 + SHADOW_REACH.left), 0, z);
+      take(contactShadow.position.x + footW * (0.5 + SHADOW_REACH.right), 0, z);
+    }
+    const pad = 12;
+    const needW = right - left + 2 * pad;
+    const needH = bottom - top + 2 * pad;
+    const mode = morph.x > 0 || morph.to > 0 ? 'dialog' : 'home';
+    let w;
+    let h;
+    if (mode === 'dialog') {
+      // The open book at full size with its landed shadow, and a little
+      // room for the perspective of a page standing up.
+      const perspective = 1.03;
+      const reachX = 1 + SHADOW_REACH.left + SHADOW_REACH.right;
+      const reachY = 1 + SHADOW_REACH.up + SHADOW_REACH.down;
+      w = Math.ceil(2 * WC * reachX * page * perspective + 2 * pad);
+      h = Math.ceil(DC * reachY * page * perspective + 2 * pad);
+    } else {
+      // By my photo the book is small; round up so the hover's growth
+      // rarely needs a new size.
+      w = Math.ceil(needW / 32) * 32;
+      h = Math.ceil(needH / 32) * 32;
+    }
+    if (canvasBox?.mode === mode) {
+      // Within a mode the size only grows, so a running animation never
+      // waits on a new drawing buffer more than once.
+      w = Math.max(w, canvasBox.w);
+      h = Math.max(h, canvasBox.h);
+    }
+    w = Math.max(w, Math.ceil(needW));
+    h = Math.max(h, Math.ceil(needH));
+    if (!canvasBox || canvasBox.w !== w || canvasBox.h !== h) {
+      renderer.setSize(w, h);
+      renderer.shadowMap.needsUpdate = true;
+    }
+    canvasBox = { w, h, mode };
+    const x = Math.round((left + right) / 2 - w / 2);
+    const y = Math.round((top + bottom) / 2 - h / 2);
+    canvas.style.transform = `translate(${x}px, ${y}px)`;
+    camera.setViewOffset(vw, vh, x, y, w, h);
+  }
+
+  function draw() {
     layout();
     renderer.render(scene, camera);
     dirty = false;
@@ -1326,7 +1422,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
 
   const onResize = () => {
     measureView();
-    sized = false;
+    canvasBox = null;
     onLayout?.(view.dialog, view.pad);
     if (started && Math.max(hover.x, morph.x) > 0) draw();
   };
@@ -1341,7 +1437,13 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
   };
   window.addEventListener('scroll', onScroll, { capture: true, passive: true });
 
+  let released = false; // the page drawings have been let go; see prepare
   const onContextRestored = () => {
+    if (released) {
+      // The textures would upload from emptied drawings: build again.
+      onContextLost?.();
+      return;
+    }
     dirty = true;
     renderer.shadowMap.needsUpdate = true;
     wake();
@@ -1354,12 +1456,13 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
   async function prepare() {
     layout();
     await renderer.compileAsync(scene, camera).catch(() => {});
-    const uploaded = new Set();
     let sliceStart = performance.now();
+    // Every texture, not one per picture: three shares the upload between
+    // textures of one picture, but each must be set up before the drawings
+    // are let go below.
     for (const thing of disposables) {
       if (disposed) return;
-      if (!thing.isTexture || uploaded.has(thing.source)) continue;
-      uploaded.add(thing.source);
+      if (!thing.isTexture) continue;
       renderer.initTexture(thing);
       if (performance.now() - sliceStart > 6) {
         await new Promise((resolve) => setTimeout(resolve));
@@ -1367,6 +1470,17 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       }
     }
     if (disposed) return;
+    // Once on the graphics card, the page drawings are no longer needed:
+    // emptying them frees about as much memory again as the textures take.
+    // (If the browser drops the graphics context, the book is rebuilt from
+    // scratch; see onContextRestored.)
+    for (const thing of disposables) {
+      if (thing.isTexture && thing.image instanceof HTMLCanvasElement) {
+        thing.image.width = 0;
+        thing.image.height = 0;
+      }
+    }
+    released = true;
     started = true;
     if (wantsHover || morph.to) wake();
   }
@@ -1444,7 +1558,15 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onScroll, { capture: true });
+      // Leave the page as it was without the book: its last frame hidden,
+      // my photo and the page behind showing.
+      canvas.style.visibility = 'hidden';
+      backdrop.style.visibility = 'hidden';
+      if (anchor.firstElementChild) anchor.firstElementChild.style.visibility = '';
       for (const thing of disposables) thing.dispose();
+      // Frees the graphics context too once the canvas has left the page
+      // (browsers allow only a few); a rebuild on the same canvas keeps it.
+      releaseContext(renderer.getContext());
       renderer.dispose();
     },
   };
