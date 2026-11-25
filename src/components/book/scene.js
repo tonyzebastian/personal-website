@@ -584,11 +584,21 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
           #endif
           ${
             spine
-              ? `// The gutter: the page curves down into the spine, into its own
+              ? `${
+                board
+                  ? '' // The pages printed on the cover boards lie flat: no gutter, no fold.
+                  : `// The gutter: the page curves down into the spine, into its own
           // shade. Its width stays put while pages turn (a band that grew and
           // shrank read as the page sliding), and it deepens only a little.
           float gutter = 1.0 - smoothstep(0.0, 0.12, vPageUv.x);
           diffuseColor.rgb *= 1.0 - (0.16 + 0.06 * uCrease) * gutter * gutter;
+          // The fold itself: a thin dark line where the two pages meet, and
+          // a faint highlight where the paper rises out of it. Without it a
+          // plain sky at the spine shows only the soft shade, no crease.
+          float fold = 1.0 - smoothstep(0.0, 0.002, vPageUv.x);
+          float ridge = smoothstep(0.002, 0.01, vPageUv.x) * (1.0 - smoothstep(0.01, 0.03, vPageUv.x));
+          diffuseColor.rgb *= (1.0 - 0.1 * fold) * (1.0 + 0.03 * ridge);`
+              }
           // The room light: brighter towards the top left where it comes
           // from, falling off to the bottom right and the outer corners.
           // The lift brings paper back towards its own colour.

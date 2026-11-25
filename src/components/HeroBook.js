@@ -25,7 +25,7 @@ import { INTRO_MS } from '@/lib/intro';
 // captured from the scene at the same size and place, shadow included); the
 // live book takes over on the frame it first draws, then the cover lifts
 // away to show the photo this long after load, or a moment after it is in.
-const PEEK_UNTIL = 1200; // ms after load
+const PEEK_UNTIL = 800; // ms after load
 const PEEK_MIN_SHOWN = 500; // ms the live book shows, at least, before lifting
 const PEEK_GIVE_UP = 6000; // ms: no book by then, show the photo
 
