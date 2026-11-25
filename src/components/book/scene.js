@@ -227,6 +227,21 @@ function bendablePage(t) {
   return geometry;
 }
 
+// A lifted page keeps the top sheet's outline, inset from the page block
+// by the pile's band (`cut`: fore edge, head and tail; zero when flat).
+// Positive outside that outline, where a lifted page is cut away: its face,
+// its edges and its shadow alike.
+const CUT_GLSL = `
+float cutAway(vec2 uv, vec2 cut) {
+  if (cut.x < 1e-4) return -1.0;
+  float r = ${RADIUS.toFixed(5)};
+  vec2 pw = vec2(uv.x * ${W.toFixed(5)}, (uv.y - 0.5) * ${D.toFixed(5)});
+  float ends = cut.y * smoothstep(0.02, 0.2, pw.x);
+  vec2 q = vec2(pw.x - (${W.toFixed(5)} - cut.x - r), abs(pw.y) - (${(D / 2).toFixed(5)} - ends - r));
+  return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+}
+`;
+
 export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion = false, onSpread, onLayout, onReveal, onRequestClose }) {
   // Treat colours as the reference does: textures straight to screen, no
   // colour-space conversion, so pages print exactly as drawn.
@@ -326,6 +341,11 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
   // Shared uniforms: the crease shade near the spine, and one parallax
   // offset per illustration.
   const crease = { value: 0 };
+  // How much of the page block lies on each side, 0 to 1: it sets how thick
+  // each pile looks (the band of page edges, its shadow on the cover rim,
+  // and how deep the gutter runs).
+  const pileL = { value: 0 };
+  const pileR = { value: 1 };
   const offsets = new Map(); // layers array -> { value: Vector2 }
 
   const baseTextures = new Map();
@@ -342,7 +362,9 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
 
   // `board` is set for the two cover boards: { cloth, mirror } where cloth is
   // the cover's own texture, shown on the rim around the inside pages.
-  function pageMaterial(page, onBack, board = null) {
+  // `rest.x` is how far in the top sheet's outline sits (1 on a pile, easing
+  // to 0 as the leaf stands up); `rest.y` is 1 only while it lies flat.
+  function pageMaterial(page, onBack, board = null, rest = { value: new THREE.Vector2(1, 1) }, cut = { value: new THREE.Vector2() }) {
     // The base layer carries this face's slice of the art: front faces run
     // from the spine outwards to the right; back faces end up mirrored on
     // the left, so their u runs right to left.
@@ -452,14 +474,30 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
               art.rgb *= 1.0 + 0.55 * exp(-pow((rim - 0.004) / 0.0035, 2.0));
               art.rgb *= 1.0 - 0.25 * exp(-pow(rim / 0.0012, 2.0));
 
-              // The hinge: a groove where the cover bends at the spine.
-              float hinge = exp(-pow((bp.x - 0.014) / 0.004, 2.0));
-              art.rgb *= 1.0 - 0.35 * hinge;
-              art.rgb *= 1.0 + 0.12 * exp(-pow((bp.x - 0.022) / 0.003, 2.0));
+              // No shadow along the endpaper's edge: it is pasted down flush,
+              // part of the cover, not a sheet lying on it.
 
-              // A thin shadow along the endpaper's edge, where it lies on the leather.
-              vec2 gap = max(vec2((pu.x - 1.0) * ${f(W)}, max(0.0 - pu.y, pu.y - 1.0) * ${f(D)}), 0.0);
-              art.rgb *= 1.0 - 0.35 * (1.0 - smoothstep(0.0, 0.006, length(gap)));
+              // The pages stacked on this board cast a soft shadow on the
+              // rim around them, more for a taller pile. The rim itself stays
+              // the same width on both sides: the page edges show inside the
+              // block (see the pages' own shader), not on the cover.
+              float pile = ${page.part === 'left' ? 'uPileL' : 'uPileR'};
+              vec2 pw = vec2(pu.x * ${f(W)}, (pu.y - 0.5) * ${f(D)});
+              vec2 q = vec2(pw.x - ${f(W - RADIUS)}, abs(pw.y) - ${f(D / 2 - RADIUS)});
+              float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - ${f(RADIUS)};
+              if (outside > 0.0) art.rgb *= 1.0 - 0.3 * pile * exp(-outside / (0.003 + 0.008 * pile));
+            } else {
+              // The pasted-down paper takes on the board under it: the cover's
+              // broad unevenness comes through as a soft mottle.
+              float mottle = (texture2D(roughnessMap, vRoughnessMapUv * 0.35).g - 0.75) / 0.25;
+              art.rgb *= 0.985 + 0.03 * smoothstep(0.55, 0.95, mottle);
+            }
+            // The pile on the other side of the spine stands above this board
+            // and shades it near the joint, paper and rim alike, so the two
+            // sides meet in a soft valley rather than a step.
+            {
+              float across = ${page.part === 'left' ? 'uPileR' : 'uPileL'};
+              art.rgb *= 1.0 - 0.2 * across * exp(-pu.x * ${f(W)} / 0.035);
             }`
                 : ''
             }
@@ -496,6 +534,10 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
 
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCrease = crease;
+      shader.uniforms.uPileL = pileL;
+      shader.uniforms.uPileR = pileR;
+      shader.uniforms.uRest = rest;
+      shader.uniforms.uCut = cut;
       shader.uniforms.uOffset = offset;
       if (board) {
         shader.uniforms.uCloth = { value: board.cloth };
@@ -569,7 +611,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       shader.fragmentShader = shader.fragmentShader
         .replace(
           '#include <common>',
-          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\nuniform sampler2D uLeatherN;\n${samplers}`
+          `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform float uPileL;\nuniform float uPileR;\nuniform vec2 uRest;\nuniform vec2 uCut;\n${CUT_GLSL}\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\nuniform sampler2D uLeatherN;\n${samplers}`
         )
         .replace(
           '#include <map_fragment>',
@@ -590,8 +632,43 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
                   : `// The gutter: the page curves down into the spine, into its own
           // shade. Its width stays put while pages turn (a band that grew and
           // shrank read as the page sliding), and it deepens only a little.
-          float gutter = 1.0 - smoothstep(0.0, 0.12, vPageUv.x);
-          diffuseColor.rgb *= 1.0 - (0.16 + 0.06 * uCrease) * gutter * gutter;
+          // A thick pile curves down into the spine more steeply, so its
+          // gutter runs wider and deeper; a thin one lies almost flat.
+          float pile = ${page.part === 'left' ? 'uPileL' : 'uPileR'};
+          float gutter = 1.0 - smoothstep(0.0, 0.08 + 0.08 * pile, vPageUv.x);
+          diffuseColor.rgb *= 1.0 - (0.07 + 0.18 * pile + 0.06 * uCrease) * gutter * gutter;
+          // The pile's top sheets curl in a little at their outer edges, so
+          // from above the edges of the sheets below show as a band just
+          // inside the page block: wide at the fore edge, thin at head and
+          // tail, each sheet a hair further out and deeper in shade. A lifted
+          // page keeps the same outline (so hovering doesn't change its
+          // size), but the band is cut away from it: it is one sheet, and the
+          // pile's edges show on the page below instead.
+          if (cutAway(vPageUv, uCut) > 0.0) discard;
+          {
+            // The top sheet is its own rounded rectangle, set in from the page
+            // block by the band on each side, so the band narrows smoothly
+            // round the corners instead of stepping.
+            float bandFore = pile * uRest.x * uRest.y * 0.022;
+            float r = ${f(RADIUS)};
+            vec2 pw = vec2(vPageUv.x * ${f(W)}, (vPageUv.y - 0.5) * ${f(D)});
+            // At the spine the sheets are bound together, so no edges show
+            // there: the head and tail bands taper away towards it.
+            float bandEnds = pile * uRest.x * uRest.y * 0.007 * smoothstep(0.02, 0.2, pw.x);
+            vec2 q = vec2(pw.x - (${f(W)} - bandFore - r), abs(pw.y) - (${f(D / 2)} - bandEnds - r));
+            float below = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; // out from the top sheet's edge
+            if (below > 0.0 && bandFore > 1e-4) {
+              vec2 out2 = max(q, 0.0);
+              float toFore = clamp(out2.x / (out2.x + out2.y + 1e-6), 0.0, 1.0);
+              float depth = clamp(below / max(mix(bandEnds, bandFore, toFore), 1e-4), 0.0, 1.0);
+              vec3 edges = vec3(0.95, 0.93, 0.885);
+              edges *= 1.0 - 0.1 * (1.0 - smoothstep(0.0, 0.35, fract(below / 0.0016)));
+              edges *= mix(0.97, 0.76, depth);
+              // The top sheet's edge throws a hairline shadow onto the ones below.
+              edges *= 1.0 - 0.25 * exp(-below / 0.0012);
+              diffuseColor.rgb = edges;
+            }
+          }
           // The fold itself: a thin dark line where the two pages meet, and
           // a faint highlight where the paper rises out of it. Without it a
           // plain sky at the spine shows only the soft shade, no crease.
@@ -637,20 +714,35 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
         normalScale: new THREE.Vector2(0.9, 0.9),
       })
     );
+    const cut = { value: new THREE.Vector2() };
+    let depthMaterial = null;
     if (!isCover) {
       // The page block's edges at the spine sit deep in the gutter: in shade,
       // so a turning cover uncovers a dark fold, not a lit white strip. The
       // top and bottom edges darken towards the spine the same way.
+      // A lifted page's edges are cut away with its face (see CUT_GLSL).
       edge.onBeforeCompile = (shader) => {
+        shader.uniforms.uCut = cut;
         shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nvarying float vSpineX;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSpineX = position.x;');
+          .replace('#include <common>', '#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSpineX = position.x;\nvCutUv = uv;');
         shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', '#include <common>\nvarying float vSpineX;')
+          .replace('#include <common>', `#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`)
           .replace(
             '#include <color_fragment>',
-            '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.22, 1.0, smoothstep(0.0, 0.06, vSpineX));'
+            '#include <color_fragment>\nif (cutAway(vCutUv, uCut) > 1e-4) discard;\ndiffuseColor.rgb *= mix(0.22, 1.0, smoothstep(0.0, 0.06, vSpineX));'
           );
+      };
+      // Its shadow too: the shadow pass draws the leaf with this instead.
+      depthMaterial = track(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }));
+      depthMaterial.onBeforeCompile = (shader) => {
+        shader.uniforms.uCut = cut;
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec2 vCutUv;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCutUv = uv;');
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', `#include <common>\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`)
+          .replace('void main() {', 'void main() {\nif (cutAway(vCutUv, uCut) > 1e-4) discard;');
       };
       edge.customProgramCacheKey = () => 'page-edge';
     }
@@ -661,18 +753,20 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
         { cloth: canvasTexture(pages[pages.length - 1].layers[0]), mirror: true }
       : null;
     const geometry = isCover ? boardGeometry(t, WC, DC, COVER_RADIUS) : bendablePage(t);
+    const rest = { value: new THREE.Vector2(1, 1) };
     const mesh = new THREE.Mesh(track(geometry), [
-      pageMaterial(pages[2 * k + 1], true, board),
-      pageMaterial(pages[2 * k], false, board),
+      pageMaterial(pages[2 * k + 1], true, board, rest, cut),
+      pageMaterial(pages[2 * k], false, board, rest, cut),
       edge,
     ]);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+    if (depthMaterial) mesh.customDepthMaterial = depthMaterial;
     mesh.frustumCulled = false; // a bent page leaves its flat bounds
     const pivot = new THREE.Group();
     pivot.add(mesh);
     book.add(pivot);
-    leaves.push({ pivot, mesh, t, theta: 0, flex: 0, geometry });
+    leaves.push({ pivot, mesh, t, theta: 0, flex: 0, geometry, rest, cut });
   }
 
   // The first page has two faces: the page itself, and my hero photo, which
@@ -857,8 +951,16 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       hit && still && liftSpread === target && !reduceMotion
         ? PAGE_LIFT * smoothstep(0.3, 0.95, Math.abs(hit.x) / W) * (drag ? PRESS_LIFT : 1)
         : 0;
-    lift.right = approach(lift.right, hit?.x > 0 && target < lastSpread ? amount : 0, 11, dt);
-    lift.left = approach(lift.left, hit?.x < 0 ? amount : 0, 11, dt);
+    // On the way down the last few hundredths of a radian are invisible on
+    // the page but still darken the soft shadow under it. An easing alone
+    // creeps over them, so a settling page also keeps a small minimum speed:
+    // it lands in finite time and its shadow fades out with it, not after.
+    const settle = (value, to) => {
+      const next = approach(value, to, 11, dt);
+      return to === 0 ? Math.max(0, next - 0.25 * dt) : next;
+    };
+    lift.right = settle(lift.right, hit?.x > 0 && target < lastSpread ? amount : 0);
+    lift.left = settle(lift.left, hit?.x < 0 ? amount : 0);
   }
 
   // How far each page wants to curve: its edge trails the way it is turning,
@@ -926,6 +1028,25 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       leaf.pivot.position.y = right + (left + leaf.t - right) * over;
       leaf.pivot.rotation.z = leaf.theta;
     });
+
+    // How much of the page block has gone over to the left, counting the
+    // turning leaf by how far over it is.
+    const paper = leafCount - 2;
+    let over = 0;
+    for (let j = 1; j <= paper; j++) over += clamp(progress - j, 0, 1);
+    pileL.value = over / paper;
+    pileR.value = 1 - over / paper;
+    // A leaf keeps its pile outline through a hover lift and loses it only
+    // as it stands up to turn; it draws the pile's edges only while flat.
+    for (const leaf of leaves) {
+      const up = Math.sin(leaf.theta);
+      const inset = 1 - smoothstep(0.5, 0.95, up);
+      const flat = up < 0.003;
+      leaf.rest.value.set(inset, flat ? 1 : 0);
+      // Lifted, it is cut to the outline of the pile it lifted from.
+      const pile = (leaf.theta < Math.PI / 2 ? pileR : pileL).value * inset;
+      leaf.cut.value.set(flat ? 0 : 0.022 * pile, flat ? 0 : 0.007 * pile);
+    }
 
     // The fold darkens while any page is in the air.
     crease.value = leaves.reduce((m, leaf, i) => (i === 0 ? m : Math.max(m, Math.sin(leaf.theta))), 0);
