@@ -357,6 +357,92 @@ async function drawHeroSpread(intro, { width }) {
   return canvas;
 }
 
+// A photo printed with a white border and some wear: the border a little
+// uneven (off-centre, deeper at the bottom), softly rounded corners scuffed
+// along the edges, fine grain over the picture, a few dust specks and one
+// faint scratch. The wear comes from a fixed seed, so it is the same every
+// time. `cx`/`cy` centre the print; `iw` x `ih` is the picture inside it.
+function agedPrint(ctx, picture, { cx, cy, iw, ih, u, seed = 7 }) {
+  let s = seed;
+  const rand = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  const edge = { top: 11 * u, right: 11 * u, bottom: 17 * u, left: 13 * u };
+  const pw = iw + edge.left + edge.right;
+  const ph = ih + edge.top + edge.bottom;
+  const px = cx - pw / 2;
+  const py = cy - ph / 2;
+  const ix = px + edge.left;
+  const iy = py + edge.top;
+
+  // The border.
+  ctx.save();
+  roundedRect(ctx, px, py, pw, ph, [5 * u, 5 * u, 5 * u, 5 * u]);
+  ctx.fillStyle = '#fffdf8';
+  ctx.fill();
+  ctx.clip();
+  // Scuffs along the edges, thicker towards the corners.
+  for (let i = 0; i < 260; i++) {
+    const side = Math.floor(rand() * 4);
+    const t = rand();
+    const along = side % 2 === 0 ? pw : ph;
+    const nearCorner = Math.min(t, 1 - t) < 0.12 ? 1 : 0.35;
+    if (rand() > nearCorner) continue;
+    const depth = rand() * 2.2 * u;
+    const x = side === 0 ? px + t * along : side === 2 ? px + t * along : side === 1 ? px + pw - depth : px + depth;
+    const y = side === 1 || side === 3 ? py + t * along : side === 0 ? py + depth : py + ph - depth;
+    ctx.fillStyle = `rgba(150, 128, 95, ${0.08 + rand() * 0.14})`;
+    ctx.fillRect(x, y, (0.4 + rand() * 1.4) * u, (0.4 + rand() * 1.4) * u);
+  }
+  ctx.restore();
+  // A faint, uneven outline where the print ends.
+  roundedRect(ctx, px, py, pw, ph, [5 * u, 5 * u, 5 * u, 5 * u]);
+  ctx.strokeStyle = 'rgba(110, 90, 60, 0.12)';
+  ctx.lineWidth = 0.8 * u;
+  ctx.stroke();
+
+  // The picture.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(ix, iy, iw, ih);
+  ctx.clip();
+  ctx.drawImage(picture, ix, iy, iw, ih);
+  // Film grain.
+  const tile = document.createElement('canvas');
+  tile.width = tile.height = 128;
+  const t = tile.getContext('2d');
+  const data = t.createImageData(128, 128);
+  for (let i = 0; i < data.data.length; i += 4) {
+    const v = rand() * 255;
+    data.data[i] = data.data[i + 1] = data.data[i + 2] = v;
+    data.data[i + 3] = 255 * 0.16;
+  }
+  t.putImageData(data, 0, 0);
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.fillStyle = ctx.createPattern(tile, 'repeat');
+  ctx.fillRect(ix, iy, iw, ih);
+  ctx.globalCompositeOperation = 'source-over';
+  // Dust: mostly pale specks, a few dark ones.
+  for (let i = 0; i < 26; i++) {
+    const light = rand() > 0.25;
+    ctx.fillStyle = light ? `rgba(255, 252, 240, ${0.45 + rand() * 0.45})` : `rgba(30, 24, 18, ${0.25 + rand() * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(ix + rand() * iw, iy + rand() * ih, (0.3 + rand() * 1.1) * u, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // One faint scratch, a long gentle curve.
+  const sx = ix + iw * (0.25 + rand() * 0.5);
+  ctx.strokeStyle = 'rgba(255, 252, 240, 0.28)';
+  ctx.lineWidth = 0.6 * u;
+  ctx.beginPath();
+  ctx.moveTo(sx, iy + ih * 0.08);
+  ctx.quadraticCurveTo(sx + iw * 0.06, iy + ih * 0.35, sx - iw * 0.02, iy + ih * 0.62);
+  ctx.stroke();
+  ctx.restore();
+  // A faint line where the picture meets its border.
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
+  ctx.lineWidth = u;
+  ctx.strokeRect(ix, iy, iw, ih);
+}
+
 // The first spread, under the cover, as the Figma "00 Cover" frame (700 x
 // 800 pages): a handwritten line and my logo on the left page (the inside
 // of the cover), and my photo on the right.
@@ -392,20 +478,13 @@ async function drawIntro(intro, { width, fonts }) {
   ctx.textAlign = 'left';
   if (logo) ctx.drawImage(logo, 326.8 * u, 677 * u, 47.37 * u, 49 * u);
 
-  // Right page: my photo, larger than the Figma's 374 x 447 (480 x 574),
-  // with 8 corners, centred on the Figma's line 357 from the spine and
-  // centred down the page.
+  // Right page: my photo as an old print glued onto the page, at its own
+  // proportions, 440 wide, centred on the Figma's line 357 from the spine
+  // and centred down the page (see agedPrint).
   if (picture) {
-    const pw = 480 * u;
-    const ph = 574 * u;
-    const px = width + 357 * u - pw / 2;
-    const py = (h - ph) / 2;
-    ctx.save();
-    roundedRect(ctx, px, py, pw, ph, [8 * u, 8 * u, 8 * u, 8 * u]);
-    ctx.clip();
-    const scale = Math.max(pw / picture.width, ph / picture.height);
-    ctx.drawImage(picture, px + (pw - picture.width * scale) / 2, py + (ph - picture.height * scale) / 2, picture.width * scale, picture.height * scale);
-    ctx.restore();
+    const iw = 440 * u;
+    const ih = (iw * picture.height) / picture.width;
+    agedPrint(ctx, picture, { cx: width + 357 * u, cy: h / 2, iw, ih, u });
   }
 
   grain(ctx, w, h, 0.01); // a light grain: the pages are a smooth stock
