@@ -1234,6 +1234,16 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       wantsHover = on;
       wake();
     },
+    // The closed book, at once (no swing), over my photo; it stays until
+    // setHover(false) lets the cover lift away again. On arrival it takes
+    // over from a picture of itself (HeroBook), so the swap is unseen.
+    peek() {
+      wantsHover = true;
+      hover.x = 1;
+      hover.v = 0;
+      dirty = true;
+      wake();
+    },
     open() {
       closing = false;
       closedByHand = false;

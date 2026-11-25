@@ -351,6 +351,29 @@ html::after {
   }
 }
 
+/* On the first visit (html.book-peek, set with intro-play on devices that
+   hover), the page loads showing the closed storybook where my photo is: the
+   photo is hidden and a picture of the closed book (captured from the 3D
+   scene, 2x, with its shadow; 28px of margin round the book, which sits
+   flush with the photo's left and bottom edges and grows up and right) sits
+   exactly where the live book will draw, until it takes over (HeroBook). */
+.book-standin {
+  display: none;
+}
+.book-peek .book-standin {
+  display: block;
+  position: absolute;
+  left: -28px;
+  top: -55.68px;
+  width: 173.24px;
+  height: 193.39px;
+  max-width: none;
+  pointer-events: none;
+}
+.book-peek .book-peek-photo {
+  visibility: hidden;
+}
+
 /* First load of the home page (html.intro-play, set by INTRO_SCRIPT in
    lib/intro.js). Things blur in one at a time from the top: the photo, my name
    and description word by word (these two stay in place), the about text, then

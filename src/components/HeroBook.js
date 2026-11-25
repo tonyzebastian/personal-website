@@ -19,6 +19,16 @@ import { INTRO_MS } from '@/lib/intro';
 // three.js and the page drawings load once the page is idle, or at the first
 // touch on devices that cannot hover, so the book never holds up first paint.
 
+// The arrival hint: on the first visit, the page loads with the closed book
+// where my photo is (html.book-peek, set before paint by INTRO_SCRIPT). Until
+// the 3D book is ready that is a picture of it (public/book/closed-book.webp,
+// captured from the scene at the same size and place, shadow included); the
+// live book takes over on the frame it first draws, then the cover lifts
+// away to show the photo this long after load, or a moment after it is in.
+const PEEK_UNTIL = 1200; // ms after load
+const PEEK_MIN_SHOWN = 500; // ms the live book shows, at least, before lifting
+const PEEK_GIVE_UP = 6000; // ms: no book by then, show the photo
+
 export default function HeroBook({ book }) {
   const { cover, intro, chapters, end } = book;
   const reduceMotion = useReducedMotion();
@@ -31,6 +41,7 @@ export default function HeroBook({ book }) {
   const startRef = useRef(null);
   const wantsOpenRef = useRef(false);
   const wantsHoverRef = useRef(false);
+  const peekRef = useRef(false);
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState('idle'); // idle | ready | failed
   const [open, setOpen] = useState(false);
@@ -60,6 +71,13 @@ export default function HeroBook({ book }) {
     let cancelled = false;
     let scene = null;
     let idleId = 0;
+    let peekTimer = 0;
+    let giveUpTimer = 0;
+    const root = document.documentElement;
+    const loadedAt = performance.now();
+    peekRef.current = root.classList.contains('book-peek');
+    const endStandIn = () => root.classList.remove('book-peek');
+    if (peekRef.current) giveUpTimer = window.setTimeout(endStandIn, PEEK_GIVE_UP);
 
     // The motif drawings and icons are rendered (hidden) by React below;
     // serialise them so the page canvases can draw them.
@@ -105,7 +123,19 @@ export default function HeroBook({ book }) {
         await scene.ready;
         if (cancelled) return;
         setStatus('ready');
-        if (wantsHoverRef.current) scene.setHover(true);
+        if (peekRef.current && root.classList.contains('book-peek')) {
+          // The live closed book draws over its picture, which goes once that
+          // frame is up; later the cover lifts away to show the photo,
+          // unless the visitor is hovering it or has clicked it by then.
+          window.clearTimeout(giveUpTimer);
+          scene.peek();
+          requestAnimationFrame(() => requestAnimationFrame(endStandIn));
+          const now = performance.now();
+          const lift = Math.max(loadedAt + PEEK_UNTIL, now + PEEK_MIN_SHOWN) - now;
+          peekTimer = window.setTimeout(() => {
+            if (!cancelled && !wantsOpenRef.current) scene.setHover(wantsHoverRef.current);
+          }, lift);
+        } else if (wantsHoverRef.current) scene.setHover(true);
         if (wantsOpenRef.current) openBook();
       } catch (error) {
         console.error(error);
@@ -125,7 +155,9 @@ export default function HeroBook({ book }) {
       else idleId = window.setTimeout(start, 400);
     };
     const canHover = window.matchMedia('(hover: hover)').matches;
-    if (canHover) {
+    // On arrival the book is shown at once, so it starts loading at once.
+    if (peekRef.current) start();
+    else if (canHover) {
       if (document.readyState === 'complete') whenIdle();
       else window.addEventListener('load', whenIdle, { once: true });
     }
@@ -133,6 +165,9 @@ export default function HeroBook({ book }) {
       cancelled = true;
       window.removeEventListener('load', whenIdle);
       window.clearTimeout(introTimer);
+      window.clearTimeout(peekTimer);
+      window.clearTimeout(giveUpTimer);
+      endStandIn();
       if (window.cancelIdleCallback) window.cancelIdleCallback(idleId);
       window.clearTimeout(idleId);
       scene?.dispose();
@@ -205,8 +240,11 @@ export default function HeroBook({ book }) {
         className="block aspect-[1.05/1.2] w-24 cursor-pointer overflow-hidden rounded-[7px] outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-ink/30 disabled:cursor-default"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- static export, sized by hand */}
-        <img src={intro.photo} alt="" fetchPriority="high" className="size-full object-cover" />
+        <img src={intro.photo} alt="" fetchPriority="high" className="book-peek-photo size-full object-cover" />
       </button>
+      {/* On arrival, a picture of the closed book until the live one is ready. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export, sized by hand */}
+      <img src="/book/closed-book.webp" alt="" aria-hidden fetchPriority="high" className="book-standin" />
 
       {mounted &&
         createPortal(

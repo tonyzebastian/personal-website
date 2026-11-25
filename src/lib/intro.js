@@ -6,4 +6,4 @@ export const INTRO_MS = 2500;
 
 // Runs before the page paints: plays the intro on the first visit to the home
 // page in a tab, and never for people who prefer reduced motion.
-export const INTRO_SCRIPT = `try{var k='intro-seen';if(location.pathname==='/'&&!sessionStorage.getItem(k)&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('intro-play');sessionStorage.setItem(k,'1')}catch(e){}`;
+export const INTRO_SCRIPT = `try{var k='intro-seen';if(location.pathname==='/'&&!sessionStorage.getItem(k)&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('intro-play');if(matchMedia('(hover: hover)').matches)document.documentElement.classList.add('book-peek')}sessionStorage.setItem(k,'1')}catch(e){}`;

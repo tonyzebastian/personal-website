@@ -25,7 +25,7 @@ function Words({ text, from = 0 }) {
 export default function Hero() {
   return (
     <header className="flex flex-col gap-5">
-      <div className="intro-photo">
+      <div className="intro-photo relative w-fit">
         <HeroBook book={storybook} />
       </div>
       <div className="flex flex-col gap-2">
