@@ -227,6 +227,15 @@ function bendablePage(t) {
   return geometry;
 }
 
+// Splices code into one of three.js's own shaders at `find`. Each find is
+// text from three's shader chunks, so if an update to three changes it, the
+// splice would silently do nothing: say so instead. (three is pinned to an
+// exact version in package.json for the same reason.)
+function patch(source, find, replacement) {
+  if (!source.includes(find)) console.error(`Book shader: "${find}" was not found, so that change is missing. Has three.js changed?`);
+  return source.replace(find, replacement);
+}
+
 // A lifted page keeps the top sheet's outline, inset from the page block
 // by the pile's band (`cut`: fore edge, head and tail; zero when flat).
 // Positive outside that outline, where a lifted page is cut away: its face,
@@ -547,9 +556,9 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       layers.forEach((texture, i) => {
         shader.uniforms[`uLayer${i}`] = { value: texture };
       });
-      shader.vertexShader = shader.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec2 vPageUv;')
-        .replace('#include <uv_vertex>', '#include <uv_vertex>\nvPageUv = uv;');
+      const vertex = patch(shader.vertexShader, '#include <common>', '#include <common>\nvarying vec2 vPageUv;');
+      shader.vertexShader = patch(vertex, '#include <uv_vertex>', '#include <uv_vertex>\nvPageUv = uv;');
+      let fragment = shader.fragmentShader;
       const samplers = layers.map((_, i) => `uniform sampler2D uLayer${i};`).join('\n');
       const mixes = layers
         .map(
@@ -562,15 +571,19 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       if (leather) {
         // Foil is smooth metal; pressed leather is burnished a little
         // smoother than the grain around it.
-        shader.fragmentShader = shader.fragmentShader.replace(
+        fragment = patch(
+          fragment,
           '#include <metalnessmap_fragment>',
           `#include <metalnessmap_fragment>
           roughnessFactor = mix(roughnessFactor * (1.0 - 0.3 * texelMetalness.g), 0.42, texelMetalness.b);`
-        ).replace(
-          // Flat ambient light ignores the grain; let the room's light,
-          // which follows the surface, do more of the work here.
+        );
+        // Flat ambient light ignores the grain; let the room's light,
+        // which follows the surface, do more of the work here.
+        fragment = patch(
+          fragment,
           '#include <lights_fragment_begin>',
-          THREE.ShaderChunk.lights_fragment_begin.replace(
+          patch(
+            THREE.ShaderChunk.lights_fragment_begin,
             'getAmbientLightIrradiance( ambientLightColor )',
             'getAmbientLightIrradiance( ambientLightColor ) * 0.35'
           )
@@ -578,7 +591,8 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       }
       if (!cloth) {
         // Paper is a smooth stock: its sheen barely varies from fleck to fleck.
-        shader.fragmentShader = shader.fragmentShader.replace(
+        fragment = patch(
+          fragment,
           '#include <metalnessmap_fragment>',
           `#include <metalnessmap_fragment>
           roughnessFactor = mix(roughness, roughnessFactor, 0.2);
@@ -588,32 +602,35 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       if (insidePage) {
         // The turn-in is the cover leather, with its grain and sheen; the
         // endpaper is left as every other page.
-        shader.fragmentShader = shader.fragmentShader
-          .replace(
-            '#include <metalnessmap_fragment>',
-            `#include <metalnessmap_fragment>
+        fragment = patch(
+          fragment,
+          '#include <metalnessmap_fragment>',
+          `#include <metalnessmap_fragment>
           if (turnIn > 0.5) {
             metalnessFactor = 0.0;
             roughnessFactor = 0.4;
           }`
-          )
-          .replace(
-            '#include <normal_fragment_maps>',
-            THREE.ShaderChunk.normal_fragment_maps.replace(
-              'mapN.xy *= normalScale;',
-              `mapN.xy *= normalScale;
+        );
+        fragment = patch(
+          fragment,
+          '#include <normal_fragment_maps>',
+          patch(
+            THREE.ShaderChunk.normal_fragment_maps,
+            'mapN.xy *= normalScale;',
+            `mapN.xy *= normalScale;
           if (turnIn > 0.5) {
             ${leatherNormal ? 'mapN = texture2D(uLeatherN, leatherUv).xyz * 2.0 - 1.0; mapN.xy *= 0.8;' : 'mapN.xy *= 2.0;'}
           }`
-            )
-          );
+          )
+        );
       }
-      shader.fragmentShader = shader.fragmentShader
-        .replace(
+      fragment = patch(
+          fragment,
           '#include <common>',
           `#include <common>\nvarying vec2 vPageUv;\nuniform float uCrease;\nuniform float uPileL;\nuniform float uPileR;\nuniform vec2 uRest;\nuniform vec2 uCut;\n${CUT_GLSL}\nuniform vec2 uOffset;\nuniform sampler2D uCloth;\nuniform float uMirror;\nuniform sampler2D uLeatherN;\n${samplers}`
-        )
-        .replace(
+        );
+      fragment = patch(
+          fragment,
           '#include <map_fragment>',
           `float turnIn = 0.0;
           vec2 leatherUv = vec2(0.0);
@@ -687,6 +704,7 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
               : ''
           }`
         );
+      shader.fragmentShader = fragment;
     };
     material.customProgramCacheKey = () =>
       `page-${page.part}-${layers.length}-${spine}-${board ? 'board' : ''}-${cloth ? 'cloth' : ''}-${leather ? 'leather' : ''}`;
@@ -723,26 +741,27 @@ export function createBookScene({ canvas, anchor, backdrop, pages, reduceMotion 
       // A lifted page's edges are cut away with its face (see CUT_GLSL).
       edge.onBeforeCompile = (shader) => {
         shader.uniforms.uCut = cut;
-        shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSpineX = position.x;\nvCutUv = uv;');
-        shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', `#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`)
-          .replace(
-            '#include <color_fragment>',
-            '#include <color_fragment>\nif (cutAway(vCutUv, uCut) > 1e-4) discard;\ndiffuseColor.rgb *= mix(0.22, 1.0, smoothstep(0.0, 0.06, vSpineX));'
-          );
+        const vertex = patch(shader.vertexShader, '#include <common>', '#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;');
+        shader.vertexShader = patch(vertex, '#include <begin_vertex>', '#include <begin_vertex>\nvSpineX = position.x;\nvCutUv = uv;');
+        const fragment = patch(
+          shader.fragmentShader,
+          '#include <common>',
+          `#include <common>\nvarying float vSpineX;\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`
+        );
+        shader.fragmentShader = patch(
+          fragment,
+          '#include <color_fragment>',
+          '#include <color_fragment>\nif (cutAway(vCutUv, uCut) > 1e-4) discard;\ndiffuseColor.rgb *= mix(0.22, 1.0, smoothstep(0.0, 0.06, vSpineX));'
+        );
       };
       // Its shadow too: the shadow pass draws the leaf with this instead.
       depthMaterial = track(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }));
       depthMaterial.onBeforeCompile = (shader) => {
         shader.uniforms.uCut = cut;
-        shader.vertexShader = shader.vertexShader
-          .replace('#include <common>', '#include <common>\nvarying vec2 vCutUv;')
-          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvCutUv = uv;');
-        shader.fragmentShader = shader.fragmentShader
-          .replace('#include <common>', `#include <common>\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`)
-          .replace('void main() {', 'void main() {\nif (cutAway(vCutUv, uCut) > 1e-4) discard;');
+        const vertex = patch(shader.vertexShader, '#include <common>', '#include <common>\nvarying vec2 vCutUv;');
+        shader.vertexShader = patch(vertex, '#include <begin_vertex>', '#include <begin_vertex>\nvCutUv = uv;');
+        const fragment = patch(shader.fragmentShader, '#include <common>', `#include <common>\nvarying vec2 vCutUv;\nuniform vec2 uCut;\n${CUT_GLSL}`);
+        shader.fragmentShader = patch(fragment, 'void main() {', 'void main() {\nif (cutAway(vCutUv, uCut) > 1e-4) discard;');
       };
       edge.customProgramCacheKey = () => 'page-edge';
     }

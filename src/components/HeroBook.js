@@ -21,7 +21,7 @@ import { INTRO_MS } from '@/lib/intro';
 
 // The arrival hint: on the first visit, the page loads with the closed book
 // where my photo is (html.book-peek, set before paint by INTRO_SCRIPT). Until
-// the 3D book is ready that is a picture of it (public/book/closed-book.webp,
+// the 3D book is ready that is a picture of it (public/book/closed-book.webp, a CSS background,
 // captured from the scene at the same size and place, shadow included); the
 // live book takes over on the frame it first draws, then the cover lifts
 // away to show the photo this long after load, or a moment after it is in.
@@ -240,11 +240,12 @@ export default function HeroBook({ book }) {
         className="block aspect-[1.05/1.2] w-24 cursor-pointer overflow-hidden rounded-[7px] outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-ink/30 disabled:cursor-default"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- static export, sized by hand */}
-        <img src={intro.photo} alt="" fetchPriority="high" className="book-peek-photo size-full object-cover" />
+        <img src={intro.thumb ?? intro.photo} alt="" fetchPriority="high" className="book-peek-photo size-full object-cover" />
       </button>
-      {/* On arrival, a picture of the closed book until the live one is ready. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- static export, sized by hand */}
-      <img src="/book/closed-book.webp" alt="" aria-hidden fetchPriority="high" className="book-standin" />
+      {/* On arrival, a picture of the closed book until the live one is ready.
+          It is a CSS background (see .book-standin), so it downloads only on
+          visits that show it. */}
+      <span aria-hidden className="book-standin" />
 
       {mounted &&
         createPortal(

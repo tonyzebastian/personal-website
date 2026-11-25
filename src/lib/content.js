@@ -343,6 +343,8 @@ export const storybook = {
   // once the book opens.
   intro: {
     photo: '/book/tony.webp',
+    // The same photo, small, for the 96px button on the home page (3x).
+    thumb: '/book/tony-thumb.webp',
     logo: '/book/logo.svg',
     picture: '/book/garden.webp',
     // Line breaks as in the Figma.

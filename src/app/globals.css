@@ -363,6 +363,7 @@ html::after {
 .book-peek .book-standin {
   display: block;
   position: absolute;
+  background: url('/book/closed-book.webp') center / 100% 100% no-repeat;
   left: -28px;
   top: -55.68px;
   width: 173.24px;

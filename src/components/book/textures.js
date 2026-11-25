@@ -57,13 +57,25 @@ function svgImage(markup) {
   });
 }
 
+// Each picture is fetched once, and decoded off the main thread before it
+// is drawn (so drawImage does not stall on it). drawPages asks for them all
+// up front, so they download side by side, not one after another.
+const images = new Map();
 function loadImage(src) {
-  return new Promise((resolve) => {
+  if (!src) return Promise.resolve(null);
+  if (!images.has(src)) {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
+    img.decoding = 'async';
     img.src = src;
-  });
+    images.set(
+      src,
+      img.decode().then(
+        () => img,
+        () => null
+      )
+    );
+  }
+  return images.get(src);
 }
 
 function wrapText(ctx, text, maxWidth) {
@@ -925,25 +937,20 @@ export function drawContactShadow() {
   return { canvas, scaleX: canvas.width / rw, scaleY: canvas.height / rh };
 }
 
-// Layered page edges, one band per leaf in that page's colour.
-export function drawEdges(colors) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 8;
-  canvas.height = colors.length * 16;
-  const ctx = canvas.getContext('2d');
-  colors.forEach((color, i) => {
-    ctx.fillStyle = color;
-    ctx.fillRect(0, i * 16, 8, 16);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(0, i * 16 + 14, 8, 2);
-  });
-  return canvas;
-}
-
 // Builds every page. `motifs` and `icons` are SVG markup keyed by motif.
 // Returns pages in reading order: { layers, part } where part is 'left' or
 // 'right' (half of a spread) or 'whole'.
 export async function drawPages(book, { width, motifs, icons }) {
+  // Start every download at once; each drawing step below picks its picture
+  // up from the same request.
+  [
+    '/book/leather-normal.webp',
+    '/book/leather-rough.webp',
+    book.intro?.photo,
+    book.intro?.picture,
+    book.intro?.logo,
+    ...book.chapters.map((chapter) => chapter.image),
+  ].forEach(loadImage);
   const fonts = fontFamilies();
   await Promise.all([
     document.fonts.load(`400 64px ${fonts.serif}`),
@@ -952,9 +959,14 @@ export async function drawPages(book, { width, motifs, icons }) {
   ]).catch(() => {});
   // Make sure the site's own faces are in, not just their fallbacks: load
   // every face of the serif and sans families outright, then wait for all.
+  // Only the faces that cover basic Latin: the book has no other letters, and
+  // loading the rest would download font files nothing uses.
   const families = [fonts.serif, fonts.sans].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
+  const coversLatin = (face) => /U\+0-/i.test(face.unicodeRange) || /U\+0+(-|,|$)/i.test(face.unicodeRange);
   await Promise.all(
-    [...document.fonts].filter((face) => families.includes(face.family)).map((face) => face.load().catch(() => {}))
+    [...document.fonts]
+      .filter((face) => families.includes(face.family) && coversLatin(face))
+      .map((face) => face.load().catch(() => {}))
   );
   await document.fonts.ready;
 
