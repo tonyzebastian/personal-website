@@ -31,7 +31,6 @@ function fontFamilies() {
   return {
     serif: style.getPropertyValue('--font-caslon').trim() || 'Georgia, serif',
     sans: style.getPropertyValue('--font-figtree').trim() || 'system-ui, sans-serif',
-    hand: style.getPropertyValue('--font-caveat').trim() || 'cursive',
   };
 }
 
@@ -181,10 +180,13 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
       ctx.font = `${23 * u}px ${fonts.sans}`;
       ctx.letterSpacing = '0px';
       ctx.textBaseline = 'middle';
-      let y = 71 * u;
+      // `text` places the words on the spread (1400 x 800 units): x, y and
+      // width of the column. By default, top left of the left page.
+      const { x = 97, y: top = 71, width: column = 430 } = chapter.text ?? {};
+      let y = top * u;
       for (const paragraph of chapter.paragraphs ?? []) {
-        for (const line of wrapText(ctx, paragraph, 430 * u)) {
-          ctx.fillText(line, 97 * u, y + 17 * u);
+        for (const line of wrapText(ctx, paragraph, column * u)) {
+          ctx.fillText(line, x * u, y + 17 * u);
           y += 34 * u;
         }
         y += 16 * u;
@@ -355,9 +357,9 @@ async function drawHeroSpread(intro, { width }) {
   return canvas;
 }
 
-// The first spread, under the cover, after the Figma "00 Cover" frame
-// (700 x 800 pages): my logo and a handwritten line on the left page (the
-// inside of the cover), and my photo on the right.
+// The first spread, under the cover, as the Figma "00 Cover" frame (700 x
+// 800 pages): a handwritten line and my logo on the left page (the inside
+// of the cover), and my photo on the right.
 async function drawIntro(intro, { width, fonts }) {
   const w = width * 2;
   const h = Math.round(width * PAGE_ASPECT);
@@ -374,20 +376,21 @@ async function drawIntro(intro, { width, fonts }) {
 
   const [logo, picture] = await Promise.all([loadImage(intro.logo), loadImage(intro.picture)]);
 
-  // Left page: the logo where the Figma has it across, with the
-  // handwritten line 36 below it, the pair centred down the page.
-  const lineHeight = 42 * u;
-  ctx.font = `400 ${35 * u}px ${fonts.hand}`; // larger than the Figma's 24, for reading on screen
+  // Left page, as the Figma frame: the line about the book (set like the
+  // words on the next page, Figtree 23 on 34, in the frame's dark green,
+  // centred in a 367-wide column from 167 in, 340 down), and the small logo
+  // 337 below the line's top.
+  ctx.fillStyle = '#152a18';
+  ctx.font = `${23 * u}px ${fonts.sans}`;
   ctx.letterSpacing = '0px';
-  const lines = wrapText(ctx, intro.caption, 430 * u);
-  const logoCx = 327.7 * u;
-  const groupTop = (h - (78 * u + 36 * u + lines.length * lineHeight)) / 2;
-  if (logo) ctx.drawImage(logo, logoCx - 37.7 * u, groupTop, 75.4 * u, 78 * u);
-  ctx.fillStyle = '#363636';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  lines.forEach((line, i) => ctx.fillText(line, logoCx, groupTop + 78 * u + 36 * u + lineHeight / 2 + i * lineHeight));
+  const column = 350.5 * u;
+  // (The caption's own line breaks are kept; a long line still wraps.)
+  const lines = intro.caption.split('\n').flatMap((part) => wrapText(ctx, part, 400 * u));
+  lines.forEach((line, i) => ctx.fillText(line, column, 340 * u + 17 * u + i * 34 * u));
   ctx.textAlign = 'left';
+  if (logo) ctx.drawImage(logo, 326.8 * u, 677 * u, 47.37 * u, 49 * u);
 
   // Right page: my photo, larger than the Figma's 374 x 447 (480 x 574),
   // with 8 corners, centred on the Figma's line 357 from the spine and
@@ -860,11 +863,10 @@ export async function drawPages(book, { width, motifs, icons }) {
     document.fonts.load(`400 64px ${fonts.serif}`),
     document.fonts.load(`italic 400 64px ${fonts.serif}`),
     document.fonts.load(`400 32px ${fonts.sans}`),
-    document.fonts.load(`400 24px ${fonts.hand}`),
   ]).catch(() => {});
   // Make sure the site's own faces are in, not just their fallbacks: load
   // every face of the serif and sans families outright, then wait for all.
-  const families = [fonts.serif, fonts.sans, fonts.hand].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
+  const families = [fonts.serif, fonts.sans].map((f) => f.split(',')[0].trim().replace(/['"]/g, ''));
   await Promise.all(
     [...document.fonts].filter((face) => families.includes(face.family)).map((face) => face.load().catch(() => {}))
   );

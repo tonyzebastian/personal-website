@@ -345,7 +345,8 @@ export const storybook = {
     photo: '/book/tony.webp',
     logo: '/book/logo.svg',
     picture: '/book/garden.webp',
-    caption: 'This is a short book about where I come from, and the small things that make me happy.',
+    // Line breaks as in the Figma.
+    caption: 'This is a short book about where\nI come from, and the small things\nthat make me happy.',
     paper: '#f6f1e8',
     label: 'My logo, and a photo of me among plants. This is a short book about where I come from, and the small things that make me happy.',
   },
@@ -365,15 +366,18 @@ export const storybook = {
       ink: '#363636',
     },
     {
-      id: 'coder',
-      kicker: 'The',
-      word: 'Coder',
-      title: 'The Coder',
-      body: 'Writing more code, and trying to write it better. Motion, interactions and the systems that run underneath them.',
-      motif: 'coder',
-      paper: '#d8e1ee',
-      ink: '#26364f',
-      accent: '#8fa7cc',
+      // Scene two: the words sit top right, in the open space beside the roof.
+      id: 'rain',
+      title: 'Rain',
+      image: '/book/scene-2.webp',
+      paragraphs: [
+        "When it rained, the power usually went out. Even when it didn't, the lights and TV stayed off.",
+        'So I watched: the noise on the roof, the water running past the house.',
+        "I think that's where I learned to notice things.",
+      ],
+      text: { x: 1000, y: 70, width: 340 },
+      paper: '#fff9ea',
+      ink: '#363636',
     },
     {
       id: 'illustrator',
