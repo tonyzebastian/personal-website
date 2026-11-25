@@ -397,6 +397,20 @@ export const storybook = {
       ink: '#363636',
     },
     {
+      // Scene four: reading. The words sit in the open sky, the first top
+      // left, the second lower on the right page, just above the boy's book.
+      id: 'reading',
+      title: 'Not the artistic one',
+      image: '/book/scene-4.webp',
+      paragraphs: [
+        'My brother was the artistic one. I was the kid doodling on his chappals when class got boring.',
+        { text: 'What I loved was reading. When the last Harry Potter came out, I had it for one weekend, and I finished it.', at: { x: 780, y: 190, width: 360 } },
+      ],
+      text: { x: 110, y: 80, width: 420 },
+      paper: '#ffffff',
+      ink: '#363636',
+    },
+    {
       id: 'illustrator',
       kicker: 'The',
       word: 'Illustrator',
