@@ -413,6 +413,23 @@ export const storybook = {
       ink: '#363636',
     },
     {
+      // Scene five: the computer at last, with a car picture mid-edit. The
+      // words run down the open wall on the left: a narrow column beside the
+      // doorway, then wider below it.
+      id: 'computer',
+      title: "The computer I didn't need",
+      image: '/book/scene-5.webp',
+      paragraphs: [
+        "Years later, I convinced my parents I needed a computer for school. I didn't, really.",
+        'Mostly I played games on it, and watched every action film I could borrow from friends.',
+        { text: "Then one day in the computer lab, a friend opened Photoshop and started changing a picture of a car. I couldn't stop watching.", at: { x: 90, y: 380, width: 420 } },
+        'Soon I had my own copy, and I was taking pictures apart.',
+      ],
+      text: { x: 90, y: 70, width: 270 },
+      paper: '#ffffff',
+      ink: '#363636',
+    },
+    {
       id: 'illustrator',
       kicker: 'The',
       word: 'Illustrator',
