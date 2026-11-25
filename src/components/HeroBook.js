@@ -308,7 +308,7 @@ export default function HeroBook({ book }) {
             <X weight="bold" aria-hidden className="size-3.5" />
           </Dialog.Close>
           <p className="sr-only" aria-live="polite">
-            {onIntro ? intro.label : chapter ? `${chapter.title}. ${chapter.paragraphs?.join(' ') ?? chapter.body}` : spread > 1 ? `${end.word}. ${end.intro}` : ''}
+            {onIntro ? intro.label : chapter ? `${chapter.title}. ${chapter.paragraphs?.map((p) => (typeof p === 'string' ? p : p.text)).join(' ') ?? chapter.body}` : spread > 1 ? `${end.word}. ${end.intro}` : ''}
           </p>
         </Dialog.Popup>
       </Dialog.Portal>

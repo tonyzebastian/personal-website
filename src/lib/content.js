@@ -366,17 +366,34 @@ export const storybook = {
       ink: '#363636',
     },
     {
-      // Scene two: the words sit top right, in the open space beside the roof.
+      // Scene two: the words sit top right in the open sky, each paragraph
+      // stepping further in, following the edge of the roof and the trees.
       id: 'rain',
       title: 'Rain',
       image: '/book/scene-2.webp',
       paragraphs: [
         "When it rained, the power usually went out. Even when it didn't, the lights and TV stayed off.",
-        'So I watched: the noise on the roof, the water running past the house.',
-        "I think that's where I learned to notice things.",
+        { text: 'So I watched: the noise on the roof, the water running past the house.', at: { x: 950, y: 186, width: 380 } },
+        { text: "I think that's where I learned to notice things.", at: { x: 1060, y: 282, width: 290 } },
       ],
-      text: { x: 1000, y: 70, width: 340 },
+      text: { x: 860, y: 56, width: 420 },
       paper: '#fff9ea',
+      ink: '#363636',
+    },
+    {
+      // Scene three: the walk home. The words sit in the sky on the right
+      // page beside the thought cloud, stepping in like scene two; the last
+      // line answers the cloud.
+      id: 'walk',
+      title: 'The walk home',
+      image: '/book/scene-3.webp',
+      paragraphs: [
+        'The school bus stopped on the other side of a hill. Up, down, and the same again on the way home.',
+        { text: "Walking back, I'd guess what my mom had made for tea. Some days I hoped for a surprise. Once I dreamed it would be a computer.", at: { x: 850, y: 180, width: 310 } },
+        { text: 'It never was.', at: { x: 850, y: 376, width: 300 } },
+      ],
+      text: { x: 820, y: 50, width: 430 },
+      paper: '#ffffff',
       ink: '#363636',
     },
     {

@@ -181,10 +181,17 @@ async function drawSpread(chapter, { width, fonts, motifs, icons }) {
       ctx.letterSpacing = '0px';
       ctx.textBaseline = 'middle';
       // `text` places the words on the spread (1400 x 800 units): x, y and
-      // width of the column. By default, top left of the left page.
-      const { x = 97, y: top = 71, width: column = 430 } = chapter.text ?? {};
+      // width of the column. By default, top left of the left page. A
+      // paragraph written as { text, at } starts a new block at `at`.
+      let { x = 97, y: top = 71, width: column = 430 } = chapter.text ?? {};
       let y = top * u;
-      for (const paragraph of chapter.paragraphs ?? []) {
+      for (const entry of chapter.paragraphs ?? []) {
+        const block = typeof entry === 'string' ? null : entry;
+        const paragraph = block ? block.text : entry;
+        if (block?.at) {
+          ({ x, width: column = column } = block.at);
+          y = block.at.y * u;
+        }
         for (const line of wrapText(ctx, paragraph, column * u)) {
           ctx.fillText(line, x * u, y + 17 * u);
           y += 34 * u;
