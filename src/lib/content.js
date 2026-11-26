@@ -430,19 +430,20 @@ export const storybook = {
       ink: '#363636',
     },
     {
-      // Scene six: college and the empty hostel, the picture mirrored so the
-      // building sits on the left page and the words in the open sky on the
-      // right, above the roof.
+      // Scene six: college and the empty hostel, on the college gate picture,
+      // mirrored so the gate sits on the left page. The words run down the
+      // open sky on the right, stepping in after the first paragraph to clear
+      // the last pillar.
       id: 'hostel',
       title: 'Design kept finding me',
       image: '/book/scene-6.webp',
       paragraphs: [
         'Engineering never pulled me in, so I studied business, far from home. But design kept finding me: posters, videos, design files downloaded at computer cafés.',
-        'One summer I stayed behind in an empty hostel, and out of boredom I started doodling. The doodles kept growing.',
+        { text: 'One summer I stayed behind in an empty hostel, and out of boredom I started doodling. The doodles kept growing.', at: { x: 935, y: 202, width: 400 } },
         'That was when I really started to draw.',
       ],
-      text: { x: 850, y: 56, width: 470 },
-      paper: '#feffed',
+      text: { x: 870, y: 50, width: 460 },
+      paper: '#fffbef',
       ink: '#363636',
     },
   ],
