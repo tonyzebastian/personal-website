@@ -67,6 +67,7 @@ function useIsDesktop() {
 // shows in the panel's top row (their page hides its own heading there);
 // `fillPaths` lists routes that fill their container edge to edge (no bottom
 // blur in the panel, the whole screen below the breadcrumb on a full page);
+// `noBlurPaths` lists other routes whose panel skips the bottom blur;
 // `pageTitles` names each route for the full-page view's breadcrumb.
 // Both the panel and a full page carry data-fills: pages with `fill` stretch
 // to fill whatever carries it (Tailwind `in-data-fills:`).
@@ -76,6 +77,7 @@ export default function SiteShell({
   fullPagePaths = [],
   panelTitles = {},
   fillPaths = [],
+  noBlurPaths = [],
   pageTitles = {},
   children,
 }) {
@@ -381,7 +383,7 @@ export default function SiteShell({
                         </m.div>
                       )}
                     </AnimatePresence>
-                    {!fillPaths.includes(pendingPath ?? pathname) && <PanelBlur />}
+                    {![...fillPaths, ...noBlurPaths].includes(pendingPath ?? pathname) && <PanelBlur />}
                   </div>
                 </div>
               </div>

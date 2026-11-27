@@ -21,6 +21,9 @@ const FULL_PAGE_PATHS = ['/hypersonix/work', ...postmanProjects.map((item) => `/
 // the side panel skips its bottom blur, and the full-page view gives them the
 // whole screen below the breadcrumb.
 const FILL_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
+// Other pages whose side panel skips the bottom blur: Dalal Prints ends in a
+// poster wall that runs to the panel's bottom edge.
+const NO_BLUR_PATHS = ['/side-projects/dalal-prints'];
 // Every page's short title, for the full-page view's breadcrumb.
 const PAGE_TITLES = {
   '/about': 'About',
@@ -45,6 +48,7 @@ export default function SiteLayout({ children }) {
       fullPagePaths={FULL_PAGE_PATHS}
       panelTitles={PANEL_TITLES}
       fillPaths={FILL_PATHS}
+      noBlurPaths={NO_BLUR_PATHS}
       pageTitles={PAGE_TITLES}
     >
       {children}

@@ -331,6 +331,42 @@ export const junymade = [
   },
 ];
 
+// The Dalal Prints page under Side projects (/side-projects/dalal-prints):
+// what the series is, then the finished posters on a drag wall (PosterWall,
+// from src/lib/dalal-prints.json). `x` is its account, linked in the details line.
+export const dalalPrintsPage = {
+  paragraphs: [
+    "Dalal Prints is a series of art posters for Indian companies' earnings calls, made every results season. Each one starts with what the company actually makes or does, an inhaler for Cipla or a Splendor for Hero, and turns it into a single image, with the type kept quiet so the artwork carries the poster.",
+    "It's where I explore visual ideas, one company at a time. Each poster goes up on X a day or two before the call.",
+  ],
+  x: 'https://x.com/dalalprints',
+};
+
+// The Juny Made page under Side projects (/side-projects/juny-made): how it
+// started and how we work, then one piece followed from photo to finished
+// embroidery (`steps`; an `image` per step once there is one, a tinted
+// placeholder until then), a 2×2 gallery of finished pieces and the
+// Instagram link. The About page keeps its own short `junymade` above.
+export const junyMadePage = {
+  paragraphs: [
+    "Juny Made is an art studio I run with my partner. We're both into art, just different kinds, and she'd been doing embroidery on hoops for a while. Then we came across someone stitching on paper and wanted to try it. We loved how it felt, orders started coming in, we started a page, and slowly it grew into a studio.",
+    'Most of what we make now is hand embroidery on photos. When someone sends us a photo, I work on the design: what we could create from it and how it should look. We shape the idea together, then print it, and she takes over. She picks the stitches and brings it to life by hand. Then we pack it up and send it off.',
+  ],
+  steps: [
+    { title: 'The photo', caption: 'Where it starts: a photo someone sends us.' },
+    { title: 'The design', caption: 'What we could make from it, worked out on screen.' },
+    { title: 'The stitching', caption: 'Printed, then brought to life thread by thread.' },
+    { title: 'The finished piece', caption: 'Packed up and on its way.' },
+  ],
+  gallery: [
+    { src: '/images/side-projects/juny/1.webp', alt: 'A hand-embroidered photo by Juny Made' },
+    { src: '/images/side-projects/juny/2.webp', alt: 'A hand-embroidered photo by Juny Made' },
+    { src: '/images/side-projects/juny/3.webp', alt: 'A hand-embroidered photo by Juny Made' },
+    { src: '/images/side-projects/juny/4.webp', alt: 'A hand-embroidered photo by Juny Made' },
+  ],
+  instagram: 'https://pin.it/3PKGQjN2Y',
+};
+
 // Home "Side projects" section: things I run or make outside work, beyond the
 // Playground. Each row opens /side-projects/<slug> in the panel; `kind` shows
 // on the right of its row. Placeholders for now, apart from Juny Made, which
@@ -339,8 +375,8 @@ export const sideProjects = [
   {
     slug: 'dalal-prints',
     title: 'Dalal Prints',
-    kind: 'Coming soon',
-    description: 'Details coming soon.',
+    kind: 'Posters',
+    description: 'Posters for Indian earnings calls. One company, one call, one artwork, every results season.',
   },
   {
     slug: 'tony-make-films',

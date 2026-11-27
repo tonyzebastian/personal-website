@@ -5,7 +5,8 @@ import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 // the sans at 24px, then a details line split by pipes) and the body
 // below.
 //   href          optional website, shown at the end of the details line as
-//                 a "Website" link that opens in a new tab
+//                 a link that opens in a new tab
+//   linkLabel     that link's text ("Website" unless set, e.g. "Instagram")
 //   description   optional intro shown under the title in place of the
 //                 details line (Playground pages)
 //   wide          lets the body run wider than the reading width (Playground
@@ -19,16 +20,22 @@ import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 //                 fills, both marked data-fills), the body takes the whole
 //                 height and width with no page padding and the heading is
 //                 hidden from sight (a tool like Mosaic Image Lab)
+//   stretch       in the side panel (data-fills), the page is at least as
+//                 tall as the panel and its last block grows to take the
+//                 space left (give it in-data-fills:flex-1), so a box at the
+//                 end reaches the bottom; the header stays (Dalal Prints)
 //   heading       false hides the title and description from sight
 //                 everywhere (kept for screen readers)
 export default function PanelPage({
   title,
   href,
+  linkLabel = 'Website',
   meta = [],
   description,
   wide = false,
   compact = false,
   fill = false,
+  stretch = false,
   heading = true,
   children,
 }) {
@@ -43,7 +50,7 @@ export default function PanelPage({
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 rounded-sm text-body/70 underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:underline focus-visible:outline-none"
       >
-        Website
+        {linkLabel}
         <ArrowUpRight weight="bold" aria-hidden className="size-3.5" />
         <span className="sr-only">(opens in a new tab)</span>
       </a>
@@ -52,7 +59,7 @@ export default function PanelPage({
 
   return (
     <article
-      className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''}`}
+      className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''} ${stretch ? 'in-data-fills:flex in-data-fills:min-h-full in-data-fills:flex-col in-data-fills:pb-8' : ''}`}
     >
       <header
         className={`mb-10 flex max-w-2xl flex-col items-start gap-1 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
@@ -74,7 +81,7 @@ export default function PanelPage({
         )}
         {description && <p className={`text-body/70 ${compact ? 'in-[aside]:hidden' : ''}`}>{description}</p>}
       </header>
-      <div className={`flex flex-col gap-6 [&_li]:leading-[1.6] [&_p]:leading-[1.6] ${fill ? 'in-data-fills:min-h-0 in-data-fills:flex-1' : ''}`}>{children}</div>
+      <div className={`flex flex-col gap-6 [&_li]:leading-[1.6] [&_p]:leading-[1.6] ${fill ? 'in-data-fills:min-h-0 in-data-fills:flex-1' : ''} ${stretch ? 'in-data-fills:flex-1' : ''}`}>{children}</div>
     </article>
   );
 }
