@@ -10,7 +10,7 @@ const PANEL_PATHS = [
   '/about',
   ...experience.map((job) => `/${job.slug}`),
   ...musings.map((musing) => musing.link),
-  ...sideProjects.map((item) => `/side-projects/${item.slug}`),
+  ...sideProjects.map((item) => item.path),
   ...playgroundPages.map((item) => `/playground/${item.slug}`),
 ];
 // Routes that always show full width, never in the panel.
@@ -23,7 +23,7 @@ const FULL_PAGE_PATHS = ['/hypersonix/work', ...postmanProjects.map((item) => `/
 const FILL_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
 // Other pages whose side panel skips the bottom blur: Dalal Prints ends in a
 // poster wall that runs to the panel's bottom edge.
-const NO_BLUR_PATHS = ['/side-projects/dalal-prints'];
+const NO_BLUR_PATHS = ['/dalal-prints'];
 // Every page's short title, for the full-page view's breadcrumb.
 const PAGE_TITLES = {
   '/about': 'About',
@@ -31,7 +31,7 @@ const PAGE_TITLES = {
   ...Object.fromEntries(postmanProjects.map((item) => [`/postman/${item.slug}`, item.page.title])),
   ...Object.fromEntries(experience.map((job) => [`/${job.slug}`, job.name])),
   ...Object.fromEntries(musings.map((musing) => [musing.link, musing.name])),
-  ...Object.fromEntries(sideProjects.map((item) => [`/side-projects/${item.slug}`, item.title])),
+  ...Object.fromEntries(sideProjects.map((item) => [item.path, item.title])),
   ...Object.fromEntries(playgroundPages.map((item) => [`/playground/${item.slug}`, item.title])),
 };
 const PANEL_TITLES = Object.fromEntries(

@@ -331,7 +331,7 @@ export const junymade = [
   },
 ];
 
-// The Dalal Prints page under Side projects (/side-projects/dalal-prints):
+// The Dalal Prints page under Side projects (/dalal-prints):
 // what the series is, then the finished posters on a drag wall (PosterWall,
 // from src/lib/dalal-prints.json). `x` is its account, linked in the details line.
 export const dalalPrintsPage = {
@@ -367,8 +367,8 @@ export const junyMadePage = {
   instagram: 'https://pin.it/3PKGQjN2Y',
 };
 
-// Tony Make Films (/side-projects/tony-make-films): why I make films, then
-// the films so far (the same ones as /film), each playing in place.
+// Tony Make Films (/film): why I make films, then
+// the films so far (the ones from the old standalone /film page), each playing in place.
 export const tonyMakeFilmsPage = {
   paragraphs: [
     "Tony Make Films is where I tell stories with a camera. It began with the films I was already making on my own: travel diaries, a live gig, a short introduction. Now I want to make them with more care for the story.",
@@ -385,12 +385,13 @@ export const tonyMakeFilmsPage = {
 };
 
 // Home "Side projects" section: things I run or make outside work, beyond the
-// Playground. Each row opens /side-projects/<slug> in the panel, with its logo
+// Playground. Each row opens its `path` in the panel, with its logo
 // (public/side-projects/logos/<slug>.webp) and `summary` below the name; `kind`
 // is the details line on the page.
 export const sideProjects = [
   {
     slug: 'dalal-prints',
+    path: '/dalal-prints',
     title: 'Dalal Prints',
     kind: 'Posters',
     summary: 'Art posters for Indian earnings calls',
@@ -398,6 +399,7 @@ export const sideProjects = [
   },
   {
     slug: 'tony-make-films',
+    path: '/film',
     title: 'Tony Make Films',
     kind: 'Films',
     summary: 'Slow, personal films that tell a story',
@@ -405,6 +407,7 @@ export const sideProjects = [
   },
   {
     slug: 'juny-made',
+    path: '/juny-made',
     title: 'Juny Made Art Studio',
     kind: 'Art studio',
     summary: 'Embroidered gifts, made with my partner',

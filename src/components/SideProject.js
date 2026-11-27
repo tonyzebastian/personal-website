@@ -4,25 +4,19 @@ import PanelPage from '@/components/panel/PanelPage';
 import PhotoGrid from '@/components/PhotoGrid';
 import PosterWall from '@/components/PosterWall';
 
-// One side project, opened from the home "Side projects" list: Dalal Prints,
-// Tony Make Films and Juny Made. Dalal Prints and Juny Made are set like the
+// One side project, opened from the home "Side projects" list: Dalal Prints
+// (/dalal-prints), Tony Make Films (/film) and Juny Made (/juny-made). Each
+// route is a thin page that renders `SideProject` with its slug. Dalal Prints and Juny Made are set like the
 // job pages (18px text, their link in the details line) with their images
 // below (`dalalPrintsPage`, `junyMadePage`); Tony Make Films the same way,
 // with its films (`tonyMakeFilmsPage`).
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return sideProjects.map((item) => ({ slug: item.slug }));
-}
-
 const find = (slug) => sideProjects.find((item) => item.slug === slug);
 
-export async function generateMetadata({ params }) {
-  const { slug } = await params;
+export function sideProjectMetadata(slug) {
   const item = find(slug);
   if (!item) return {};
   const title = `${item.title} ✦ Tony Sebastian`;
-  const url = `https://www.tonyzeb.com/side-projects/${slug}`;
+  const url = `https://www.tonyzeb.com${item.path}`;
   return {
     title,
     description: item.description,
@@ -36,8 +30,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function SideProjectPage({ params }) {
-  const { slug } = await params;
+export default function SideProject({ slug }) {
   const item = find(slug);
   if (!item) notFound();
 
@@ -138,7 +131,7 @@ function TonyMakeFilms() {
 
       <section aria-labelledby="films-so-far" className="mt-4 flex flex-col gap-4">
         <h2 id="films-so-far">Films so far</h2>
-        <ul className="grid grid-cols-1 gap-x-3 gap-y-5 @xl:grid-cols-2">
+        <ul className="flex flex-col gap-8">
           {films.map((film) => (
             <li key={film.src} className="flex flex-col gap-2">
               <video

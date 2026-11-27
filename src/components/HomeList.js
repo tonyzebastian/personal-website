@@ -43,11 +43,11 @@ export default function HomeList() {
           <h2 id="side-projects" className="font-sans text-base font-semibold tracking-normal">
             Side projects
           </h2>
-          <div>
+          <div className="flex flex-col gap-2">
             {sideProjects.map((item) => (
               <ProjectRow
                 key={item.slug}
-                href={`/side-projects/${item.slug}`}
+                href={item.path}
                 logo={`/side-projects/logos/${item.slug}.webp`}
                 title={item.title}
                 summary={item.summary}
