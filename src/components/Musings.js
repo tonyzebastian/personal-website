@@ -531,8 +531,8 @@ function Rail({ items, railRef }) {
                   </span>
                 </span>
               </span>
-              {/* Shown on touch screens; with a mouse the card says it all, so
-                  this is for screen readers only. */}
+              {/* For screen readers only (hidden in globals.css): the card
+                  already shows the title and date. */}
               <span data-fade className="musings-caption mt-3 flex items-baseline justify-between gap-3">
                 <span className="truncate font-medium text-ink">{musing.name}</span>
                 <span className="shrink-0 text-body/70 tabular-nums">{musing.date}</span>

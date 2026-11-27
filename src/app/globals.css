@@ -681,15 +681,16 @@ html:not([data-playground='list']) [data-toggle='playground'] [data-option='defa
       0 2px 4px rgb(0 0 0 / 0.06),
       0 20px 40px -18px rgb(0 0 0 / 0.28);
   }
-  /* With a mouse, the date follows the cursor instead. */
-  .musings-caption {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+}
+/* The caption under each card (title and date) is for screen readers only:
+   the card already shows both. */
+.musings-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .musings-card[data-current] .group\/card:active .musings-doc {
   scale: 0.98;
