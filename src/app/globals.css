@@ -130,12 +130,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Serif headings */
+  /* Headings: the sans, semibold. The serif is kept for special places only
+     (the name on the home page), chosen case by case with `font-serif`. */
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
-    font-weight: 400;
+    font-family: var(--font-sans);
+    font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--ink);
   }
@@ -185,7 +186,7 @@
   p,
   li {
     line-height: 1.5;
-    color: color-mix(in srgb, var(--body) 80%, transparent);
+    color: var(--body);
   }
 
   strong {
@@ -300,6 +301,62 @@ html::after {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* A hand-drawn wavy rule between a page's body and what follows it (the job
+   pages' "Read more"). One 16px wave, repeated across, drawn as a mask so it
+   takes the faded body colour. */
+.squiggle {
+  height: 8px;
+  background-color: color-mix(in srgb, var(--body) 10%, transparent);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 4 Q4 0 8 4 T16 4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") left center / 16px 8px repeat-x;
+}
+
+/* RelatedCard: a musing card laid sideways, kept quiet. An edge and a faint
+   lift at rest; on hover it rises 2px and the shadow deepens a little. */
+.related-card-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.05),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+  transition:
+    translate 300ms var(--ease-snappy),
+    box-shadow 300ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .related-card:hover .related-card-paper {
+    translate: 0 -2px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 14px 28px -18px rgb(0 0 0 / 0.2);
+  }
+}
+.related-card:active .related-card-paper {
+  scale: 0.99;
+}
+.related-card[data-active] .related-card-paper {
+  box-shadow:
+    0 0 0 1px var(--color-green-700),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+.related-card:focus-visible .related-card-paper {
+  box-shadow:
+    0 0 0 2px var(--ring),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+
+/* Grain over a still (YouTubeEmbed's poster), so flat, saturated artwork
+   sits in with the paper texture: the site grain, much stronger and blended
+   in overlay so it shows on colour, plus the soft fibre mottle. */
+.poster-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.9 0 0 0 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.57 0 0 0 0 0.55 0 0 0 0 0.52 0.35 0 0 0 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 108px, 600px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
 }
 
 /* Experience timeline. Each company draws the line from its own logo down to

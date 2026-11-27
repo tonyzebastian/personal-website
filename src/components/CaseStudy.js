@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 import MediaGrid from '@/components/experience/MediaGrid';
 import { buttonVariants } from '@/components/ui/button';
@@ -5,13 +6,18 @@ import { buttonVariants } from '@/components/ui/button';
 // Renders case study projects from src/lib/case-studies. Each project has a
 // title, an optional link to its full write-up, and sections that may hold a
 // heading, a description, bullet points, media, cards or subsections.
-export default function CaseStudy({ projects }) {
+//   dividers   draw the faint wavy rule (`.squiggle`) between projects
+//              (/hypersonix/work)
+export default function CaseStudy({ projects, dividers = false }) {
   return (
     <div className="flex flex-col gap-16">
-      {projects.map((project) => (
-        <article key={project.title} className="flex flex-col gap-6">
+      {projects.map((project, index) => (
+        <Fragment key={project.title ?? index}>
+        {dividers && index > 0 && <div aria-hidden className="squiggle" />}
+        <article className="flex flex-col gap-6">
+          {(project.title || project.link) && (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2>{project.title}</h2>
+            {project.title && <h2>{project.title}</h2>}
             {project.link && (
               // Full write-ups live outside the panel, so they open in a new tab.
               <a
@@ -25,10 +31,12 @@ export default function CaseStudy({ projects }) {
               </a>
             )}
           </div>
+          )}
           {project.sections.map((section, index) => (
             <Section key={section.heading || index} section={section} title={project.title} />
           ))}
         </article>
+        </Fragment>
       ))}
     </div>
   );

@@ -1,34 +1,44 @@
 import { notFound } from 'next/navigation';
 import { experience } from '@/lib/content';
-import { postmanData } from '@/lib/case-studies/postman';
+import { hypersonixData } from '@/lib/case-studies/hypersonix';
 import PanelPage from '@/components/panel/PanelPage';
 import CaseStudy from '@/components/CaseStudy';
 
 // Full-page case studies for roles whose work is too long for the company
-// page. Only Postman has one, at /postman/work. SiteShell always shows this
-// route full width (see `FULL_PAGE_PATHS` in the (site) layout).
+// page: /hypersonix/work, all four of its case studies on one page. SiteShell
+// always shows it full width (see `FULL_PAGE_PATHS` in the (site) layout).
+// Postman's case studies each have their own page instead
+// ((site)/[company]/[project]).
 export const dynamicParams = false;
 
-const WORK = { postman: postmanData.projects };
+const WORK = {
+  hypersonix: {
+    title: 'My work at Hypersonix',
+    projects: hypersonixData.projects,
+    description:
+      "Case studies from Tony Sebastian's time as Lead Product Designer at Hypersonix, covering Documents, onboarding, the Sonic design system, and explorations like App Studio and Hawkeye.",
+  },
+};
 
 // Only companies with a work page get one built.
 export function generateStaticParams() {
   return Object.keys(WORK).map((company) => ({ company }));
 }
 
-const description =
-  "Case studies from Tony Sebastian's three years as a Senior Product Designer at Postman, covering trial experiences, API observability with Live Collections, and smaller workflow improvements.";
 
 export async function generateMetadata({ params }) {
   const { company } = await params;
-  if (!WORK[company]) return {};
+  const work = WORK[company];
+  if (!work) return {};
   const url = `https://www.tonyzeb.com/${company}/work`;
+  const title = `${work.title} ✦ Tony Sebastian`;
+  const { description } = work;
   return {
-    title: 'My work at Postman ✦ Tony Sebastian',
+    title,
     description,
     alternates: { canonical: url },
     openGraph: {
-      title: 'My work at Postman ✦ Tony Sebastian',
+      title,
       description,
       url,
       images: [{ url: '/preview.png', width: 1200, height: 630, alt: 'Tony Sebastian, visual product designer' }],
@@ -39,11 +49,12 @@ export async function generateMetadata({ params }) {
 export default async function WorkPage({ params }) {
   const { company } = await params;
   const job = experience.find((item) => item.slug === company);
-  if (!job || !WORK[company]) notFound();
+  const work = WORK[company];
+  if (!job || !work) notFound();
 
   return (
-    <PanelPage icon={job.image} title="My work at Postman" href={job.link} meta={[job.role, job.period]}>
-      <CaseStudy projects={WORK[company]} />
+    <PanelPage title={work.title} href={job.link} meta={[job.period, job.role]}>
+      <CaseStudy projects={work.projects} dividers />
     </PanelPage>
   );
 }

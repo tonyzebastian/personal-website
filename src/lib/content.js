@@ -48,29 +48,55 @@ export const experience = [
     description: "The API platform used by millions of developers. I designed trial experiences, API observability with Live Collections, and everyday workflow improvements.",
     // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
     overview: [
-      "At Postman, I worked on an API platform with a large developer audience and an established design team. I joined through a friend's referral, wanting to learn from more designers and understand how to design at that scale.",
-      "That scale changed how I thought about everyday decisions. A small change to some text or the placement of a dropdown could affect workflows people already depended on. I learned to work through those implications with product managers, engineers, and other designers, and to get people aligned around a change.",
-      "My work included API observability and Live Collections, exploring how collections could stay connected to what was happening in running services. I spent some time in the design system team too, working on consistency and contributing a few PRs as I began learning to code. Later, in Growth, I worked on trial experiences: helping teams discover premium features, understand what they were using, and decide whether a paid plan made sense for them.",
-      "Being part of a larger design team gave me more ways of looking at a problem. We shared explorations and taught each other things beyond our immediate projects. I ran sessions on video editing, visual design, and photography, and made good friends along the way. The company trip to Barcelona for Postman's tenth anniversary is another memory I keep from that time.",
+      "At Postman I designed for millions of developers who used the product every day. I joined to learn from a bigger design team and see how design works at that scale.",
+      "At that scale, even rewording a label or moving a dropdown could break a workflow people relied on. I learned to think those changes through with PMs, engineers and other designers.",
+      {
+        media: ['/images/projects/miniprojects/mini_pin_02.mp4'],
+        alt: 'Pinning environments to a collection in Postman',
+        caption: 'Pinned environments: a collection carries its own, so people rarely pick one by hand.',
+      },
+      "I started on API observability, a 0 to 1 project, designing Live Collections, which kept a collection in sync with a running service.",
+      {
+        media: ['/images/experience/postman-live-collections-launch.webp'],
+        alt: "Postman's blog post introducing Live Collections for automated documentation",
+        caption: 'Live Collections, announced on the Postman blog.',
+      },
+      "Later I spent time on the design system, where I started coding and sent my first PRs, and then in Growth, where I designed a new trial experience for teams.",
+      {
+        media: ['/images/projects/trial_02.mp4'],
+        alt: 'A team inviting its fourth member, which starts a Postman trial',
+        caption: 'When a team adds its fourth member, its trial begins.',
+      },
+      "I also ran sessions on video editing, visual design and photography for the design team, and made good friends there. The trip to Barcelona for Postman's tenth anniversary is still a favourite memory.",
+      {
+        media: ['/images/experience/postman-barcelona-trip.webp'],
+        alt: 'A group of Postman designers in white outfits at an evening beach party in Barcelona',
+        caption: "With most of the design team in Barcelona, for Postman's tenth anniversary.",
+      },
     ],
     items: [
       {
         title: "New Trial Experiences",
         description: "Designed new trial experiences that improved user awareness by 27% and conversion by 5%.",
         images: ["/images/projects/trial_01.png", "/images/projects/trial_02.mp4"],
-        link: "/project/newtrialexp",
+        link: "/postman/new-trial-experiences",
+        meta: "Growth · Experiments",
       },
       {
         title: "Live Collections",
         description: "A 0 to 1 project that brought API observability into Postman, letting users monitor their collections in real time.",
         images: ["/images/projects/live_collections_1.png", "/images/projects/live_collections_2.png"],
-        link: "/project/api-observability",
+        link: "/postman/live-collections",
+        summary: "Postman's first observability feature: collections kept in sync with live traffic.",
+        meta: "API Observability · 0 to 1",
       },
       {
-        title: "Mini Projects",
-        description: "Smaller but impactful improvements: environment management, secret fields and app loading interactions.",
+        title: "Pinned Environments",
+        description: "Letting a collection carry its own environments, so people rarely have to pick one before sending a request.",
         images: ["/images/projects/mini_project_02.mp4", "/images/projects/mini_proj_01.png"],
-        link: "/project/miniprojects",
+        link: "/postman/pinned-environments",
+        summary: "Collections that carry their own environments, cutting unresolved variable errors in forks by 28%.",
+        meta: "Core workflows · Usability",
       },
     ]
   },
@@ -84,10 +110,26 @@ export const experience = [
     description: "An AI analytics platform for e-commerce and retail teams. As Lead Product Designer, I drove 0 to 1 explorations, scaled the design system and improved core product experiences.",
     // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
     overview: [
-      "Hypersonix was where I moved into a full product design role. It was a data analytics company working mainly with retail businesses, helping people explore their business data and get useful answers from it. I joined a small design team and worked closely with product managers and engineers.",
-      "Much of the work was about making complex data easier to work with. I redesigned parts of Documents, where people created and compared analytical reports. That included bringing card controls together and making it easier to organize reports. I also worked on onboarding, where a preview showed people how their choices would shape the insights they received.",
-      "There was room to explore new ideas too. I worked on voice interactions for the analytics assistant and a no-code App Studio concept that let customers customize analytical applications through connected modules. Alongside that, I helped build Sonic, our first design system, so the team could work with more consistent components and guidelines.",
-      "I began taking on more responsibility for the team. I hired two designers, mentored them, and helped them grow in their roles. The work was fluid enough that conversations could move from a product flow to what we should explain on the website or how we should market it.",
+      "Hypersonix was my first full product design role, at a US analytics company that helped retail businesses get answers from their data. The job was fully remote: I worked from India with a small design team, close to product and engineering, and I've never met any of them in person.",
+      "Much of the work was making complex data easier to work with. I redesigned Documents, where people built and compared reports, and worked on onboarding.",
+      {
+        media: ['/images/projects/hypersonix/hx_doc_03.mp4'],
+        alt: 'Documents in Hypersonix',
+        caption: 'Documents, with the new card layout.',
+      },
+      "There was room to try new ideas too: voice for the analytics assistant, App Studio, a no-code concept we tested with customers as a prototype, and Hawkeye, which surfaced insights in small pieces people could act on.",
+      {
+        media: ['/images/projects/hx_hawk.mp4'],
+        alt: 'Hawkeye, an insights platform concept',
+        caption: 'Hawkeye, an early concept.',
+      },
+      "I also helped build Sonic, our first design system, working with engineers and product managers so everyone used the same pieces.",
+      {
+        media: ['/images/projects/hypersonix/hx_sonic_03.webp'],
+        alt: 'A card component in the Sonic design system, with its spacing and states',
+        caption: 'A component from Sonic, our first design system.',
+      },
+      "Over time I took on more of the team. I hired two designers, mentored them, and helped them grow into their roles. The work was fluid enough that a conversation could start with a product flow and end up on what we should say on the website or how to market it.",
     ],
     caseStudy: {
       link: "/hypersonix",
@@ -100,18 +142,18 @@ export const experience = [
     name: 'AVRL',
     slug: 'avrl',
     role: 'Visual Designer',
-    link: 'https://www.linkedin.com/company/advanced-voice-research-labs/',
+    link: 'https://www.avrl.io/',
     image: '/icons/avrl.webp',
     period: "Jan'19 - Oct'20",
-    description: "My first job as a designer. In late 2018 I made the switch from business analysis to design and joined AVRL (Advanced Voice Research Labs) as a Visual Designer. The role was fully remote, so I moved back to my hometown, Thodupuzha, and worked from there.",
+    description: "My first job as a designer. In late 2018 I made the switch from business analysis to design and joined AVRL (Advanced Voice Research Labs) as a Visual Designer. The role was fully remote, so I moved back to my hometown in Kerala and worked from there.",
     // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
     overview: [
-      "AVRL was where I changed careers, moving from consulting into visual design. It felt like a big bet. Design wasn't what I had studied in college, and I was taking on work I had been teaching myself to do. Freelance projects helped me build a portfolio, and a contract with AVRL became my way into the profession.",
-      "AVRL was a small US-based company, and I worked remotely from India. My early work included presentation decks and storyboards explaining the product. I also made one of my first explainer videos in After Effects. I enjoyed having different things to make and figuring out how to explain what the company was building.",
-      { youtube: 'u88Qmw-XpeI', title: 'AVRL explainer video' },
-      "The product started as a voice assistant for inventory management. Someone checking stock could say what was left, and the system would update it. I designed interfaces for that experience and later worked on the company's move towards fleet management. Alongside AVRL, I continued taking on other freelance projects.",
-      "Working on those interfaces helped me understand what UX and product designers did. I became more interested in how a product behaved and the workflows behind it. I wanted to learn more about users and work more closely with the people building the product.",
-      "One memory I still carry from AVRL is our company trip to Bali. It was my first international trip.",
+      "AVRL was where I switched careers. Leaving a steady consulting job for visual design felt like a big bet. I hadn't studied design, and most of what I knew, I'd taught myself. A few freelance projects gave me a portfolio, and a contract with AVRL became my way in.",
+      "It was a small US team of about fifteen, fully remote, so I moved back to my hometown in Kerala and worked from there. I made decks, storyboards and one of my first explainer videos in After Effects.",
+      { youtube: "u88Qmw-XpeI", title: "AVRL explainer video", poster: "/images/experience/avrl-explainer.webp", caption: "The explainer I made in After Effects." },
+      "The product began as a voice assistant for inventory: you said what stock was left and the system updated it. I designed the interfaces around that, and later for the company's move into fleet management. Doing that work showed me what product design really was. I wanted to do more than make screens, and design for how people actually use and understand them.",
+      "One memory I still carry from AVRL is our company trip to Bali. It was my first time travelling abroad.",
+      { media: ["/images/experience/avrl-bali-trip.webp"], alt: "The AVRL team on the deck of a boat off the coast of Bali", caption: "Out on the water with the AVRL team in Bali." },
     ],
     related: [{ title: '15 Months of remote work: A Recap', href: '/musings/remote_work' }],
     timeline: false,
@@ -127,10 +169,11 @@ export const experience = [
     description: "Where my career started. After a master's in marketing, I joined Infosys as a business analyst and grew into a Senior Associate Consultant. Working close to how products get built made me curious about design, which I went on to teach myself. I also wrote about how the asset management team revived its legacy system.",
     // Overview shown on the company page (from the 2026-11-03 drafts in the wiki).
     overview: [
-      "My first job started at Infosys, and the Mysore campus felt a lot like going back to college. I had studied marketing and systems, and joined the team responsible for the company's internal applications.",
-      "I worked on asset management, in a role that was closer to a product owner. The system tracked everything from laptops and software to vehicles and buildings. Behind something as ordinary as assigning a laptop were purchase records, approvals, and several departments that needed the same information. I worked with the team on bringing three separate systems into a more connected asset management platform.",
-      "It was my first experience of working on a product with that many moving parts. Understanding the workflows meant understanding the people and departments behind them, including where the software had stopped matching how they actually worked.",
-      "I was also interested in design. I knew Photoshop, liked visual work, and had imagined doing something around branding or marketing. Towards the end of my time at Infosys, I started learning Figma and taking on freelance design work to see where it could go.",
+      "Infosys was my first job, and it began on the Mysore campus, which felt a lot like going back to college. I had just finished a master's in marketing and systems, and I joined the team that built and ran the company's own internal tools: payroll, HR, learning, and the one I ended up on, asset management.",
+      { media: ["/images/experience/infosys-mysore-campus.webp"], alt: "Tony cycling along a road on the Infosys Mysore campus", caption: "Cycling around the Mysore campus." },
+      "My role was closer to a product owner than anything else. The system kept track of everything Infosys owned, from laptops and software to vehicles and buildings. Handing someone a laptop sounds simple, but behind it were asset IDs, purchase records in SAP, approvals, and several departments that all needed the same information. Our team worked on bringing three separate systems together into one asset management platform.",
+      "It was the first time I'd worked on a product with that many moving parts. To understand the workflows, I had to understand the people behind them, and I kept finding places where the software no longer matched how they actually worked.",
+      "Design had been on my mind for a while. I knew Photoshop, I liked visual work, and I'd pictured myself doing something in branding or marketing. The consulting work didn't feel like enough, so towards the end of my time there I started learning Figma and taking on freelance projects to see where it might lead.",
     ],
     related: [{ title: 'Reviving a legacy system at Infosys', href: '/musings/infosys_legacy' }],
     timeline: false,
@@ -138,13 +181,16 @@ export const experience = [
   },
 ];
 
-// Home list of musings. `excerpt` is the opening of each piece, shown as the
+// Home list of musings. `readTime` matches the one on the musing's own page;
+// it and `summary` (two lines at most) show on the musing's card at the end
+// of a job page. `excerpt` is the opening of each piece, shown as the
 // page on its carousel card (it fades out, so a couple of paragraphs is plenty).
 export const musings = [
   {
     name: 'Reduce perceived wait times through visual delight',
     date: 'May 2024',
     link: '/musings/perceived_wait',
+    readTime: '4 min read',
     excerpt: [
       "Staring at a blank screen as an app slowly loads is a surefire way to lose user attention. Whether it's loading a webpage or launching an app, users expect speed and efficiency.",
       'This is where visual delight comes into play. It is not just about aesthetics; it is about creating a memorable, engaging experience that captivates attention, reduces perceived wait times and leaves a lasting impression.',
@@ -154,6 +200,7 @@ export const musings = [
     name: 'Mnemonic Signages',
     date: 'Jan 2024',
     link: '/musings/mnemonic_signages',
+    readTime: '2 min read',
     excerpt: [
       'I used to have difficulty remembering where I parked my car in large parking lots. To solve this, I began taking pictures of the pillar near where I parked.',
       'Recently, while photographing a pillar, I noticed an interesting pattern where illustrations are displayed next to the alphabet. These are known as mnemonic signages.',
@@ -163,6 +210,7 @@ export const musings = [
     name: '365 days of drawing - Some learnings',
     date: 'Jun 2021',
     link: '/musings/days_drawing',
+    readTime: '3 min read',
     excerpt: [
       'On 2nd May 2020, I decided to start a new project: draw something every day for a year. 365 days later, I completed it, and these are some of my learnings and realizations.',
       "As expected, my drawing skills levelled up. Compared with last year's drawings, there is a massive improvement in colour usage and overall line quality.",
@@ -172,6 +220,8 @@ export const musings = [
     name: '15 Months of remote work: A Recap',
     date: 'Nov 2020',
     link: '/musings/remote_work',
+    summary: "What fifteen months of working remotely taught me.",
+    readTime: '7 min read',
     excerpt: [
       "It wasn't a deliberate choice to go remote. Back in late 2018, I was looking to switch from being a senior business analyst at Infosys to trying my luck in the design field.",
       'A friend had been working remotely for about a year and seemed to be thriving, working from their hometown with occasional travel. That inspired me to explore remote jobs.',
@@ -181,6 +231,8 @@ export const musings = [
     name: 'Reviving a legacy system at Infosys',
     date: 'Nov 2018',
     link: '/musings/infosys_legacy',
+    summary: "How the asset team merged three old systems into one platform.",
+    readTime: '7 min read',
     excerpt: [
       'As companies grow, asset management becomes crucial for smooth operations. Smaller firms manage with spreadsheets, but multinationals need dedicated systems.',
       "This case study outlines how Infosys' asset management team revamped their legacy system to boost efficiency, cut costs, and enhance control and accountability.",
@@ -279,6 +331,31 @@ export const junymade = [
   },
 ];
 
+// Home "Side projects" section: things I run or make outside work, beyond the
+// Playground. Each row opens /side-projects/<slug> in the panel; `kind` shows
+// on the right of its row. Placeholders for now, apart from Juny Made, which
+// reuses the About page's text (`junymade`) and gallery.
+export const sideProjects = [
+  {
+    slug: 'dalal-prints',
+    title: 'Dalal Prints',
+    kind: 'Coming soon',
+    description: 'Details coming soon.',
+  },
+  {
+    slug: 'tony-make-films',
+    title: 'Tony Make Films',
+    kind: 'Coming soon',
+    description: 'Details coming soon.',
+  },
+  {
+    slug: 'juny-made',
+    title: 'Juny Made Art Studio',
+    kind: 'Art studio',
+    description: 'Handmade embroidered gifts and creative projects, run with my partner.',
+  },
+];
+
 export const photography = [
   {
     text: "I spend a lot of time behind the lens, chasing beautiful moments in nature, capturing dynamic movement, and exploring abstract forms. Follow me on Pexels.",
@@ -310,18 +387,21 @@ export const homeAbout = [
   [
     'Most recently I led design at ',
     { label: 'Sundial', href: '/sundial' },
-    ' (acq. by Meta), where more and more of my work happened directly in code. Before that I spent three years designing for developers at ',
+    ' (acq. by Meta). Before that I spent three years designing for developers at ',
     { label: 'Postman', href: '/postman' },
-    '.',
+    ', and earlier at ',
+    { label: 'Hypersonix', href: '/hypersonix' },
+    ' and ',
+    { label: 'AVRL', href: '/avrl' },
+    ', where I got my start in design.',
   ],
   [
-    'I started at ',
+    "My path here wasn't a straight line. I studied marketing and worked as a consultant at ",
     { label: 'Infosys', href: '/infosys' },
-    " after a master's in marketing, taught myself design, then worked at ",
-    { label: 'AVRL', href: '/avrl' },
-    ' and ',
-    { label: 'Hypersonix', href: '/hypersonix' },
-    '. Outside work I draw, film and keep a side project or two going.',
+    ', spending my nights and weekends drawing and designing until the side thing became the main thing.',
+  ],
+  [
+    "These days I'm into telling stories through film and visuals, the kind that make people feel something. And I always keep a side project or two going, just for fun.",
   ],
 ];
 

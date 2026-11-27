@@ -1,8 +1,9 @@
 import { Fragment } from 'react';
 import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 
-// The frame for every page shown in the panel: a header (optional logo and
-// title on one line, then a details line split by pipes) and the body below.
+// The frame for every page shown in the panel: a header (the title in
+// the sans at 24px, then a details line split by pipes) and the body
+// below.
 //   href          optional website, shown at the end of the details line as
 //                 a "Website" link that opens in a new tab
 //   description   optional intro shown under the title in place of the
@@ -21,7 +22,6 @@ import { ArrowUpRight } from '@phosphor-icons/react/ssr';
 //   heading       false hides the title and description from sight
 //                 everywhere (kept for screen readers)
 export default function PanelPage({
-  icon,
   title,
   href,
   meta = [],
@@ -55,20 +55,9 @@ export default function PanelPage({
       className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''}`}
     >
       <header
-        className={`mb-10 flex max-w-2xl flex-col items-start gap-3 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
+        className={`mb-10 flex max-w-2xl flex-col items-start gap-1 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
       >
-        <div className="flex items-center gap-3">
-          {icon && (
-            <img
-              src={icon}
-              alt=""
-              width={40}
-              height={40}
-              className="size-10 shrink-0 object-contain drop-shadow-md"
-            />
-          )}
-          <h1>{title}</h1>
-        </div>
+        <h1 className="font-sans text-2xl font-semibold tracking-[-0.02em]">{title}</h1>
         {items.length > 0 && (
           <p className="flex flex-wrap items-center gap-x-2.5 font-medium text-body/70 tabular-nums">
             {items.map((item, index) => (
@@ -85,7 +74,7 @@ export default function PanelPage({
         )}
         {description && <p className={`text-body/70 ${compact ? 'in-[aside]:hidden' : ''}`}>{description}</p>}
       </header>
-      <div className={`flex flex-col gap-6 ${fill ? 'in-data-fills:min-h-0 in-data-fills:flex-1' : ''}`}>{children}</div>
+      <div className={`flex flex-col gap-6 [&_li]:leading-[1.6] [&_p]:leading-[1.6] ${fill ? 'in-data-fills:min-h-0 in-data-fills:flex-1' : ''}`}>{children}</div>
     </article>
   );
 }

@@ -25,8 +25,8 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.tonyzeb.com/postman/work</loc>
-    <lastmod>2026-11-03</lastmod>
+    <loc>https://www.tonyzeb.com/hypersonix/work</loc>
+    <lastmod>2026-11-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -133,24 +133,42 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.tonyzeb.com/project/newtrialexp</loc>
+    <loc>https://www.tonyzeb.com/postman/new-trial-experiences</loc>
     <lastmod>2025-08-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.tonyzeb.com/project/api-observability</loc>
+    <loc>https://www.tonyzeb.com/postman/live-collections</loc>
     <lastmod>2025-08-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.tonyzeb.com/project/miniprojects</loc>
+    <loc>https://www.tonyzeb.com/postman/pinned-environments</loc>
     <lastmod>2025-08-25</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.tonyzeb.com/playground/365-days-of-drawing</loc>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/side-projects/dalal-prints</loc>
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/side-projects/tony-make-films</loc>
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.tonyzeb.com/side-projects/juny-made</loc>
+    <lastmod>2026-11-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

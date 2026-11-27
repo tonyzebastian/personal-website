@@ -1,7 +1,8 @@
 import HomeList from '@/components/HomeList';
 import SiteShell from '@/components/panel/SiteShell';
-import { experience, musings } from '@/lib/content';
+import { experience, musings, sideProjects } from '@/lib/content';
 import { playgroundPages } from '@/lib/playground';
+import { postmanProjects } from '@/lib/case-studies/postman-projects';
 
 // Routes that open in the panel. The shell uses this to open the panel the
 // moment one of these links is clicked.
@@ -9,10 +10,11 @@ const PANEL_PATHS = [
   '/about',
   ...experience.map((job) => `/${job.slug}`),
   ...musings.map((musing) => musing.link),
+  ...sideProjects.map((item) => `/side-projects/${item.slug}`),
   ...playgroundPages.map((item) => `/playground/${item.slug}`),
 ];
 // Routes that always show full width, never in the panel.
-const FULL_PAGE_PATHS = ['/postman/work'];
+const FULL_PAGE_PATHS = ['/hypersonix/work', ...postmanProjects.map((item) => `/postman/${item.slug}`)];
 // Pages whose title (and optional tagline) sits in the side panel's top row,
 // beside its buttons, instead of in the page (Playground pages).
 // Pages that fill their container edge to edge (`fill` in playground.js):
@@ -22,9 +24,11 @@ const FILL_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/p
 // Every page's short title, for the full-page view's breadcrumb.
 const PAGE_TITLES = {
   '/about': 'About',
-  '/postman/work': 'Work at Postman',
+  '/hypersonix/work': 'Work at Hypersonix',
+  ...Object.fromEntries(postmanProjects.map((item) => [`/postman/${item.slug}`, item.page.title])),
   ...Object.fromEntries(experience.map((job) => [`/${job.slug}`, job.name])),
   ...Object.fromEntries(musings.map((musing) => [musing.link, musing.name])),
+  ...Object.fromEntries(sideProjects.map((item) => [`/side-projects/${item.slug}`, item.title])),
   ...Object.fromEntries(playgroundPages.map((item) => [`/playground/${item.slug}`, item.title])),
 };
 const PANEL_TITLES = Object.fromEntries(

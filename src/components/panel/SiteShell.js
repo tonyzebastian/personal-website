@@ -59,7 +59,7 @@ function useIsDesktop() {
 // and shows a placeholder if the page takes longer than SKELETON_DELAY to load,
 // instead of waiting for the route.
 // Arriving straight on a page (a typed link, a new tab, the panel's expand
-// button) shows that page on its own, full width, with a link home, and keeps
+// button, a link marked data-full-page) shows that page on its own, full width, with a link home, and keeps
 // its URL. Once the
 // visitor reaches "/", the list and panel take over for the rest of the visit.
 // `panelPaths` lists the routes that open in the panel; `fullPagePaths` lists
@@ -111,12 +111,23 @@ export default function SiteShell({
   // The pending link whose placeholder is due (it has been loading for longer
   // than SKELETON_DELAY).
   const [skeletonFor, setSkeletonFor] = useState(null);
+  // Full-page view: on when the visit starts on a page, off for good once the
+  // visitor reaches home.
+  const [fullPage, setFullPage] = useState(pathname !== '/');
+
+  // A link marked data-full-page (a job page's musing card) leaves the panel:
+  // its page opens in the full-page view once it arrives.
+  const [fullPageNext, setFullPageNext] = useState(null);
   const [shownPath, setShownPath] = useState(pathname);
   if (pathname !== shownPath) {
     setShownPath(pathname);
     setPendingPath(null);
     setSkeletonFor(null);
     setClosing(false);
+    if (fullPageNext !== null) {
+      if (pathname === fullPageNext) setFullPage(true);
+      setFullPageNext(null);
+    }
   }
   useEffect(() => {
     if (pendingPath === null) return undefined;
@@ -124,9 +135,6 @@ export default function SiteShell({
     return () => clearTimeout(timer);
   }, [pendingPath]);
 
-  // Full-page view: on when the visit starts on a page, off for good once the
-  // visitor reaches home.
-  const [fullPage, setFullPage] = useState(pathname !== '/');
   if (fullPage && pathname === '/') setFullPage(false);
   const showFullPage = fullPage || fullPagePaths.includes(pathname);
 
@@ -224,6 +232,12 @@ export default function SiteShell({
     if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
     const url = new URL(link.href);
     if (url.origin !== window.location.origin) return;
+    if (link.hasAttribute('data-full-page')) {
+      setPendingPath(null);
+      setFullPageNext(url.pathname);
+      scrollToTop.current = true;
+      return;
+    }
     if (url.pathname === pathname) {
       // Back on the page already open: drop any open or close still under way.
       setPendingPath(null);

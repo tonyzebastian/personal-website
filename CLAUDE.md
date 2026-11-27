@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Personal portfolio of Tony Sebastian, a visual product designer. One home page has my photo and a short about (which links to each job), then musings, the Playground grid and a footer row of links ("Email", which copies the address, and socials from `bio` in `content.js`); every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The address bar stays on `/` while a panel is open, so a refresh always lands on home.
+Personal portfolio of Tony Sebastian, a visual product designer. One home page has my photo and a short about (which links to each job), then side projects, musings, the Playground grid and a footer row of links ("Email", which copies the address, and socials from `bio` in `content.js`); every internal link opens its page in a side panel next to that list (a sheet on smaller screens). The address bar stays on `/` while a panel is open, so a refresh always lands on home.
 
 ## Technology stack
 
@@ -11,7 +11,7 @@ Personal portfolio of Tony Sebastian, a visual product designer. One home page h
 - **shadcn/ui on Base UI** (`@base-ui/react`): components live in `src/components/ui/`. Compose with `render={<el />}`, not `asChild`. To style a link like a button, use `buttonVariants()` on the link itself (rendering a link through `Button` gives it a button role)
 - **Phosphor icons** (`@phosphor-icons/react`): the only icon set. Import from `@phosphor-icons/react/ssr` in server components. Use `weight="bold"` for UI icons
 - **Motion** (`motion/react`): panel animations, loaded through `LazyMotion` with `m.` components; features load on demand from `src/lib/motion-features.js`
-- **Fonts**: Figtree (body, `next/font/google`) and Libre Caslon Condensed (headings, self-hosted in `src/fonts/` via `next/font/local`, SIL OFL)
+- **Fonts**: Figtree (`next/font/google`) for everything, headings included (semibold). Libre Caslon Condensed (self-hosted in `src/fonts/` via `next/font/local`, SIL OFL) is kept for special places only, chosen case by case with `font-serif`: for now the name on the home page and the titles on the home Musings cards (and the storybook's lettering)
 - **react-plock**: masonry layout for the about galleries
 
 ## Design system
@@ -20,7 +20,7 @@ Tokens are defined in `src/app/globals.css`. Type scale follows rachelchen.tech;
 
 - **Ink**: `#160216`, a plum-tinted near-black for headings and titles (`text-ink`). Body copy is `--body` `#363636` (`text-body`); faded text, hover fills and lines are built from it so greys stay neutral: `text-body/80`, `text-body/70` (the lightest that passes AA for text, 4.7:1), and `text-body/40`, `text-body/25` only for decoration (pipes, list markers, icons)
 - **Highlight**: the green link style, `bg-highlight` / `bg-highlight-strong` (`HighlightLink`, or the Button `highlight` variant)
-- **Type**: body 15px with 1.5 line height; serif headings h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
+- **Type**: body 15px with 1.5 line height (1.6 for paragraphs and lists in panel page bodies, set in `PanelPage`); headings in the sans, semibold: h1 2rem (2.25rem from 1200px), h2 1.25rem, h3 1.125rem, all -0.02em letter spacing. Base element styles sit in `@layer base`, so utility classes override them
 - **Canvas**: the page colour is a warm stone, `--canvas` (#fcfaf8), from the `.surface-canvas` class on the site shell and the list column. Panels stay white (`--paper`). A paper texture (fine grain plus soft fibre, SVG noise tuned to flowjam.com) sits over the whole screen on `html::before`/`::after`, fixed and click-through. The hero video uses `mix-blend-multiply` so its white backdrop takes on the canvas. `/experience` keeps its own fading band (`NoiseBand`, `public/noise.png`)
 - **Motion**: one curve for UI, `--ease-snappy` `cubic-bezier(0.23, 1, 0.32, 1)` (Tailwind `ease-snappy`; `EASE_SNAPPY` in `src/components/panel/config.js` for Motion), for anything appearing, leaving or changing state. Colour-only hovers keep Tailwind's default curve; the side panel slides on a drawer curve (`EASE_DRAWER`). Durations: 150ms hover reveals and exits, 200ms small fades and state changes, 300ms height changes and row reveals, 400ms the panel slide; only decorative motion runs longer. Never plain `ease-out`/`ease-in-out`, and name the properties rather than `transition-all`. The scale is written out at the top of `globals.css`
 - **shadcn tokens** (`--background`, `--primary`, `--border`, ...) are mapped onto ink and paper
@@ -34,10 +34,11 @@ src/app/
 │   ├── layout.js          # SiteShell: home list + panel for the current route
 │   ├── page.js            # "/": metadata only, renders nothing (no panel)
 │   ├── [company]/page.js  # /sundial, /postman, /hypersonix, /avrl, /infosys
+│   ├── [company]/[project]/ # Postman case studies: /postman/new-trial-experiences, ...
+│   ├── [company]/work/    # /hypersonix/work, all its case studies on one page
 │   ├── about/             # About me panel
 │   └── musings/*          # One folder per musing
 ├── experience/            # Standalone timeline page (unlisted, noindex)
-├── project/*              # Postman sub case studies, full pages
 ├── film/                  # Standalone film site (own font)
 └── craft/                 # Old craft page (to be replaced)
 ```
@@ -48,19 +49,20 @@ src/app/
 - The panel is one layer over home: switching panels replaces the history entry, and closing steps back when the panel was opened from home, so Back always returns home
 - Split, breakpoint, the side panel's slide (`PANEL_SLIDE`) and the sheet's spring live in `src/components/panel/config.js`. So does `SKELETON_DELAY`: a page that loads faster than that replaces the panel's content directly, and `PanelSkeleton` shows only for slower loads
 - `FrozenRouter.js` keeps the outgoing page rendered while a panel closes or swaps. It relies on a Next.js internal (`LayoutRouterContext`), which is why `next` is pinned to 15.5.x; recheck it before upgrading
-- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (logo and title on one line, details line split by pipes, with an optional `href` shown at its end as a "Website" link), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
+- New panel page: add a route under `src/app/(site)/`, wrap its content in `PanelPage` (title in Figtree semibold at 1.5rem, then a details line split by pipes; job pages list period, role, website, with an optional `href` shown at its end as a "Website" link), and link to it from a `Row`. Internal `Row` links use `scroll={false}` so the list does not jump
 
 ## Content
 
 All copy lives in `src/lib/content.js`:
 
 - `homeAbout`: the about text on the home page, with its links to the company pages
-- `experience`: the `[company]` pages (`role`, `period`, `description` for metadata, `overview` paragraphs for the page, where an object like `{ youtube, title }` embeds a video, optional `related` links). Hypersonix folds its case studies behind "More about my work here" (`Expandable`); Postman's live on the full-width `/postman/work` page (listed in `FULL_PAGE_PATHS` in the `(site)` layout). Entries with `timeline: false` are left off `/experience`. The overview copy is drafted in the wiki (`areas/career/overview/website-experience-drafts.md`)
+- `experience`: the `[company]` pages (`role`, `period`, `description` for metadata, `overview` paragraphs for the page, where an object like `{ youtube, title }` embeds a video, optional `related` links). Postman's job page ends with one card per case study (its `items`, each opening `/postman/<slug>`); Hypersonix's with one card for `/hypersonix/work`, which holds all four. Both kinds are listed in `FULL_PAGE_PATHS` in the `(site)` layout. Cards are `RelatedCard`. Entries with `timeline: false` are left off `/experience`. The overview copy is drafted in the wiki (`areas/career/overview/website-experience-drafts.md`)
+- `sideProjects`: the home "Side projects" list above Musings (plain `Row`s, `kind` on the right), each opening `/side-projects/<slug>` in the panel. Placeholders for now; Juny Made reuses `junymade` and the About gallery
 - `musings`: the home Musings section (the article itself is its own route); `excerpt` is the opening shown on each carousel card
 - Playground entries live in `src/lib/playground.js`, not here (each with its bento `size`, its `cover` and the cover's `aspect` for the hover preview, and a `kind` shown on its list row): groups (`gallery-pieces`, `light-and-shadow`, `pocket-worlds`) list live pieces one below the other, singles show one piece, `clips` (In Motion, the Animation section moved here from About) lists short videos, `note` is a plain text page (Dalal Prints, for now) and `link` is an outside project whose card opens its site in a new tab (UX Nudges; no page here, see `playgroundPages`). The rest open `/playground/<slug>` in the panel. The old Pet Projects section is gone: UX Nudges and Dalal Prints became Playground cards
 - `bio`, `aboutBio`, `aboutFunThings`, `aboutPrinciples`, `now`, `junymade`, `photography`, `aboutConversation`
 
-Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and rendered by `src/components/CaseStudy.js`. The three Postman sub case studies under `src/app/project/` still use `CaseStudyTemplate.js`.
+Case study data is in `src/lib/case-studies/` and rendered by `src/components/CaseStudy.js` inside `PanelPage`: `hypersonix.js` (all four on `/hypersonix/work`) and `postman-projects/` (one file per case study, each its own page at `/postman/<slug>`, listed in `postman-projects/index.js`). The old `/project/*` URLs redirect there (`public/_redirects`).
 
 ## Key components
 
@@ -75,8 +77,9 @@ Case study data for Postman and Hypersonix is in `src/lib/case-studies/` and ren
 - Image Goo (`pieces/image-goo/`, in Gallery Pieces): Image Sphere's photos (shared in `pieces/sphere-images.js`, loaded from Unsplash as 192px square crops packed into one canvas atlas) in green-700 squircle bubbles around a small squircle drop, all one liquid shape drawn in WebGL 2 (`goo-gl.js`: signed distances joined by a smooth minimum, blend radius `K`). At rest the drop and four bubbles sit in the middle of the box; the drop follows the pointer, and on each new empty square of a 52px grid lined up on the box's centre the four around it come out of the drop while the rest are drawn back in; when the pointer leaves, the group glides back to the middle (touch: drag a finger). 41px bubbles (a 38px photo in a 1.5px frame). Nudging toward a bubble (gap under `BRIDGE`, 24px) swells its frame on that side (`REACH`) and draws a bridge from the drop that beads while thin and thickens to `BRIDGE_W`. Edges wobble outward only, with slow noise, in the necks and while the pointer moves (an energy from the drop's speed, `ENERGY_SPEED`), so a still scene is smooth; the squircle distance is gradient-corrected so the frame stays even round the corners. Resting on a bubble grows it outward (to 93px) and clicking it opens `PhotoModal`, the same photo card as Image Sphere. Motion is springs (`[stiffness, damping]` constants at the top), stepped while anything moves or the pointer is over the box; the last frame stays on the canvas otherwise
 - `SquareCursor` (root layout, every page): the pointer drawn as a 14px green-700 square, after shahimim.com, sitting exactly on the pointer; it shrinks over anything clickable and further while pressed, and hides when the pointer leaves the window. Over a link a small green label slides out beside it saying what a click does (`labelFor`: Open for Playground pieces, Read for every other page (jobs, musings, About), Visit ↗ for outside links, Email); any element can name its own with `data-cursor="…"` (Image Goo's photos say View); buttons get no label. Fine pointers from 768px wide only, and the native cursor is hidden only once it runs (`<html data-square-cursor>`)
 - `CopyEmail`: the footer's "Email": a click copies `bio.email` and a small green-900 "Copied" pill rises above it for 1.5s (falls back to a mailto if the clipboard is blocked); the square cursor says Copy
+- `RelatedCard`: the cards at the end of a job page, under a faint wavy rule (`.squiggle`): its case studies (Postman's each, Hypersonix's page) and its `related` musings. A wide, nearly flat paper card with a title, a details line and a short opening cut with "…" (a musing's come from `musings`), and a tinted space on the left for an `illustration` image. A click opens the page full width even from the side panel (`data-full-page`, handled in `SiteShell`). Styles are `.related-card-*` in globals.css
 - `Contact`: "Start a conversation" with X, LinkedIn and GitHub buttons, at the bottom of the About page
-- `YouTubeEmbed`: a YouTube video that shows only its thumbnail until played, then loads the privacy-enhanced player
+- `YouTubeEmbed`: a YouTube video that shows only its thumbnail until played, then loads the privacy-enhanced player. With `poster` (an overview block's `poster` on the job pages) it shows that still instead, edge to edge, with a small white play button
 - `Expandable`: a button that unfolds a server-rendered section below it
 - `AutoVideo`: muted looping video that plays only while on screen and loads only metadata until then. Use it for any inline clip. `pauseOnScroll` also pauses it while its scroller moves (playing again 150ms after it stops); use it where several clips show at once (In Motion): with two or more videos playing, Chromium drops the page to the videos' frame rate (about 30fps) and scrolling judders
 - `MediaGrid`: media side by side in a row

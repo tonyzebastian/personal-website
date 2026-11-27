@@ -1,30 +1,28 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowRight } from '@phosphor-icons/react/ssr';
 import { experience } from '@/lib/content';
-import { postmanData } from '@/lib/case-studies/postman';
 import { hypersonixData } from '@/lib/case-studies/hypersonix';
 import PanelPage from '@/components/panel/PanelPage';
-import CaseStudy from '@/components/CaseStudy';
-import Row from '@/components/Row';
-import Expandable from '@/components/Expandable';
+import RelatedCard from '@/components/RelatedCard';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
-import { buttonVariants } from '@/components/ui/button';
+import MediaGrid from '@/components/experience/MediaGrid';
 
 // One page per experience entry: /sundial, /postman, /hypersonix, /avrl and
-// /infosys. Each starts with the written overview. Hypersonix folds its case
-// studies behind "More about my work here"; Postman's are long enough to get
-// their own full page (/postman/work). Only these are built; any other path
-// is a 404.
+// /infosys. Each starts with the written overview. Below a wavy rule, cards
+// lead on: Postman to each of its case studies (their own pages under
+// /project, from the job's `items`), Hypersonix to the one page holding all
+// of its case studies (/hypersonix/work), and AVRL and Infosys to related
+// musings. Only these are built; any other path is a 404.
 export const dynamicParams = false;
 
-const CASE_STUDIES = {
-  postman: postmanData.projects,
-  hypersonix: hypersonixData.projects,
+// Roles whose case studies share one full page.
+const WORK_PAGES = {
+  hypersonix: {
+    href: '/hypersonix/work',
+    projects: hypersonixData.projects,
+    summary: 'Documents, onboarding, the Sonic design system and a few early explorations.',
+  },
 };
 
-// Pages whose case studies live on a separate full page instead of in a fold.
-const WORK_PAGES = { postman: { href: '/postman/work', label: 'See my work at Postman' } };
 
 export function generateStaticParams() {
   return experience.map((job) => ({ company: job.slug }));
@@ -57,51 +55,57 @@ export default async function CompanyPage({ params }) {
   const job = findJob(company);
   if (!job) notFound();
 
-  const projects = CASE_STUDIES[job.slug];
   const workPage = WORK_PAGES[job.slug];
+  // Case studies with a write-up of their own (Postman's).
+  const caseStudies = job.items?.filter((item) => item.link) ?? [];
 
   return (
     <PanelPage
-      icon={job.image}
       title={job.name}
       href={job.link}
-      meta={[job.role, job.period]}
+      meta={[job.period, job.role]}
     >
       {(job.overview ?? [job.description]).map((block, index) =>
         typeof block === 'string' ? (
-          <p key={index}>{block}</p>
+          <p key={index} className="text-[18px]">{block}</p>
         ) : (
-          <YouTubeEmbed key={block.youtube} id={block.youtube} title={block.title} />
+          <figure key={index} className="flex flex-col gap-2">
+            {block.youtube ? (
+              <YouTubeEmbed id={block.youtube} title={block.title} poster={block.poster} />
+            ) : (
+              <MediaGrid items={block.media} alt={block.alt} />
+            )}
+            {block.caption && <figcaption className="text-body/70">{block.caption}</figcaption>}
+          </figure>
         )
       )}
 
-      {workPage ? (
-        <Link
-          href={workPage.href}
-          className={buttonVariants({ variant: 'outline', className: 'mt-4 self-start' })}
-        >
-          {workPage.label}
-          <ArrowRight weight="bold" data-icon="inline-end" aria-hidden />
-        </Link>
-      ) : (
-        projects && (
-          <div className="mt-4">
-            <Expandable label="More about my work here">
-              <CaseStudy projects={projects} />
-            </Expandable>
-          </div>
-        )
-      )}
-
-      {job.related?.length > 0 && (
-        <section className="mt-6 flex flex-col gap-2">
-          <h3>Read more</h3>
-          <div>
-            {job.related.map((item) => (
-              <Row key={item.href} href={item.href} title={item.title} />
+      {(workPage || caseStudies.length > 0 || job.related?.length > 0) && (
+        <>
+          <div aria-hidden className="squiggle my-6" />
+          <div className="flex flex-col gap-5">
+            {workPage && (
+              <RelatedCard
+                href={workPage.href}
+                title="A closer look at the work"
+                meta={`${job.period} · ${workPage.projects.length} case studies`}
+                excerpt={workPage.summary}
+              />
+            )}
+            {caseStudies.map((item) => (
+              <RelatedCard
+                key={item.link}
+                href={item.link}
+                title={item.title}
+                meta={item.meta ?? 'Case study'}
+                excerpt={item.summary ?? item.description}
+              />
+            ))}
+            {job.related?.map((item) => (
+              <RelatedCard key={item.href} {...item} />
             ))}
           </div>
-        </section>
+        </>
       )}
     </PanelPage>
   );

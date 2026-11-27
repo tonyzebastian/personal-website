@@ -38,7 +38,7 @@ export default function CoverGrid({ items }) {
             >
               <span className="bento-cover" style={{ '--zoom': item.cover.zoom }}>
                 {item.cover.placeholder ? (
-                  <span aria-hidden className="flex size-full items-center justify-center p-[12%] pb-[20%] text-center font-serif text-[1.375rem] leading-[1.05] tracking-[-0.03em] text-ink">
+                  <span aria-hidden className="flex size-full items-center justify-center p-[12%] pb-[20%] text-center text-[1.375rem] leading-[1.1] font-semibold tracking-[-0.03em] text-ink">
                     {item.title}
                   </span>
                 ) : item.cover.video ? (

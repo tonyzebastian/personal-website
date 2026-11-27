@@ -87,7 +87,7 @@ export default function Row({ href, icon, title, meta = [] }) {
   const layout = hasIcon
     ? 'grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 @lg:grid-cols-[auto_minmax(0,1fr)_auto] @lg:gap-x-2'
     : 'grid-cols-[minmax(0,1fr)] gap-y-1 @lg:grid-cols-[minmax(0,1fr)_auto]';
-  const className = `-mx-3 grid items-center rounded-md px-3 py-2.5 ${layout}`;
+  const className = `-mx-3 grid items-center rounded-md px-3 py-2.5 text-base ${layout}`;
 
   if (!href) return <div className={className}>{body}</div>;
 

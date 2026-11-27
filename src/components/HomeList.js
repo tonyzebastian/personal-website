@@ -5,7 +5,8 @@ import CopyEmail from '@/components/CopyEmail';
 import Musings from '@/components/Musings';
 import Playground from '@/components/Playground';
 import IntroFlow from '@/components/IntroFlow';
-import { bio, musings } from '@/lib/content';
+import Row from '@/components/Row';
+import { bio, musings, sideProjects } from '@/lib/content';
 import { playground } from '@/lib/playground';
 
 // The reading column: 512px, centred, with the page gutters.
@@ -33,6 +34,20 @@ export default function HomeList() {
     <IntroFlow className="flex flex-col gap-16 pt-16 pb-24 lg:pt-24 lg:pb-20">
       <Column className="intro-hero">
         <Hero />
+      </Column>
+
+      {/* Side projects: things I run or make outside work, as a plain list. */}
+      <Column>
+        <section aria-labelledby="side-projects" className="flex flex-col gap-2">
+          <h2 id="side-projects" className="font-sans text-base font-semibold tracking-normal">
+            Side projects
+          </h2>
+          <div>
+            {sideProjects.map((item) => (
+              <Row key={item.slug} href={`/side-projects/${item.slug}`} title={item.title} meta={[item.kind]} />
+            ))}
+          </div>
+        </section>
       </Column>
 
       <Column>

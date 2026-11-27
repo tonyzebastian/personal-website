@@ -1,8 +1,8 @@
-export const postminidata = {
+export const postpinneddata = {
   // Page-level configuration
   page: {
-    title: "Mini Projects",
-    description: "A collection of mini projects I worked on during my time at Postman that made a huge impact.",
+    title: "Pinned Environments",
+    description: "Environments are often the first thing someone needs before a collection works. This project made it clear which one to use, by letting a collection carry its own, and kept them linked through forks, mocks and other workflows.",
     role: "Lead Product Designer",
     company: "Postman",
     logo: "/icons/postman.webp",
@@ -11,11 +11,7 @@ export const postminidata = {
   // Projects data
   projects: [
     {
-      title: "Improving Environment usage experience",
       sections: [
-        {
-          description: "Environments are critical for making collections usable, but the current experience often caused confusion, errors, and delays. This project focused on simplifying that experience and making environments more seamlessly connected to collections."
-        },
         {
           heading: "Previous experience",
           description: "Environments are a core part of Postman, used daily by millions of developers and teams. They're often the first step in making a collection usable for others, acting as the bridge between setup and successful execution. There were some obvious gaps in the current experience.",

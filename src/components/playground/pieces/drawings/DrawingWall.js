@@ -313,7 +313,7 @@ export function Piece() {
             style={{ width: CARD, height: CARD, transform: `translateY(${card.y}px)` }}
           >
             <span className="text-[10px] tracking-[0.08em] text-body/70 uppercase">May 2020 to May 2021</span>
-            <h2 className="mt-4 mb-3 font-serif text-[2rem] leading-[1.05] tracking-[-0.035em] text-ink">
+            <h2 className="mt-4 mb-3 text-[2rem] leading-[1.1] font-semibold tracking-[-0.035em] text-ink">
               365 days
               <br />
               of drawing
