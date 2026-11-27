@@ -367,27 +367,47 @@ export const junyMadePage = {
   instagram: 'https://pin.it/3PKGQjN2Y',
 };
 
+// Tony Make Films (/side-projects/tony-make-films): why I make films, then
+// the films so far (the same ones as /film), each playing in place.
+export const tonyMakeFilmsPage = {
+  paragraphs: [
+    "Tony Make Films is where I tell stories with a camera. It began with the films I was already making on my own: travel diaries, a live gig, a short introduction. Now I want to make them with more care for the story.",
+    "I think telling a story well is one of the things AI still isn't good at. It's also the best way I've found to get an idea across and reach more people.",
+    "So these films are slow and intentional. Each one starts as a script I record and listen to before I plan a single shot, and each has a character, and a bit of me, in it.",
+  ],
+  films: [
+    { title: 'Personal introduction', caption: 'An animated introduction for my design portfolio.', src: '/hero_video.mp4', poster: '/side-projects/films/introduction.webp' },
+    { title: 'A day trip to Yosemite', caption: 'A solo travel film, Yosemite through my lens.', src: '/images/film/Yosemite.mp4', poster: '/side-projects/films/yosemite.webp' },
+    { title: 'You, me & Kodaikanal', caption: 'A video diary from Kodaikanal, made with my partner.', src: '/images/film/kodaikanal.mp4', poster: '/side-projects/films/kodaikanal.webp' },
+    { title: 'Algorythm, live in Bengaluru', caption: "Algorythm's 2025 show at Phoenix Marketcity.", src: '/images/film/algorythm.mp4', poster: '/side-projects/films/algorythm.webp' },
+  ],
+  instagram: 'https://www.instagram.com/tony.make.films/',
+};
+
 // Home "Side projects" section: things I run or make outside work, beyond the
-// Playground. Each row opens /side-projects/<slug> in the panel; `kind` shows
-// on the right of its row. Placeholders for now, apart from Juny Made, which
-// reuses the About page's text (`junymade`) and gallery.
+// Playground. Each row opens /side-projects/<slug> in the panel, with its logo
+// (public/side-projects/logos/<slug>.webp) and `summary` below the name; `kind`
+// is the details line on the page.
 export const sideProjects = [
   {
     slug: 'dalal-prints',
     title: 'Dalal Prints',
     kind: 'Posters',
+    summary: 'Art posters for Indian earnings calls',
     description: 'Posters for Indian earnings calls. One company, one call, one artwork, every results season.',
   },
   {
     slug: 'tony-make-films',
     title: 'Tony Make Films',
-    kind: 'Coming soon',
-    description: 'Details coming soon.',
+    kind: 'Films',
+    summary: 'Slow, personal films that tell a story',
+    description: 'Slow, personal films, made to tell a story well.',
   },
   {
     slug: 'juny-made',
     title: 'Juny Made Art Studio',
     kind: 'Art studio',
+    summary: 'Embroidered gifts, made with my partner',
     description: 'Handmade embroidered gifts and creative projects, run with my partner.',
   },
 ];

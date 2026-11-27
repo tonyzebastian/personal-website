@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { sideProjects, junyMadePage, dalalPrintsPage } from '@/lib/content';
+import { sideProjects, junyMadePage, dalalPrintsPage, tonyMakeFilmsPage } from '@/lib/content';
 import PanelPage from '@/components/panel/PanelPage';
 import PhotoGrid from '@/components/PhotoGrid';
 import PosterWall from '@/components/PosterWall';
@@ -7,8 +7,8 @@ import PosterWall from '@/components/PosterWall';
 // One side project, opened from the home "Side projects" list: Dalal Prints,
 // Tony Make Films and Juny Made. Dalal Prints and Juny Made are set like the
 // job pages (18px text, their link in the details line) with their images
-// below (`dalalPrintsPage`, `junyMadePage`); Tony Make Films is a
-// placeholder for now.
+// below (`dalalPrintsPage`, `junyMadePage`); Tony Make Films the same way,
+// with its films (`tonyMakeFilmsPage`).
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -71,9 +71,12 @@ export default async function SideProjectPage({ params }) {
       title={item.title}
       meta={[item.kind]}
       {...(slug === 'juny-made' && { href: junyMadePage.instagram, linkLabel: 'Instagram' })}
+      {...(slug === 'tony-make-films' && { href: tonyMakeFilmsPage.instagram, linkLabel: '@tony.make.films on Instagram' })}
     >
       {slug === 'juny-made' ? (
         <JunyMade />
+      ) : slug === 'tony-make-films' ? (
+        <TonyMakeFilms />
       ) : (
         <p className="text-body/70">{item.description}</p>
       )}
@@ -118,6 +121,42 @@ function JunyMade() {
       <section aria-labelledby="juny-pieces" className="mt-4 flex flex-col gap-4">
         <h2 id="juny-pieces">A few pieces</h2>
         <PhotoGrid images={gallery} />
+      </section>
+    </>
+  );
+}
+
+// Tony Make Films: why I make films, then the films so far. Each plays in
+// place with the browser's controls and loads nothing until played.
+function TonyMakeFilms() {
+  const { paragraphs, films } = tonyMakeFilmsPage;
+  return (
+    <>
+      {paragraphs.map((text) => (
+        <p key={text} className="text-[18px]">{text}</p>
+      ))}
+
+      <section aria-labelledby="films-so-far" className="mt-4 flex flex-col gap-4">
+        <h2 id="films-so-far">Films so far</h2>
+        <ul className="grid grid-cols-1 gap-x-3 gap-y-5 @xl:grid-cols-2">
+          {films.map((film) => (
+            <li key={film.src} className="flex flex-col gap-2">
+              <video
+                src={film.src}
+                poster={film.poster}
+                controls
+                playsInline
+                preload="none"
+                aria-label={film.title}
+                className="aspect-video w-full rounded-xl bg-body/[0.04] object-cover"
+              />
+              <div className="flex flex-col">
+                <span className="font-medium text-ink">{film.title}</span>
+                <span className="text-body/70">{film.caption}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );

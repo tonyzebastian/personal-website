@@ -5,7 +5,7 @@ import CopyEmail from '@/components/CopyEmail';
 import Musings from '@/components/Musings';
 import Playground from '@/components/Playground';
 import IntroFlow from '@/components/IntroFlow';
-import Row from '@/components/Row';
+import ProjectRow from '@/components/ProjectRow';
 import { bio, musings, sideProjects } from '@/lib/content';
 import { playground } from '@/lib/playground';
 
@@ -36,7 +36,8 @@ export default function HomeList() {
         <Hero />
       </Column>
 
-      {/* Side projects: things I run or make outside work, as a plain list. */}
+      {/* Side projects: things I run or make outside work, each with its logo
+          and a line about it. */}
       <Column>
         <section aria-labelledby="side-projects" className="flex flex-col gap-2">
           <h2 id="side-projects" className="font-sans text-base font-semibold tracking-normal">
@@ -44,7 +45,13 @@ export default function HomeList() {
           </h2>
           <div>
             {sideProjects.map((item) => (
-              <Row key={item.slug} href={`/side-projects/${item.slug}`} title={item.title} meta={[item.kind]} />
+              <ProjectRow
+                key={item.slug}
+                href={`/side-projects/${item.slug}`}
+                logo={`/side-projects/logos/${item.slug}.webp`}
+                title={item.title}
+                summary={item.summary}
+              />
             ))}
           </div>
         </section>
