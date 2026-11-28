@@ -865,3 +865,30 @@ html[data-square-cursor] * {
     opacity 200ms var(--ease-snappy),
     translate 200ms var(--ease-snappy);
 }
+
+/* While a side panel is open, the home list steps back so the panel is the
+   focus: the whole list fades to 90% and loses 30% of its colour (the green
+   links, photo, logos and covers pull the eye most), and comes back while the
+   pointer is anywhere over the list column or focus is inside it. Wide
+   screens only (below 1024px the panel is a sheet over the list). */
+@media (min-width: 1024px) {
+  /* Stepping back is slow and soft (600ms); coming back is quicker (250ms),
+     so the list answers the pointer straight away. */
+  [data-panel-open] .intro-flow {
+    opacity: 0.9;
+    filter: grayscale(0.3);
+    transition-property: opacity, filter;
+    transition-duration: 600ms;
+    transition-timing-function: var(--ease-snappy);
+  }
+  [data-panel-open]:is(:hover, :focus-within) .intro-flow {
+    opacity: 1;
+    filter: none;
+    transition-duration: 250ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-panel-open] .intro-flow {
+    transition: none;
+  }
+}
