@@ -1,0 +1,17 @@
+# Cloudflare Pages redirects for pages that moved in the 2026 refresh.
+/project/postman     /postman      301
+/project/hypersonix  /hypersonix   301
+/musings             /             301
+/AI                  /             301
+
+/craft / 301
+/project/new-trial-experiences /postman/new-trial-experiences 301
+/project/newtrialexp           /postman/new-trial-experiences 301
+/project/api-observability     /postman/live-collections      301
+/project/miniprojects          /postman/pinned-environments   301
+/postman/mini-projects         /postman/pinned-environments   301
+/postman/work                  /postman                       301
+/playground/dalal-prints       /dalal-prints                  301
+/side-projects/dalal-prints    /dalal-prints                  301
+/side-projects/tony-make-films /film                          301
+/side-projects/juny-made       /juny-made                     301

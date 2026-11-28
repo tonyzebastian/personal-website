@@ -1,0 +1,83 @@
+import { notFound } from 'next/navigation';
+import PanelPage from '@/components/panel/PanelPage';
+import GroupItem from '@/components/playground/GroupItem';
+import LinkedText from '@/components/LinkedText';
+import { findPlayground, playgroundPages } from '@/lib/playground';
+
+// One page per Playground entry, opened in the panel from the home grid. A
+// group lists its pieces one below the other, each live, each able to open on
+// its own in a lightbox; a single piece fills the page; clips are short
+// videos, one below the other.
+export const dynamicParams = false;
+
+// Entry types set like the side-project pages (see below).
+const LISTS = ['group', 'clips'];
+
+export function generateStaticParams() {
+  return playgroundPages.map(({ slug }) => ({ slug }));
+}
+
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const entry = findPlayground(slug);
+  if (!entry) return {};
+  const title = `${entry.title} ✦ Tony Sebastian`;
+  const url = `https://www.tonyzeb.com/playground/${slug}`;
+  return {
+    title,
+    description: entry.description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description: entry.description,
+      url,
+      siteName: 'Tony Sebastian',
+      images: [{ url: '/preview.png', width: 1200, height: 630, alt: entry.title }],
+      locale: 'en_US',
+      type: 'website',
+    },
+  };
+}
+
+export default async function PlaygroundEntry({ params }) {
+  const { slug } = await params;
+  const entry = findPlayground(slug);
+  if (!entry) notFound();
+
+  // Groups and clips show a full header like the side-project pages: the
+  // title, with the description in the details line's place. Singles keep the compact header (the panel's top row names
+  // them) so the piece gets the room.
+  if (LISTS.includes(entry.type)) {
+    return (
+      <PanelPage title={entry.title} description={<LinkedText text={entry.description} links={entry.links} />} wide>
+        <div className="flex flex-col gap-12">
+          {entry.type === 'clips'
+            ? entry.clips.map((clip) => <GroupItem key={clip.src} video={clip.src} title={clip.title} hint={clip.hint} />)
+            : entry.items.map((item) => (
+                <GroupItem key={item.id} id={item.id} title={item.title} hint={item.hint} description={item.description} />
+              ))}
+        </div>
+      </PanelPage>
+    );
+  }
+
+  return (
+    <PanelPage
+      title={entry.title}
+      description={<LinkedText text={entry.description} links={entry.links} />}
+      wide
+      compact
+      fill={entry.fill}
+    >
+      {entry.type === 'note' ? (
+        // In the side panel the page's own header is hidden (the panel's top
+        // row names it), so the note shows its text here instead.
+        <p className="hidden text-body/70 in-[aside]:block">{entry.description}</p>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <GroupItem id={entry.piece} title={entry.title} fill={entry.fill} />
+        </div>
+      )}
+    </PanelPage>
+  );
+}

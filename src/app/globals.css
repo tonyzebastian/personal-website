@@ -1,59 +1,207 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-body {
-  background-color: #FFFFFF; 
-  margin: 0;
-  padding: 0;
-  overflow-y: scroll;
+/* ==========================================================================
+   Design tokens
+   Type scale follows rachelchen.tech; text colours and the paper texture
+   follow flowjam.com. Light mode only.
+   ========================================================================== */
+
+:root {
+  /* Ink: a near-black with a plum tint, for headings and titles. */
+  --ink: #160216;
+  /* Body copy: a neutral dark grey. Faded text, hover fills and lines are
+     built from it, so greys stay neutral:
+     text-body (100) · /80 · /55 · /40 · /25 */
+  --body: #363636;
+  --paper: #ffffff;
+  /* A light warm stone page colour (buffmotion.com's #f2ece7, three quarters of the way to white). Panels stay on paper. */
+  --canvas: #fcfaf8;
+
+  /* Your green, used for highlight links and accents. */
+  --highlight: rgb(40 237 60 / 0.25);
+  --highlight-strong: rgb(40 237 60 / 0.4);
+  --highlight-ink: #01270a;
+
+  /* shadcn tokens, mapped onto the ink system. */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: color-mix(in srgb, var(--body) 6%, var(--paper));
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in srgb, var(--body) 4%, var(--paper));
+  /* 70% is the lightest body tint that passes AA for text on the canvas
+     (4.7:1); the focus ring needs 3:1 (60% gives 3.6:1). */
+  --muted-foreground: color-mix(in srgb, var(--body) 70%, transparent);
+  --accent: color-mix(in srgb, var(--body) 6%, var(--paper));
+  --accent-foreground: var(--ink);
+  --destructive: var(--color-red-600);
+  --border: color-mix(in srgb, var(--body) 12%, transparent);
+  --input: color-mix(in srgb, var(--body) 16%, transparent);
+  --ring: color-mix(in srgb, var(--body) 60%, transparent);
+  --radius: 0.5rem;
 }
 
-html {
-  scroll-behavior: smooth;
+@theme inline {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-caslon), ui-serif, Georgia, serif;
+
+  /* Motion. One curve for UI: things appearing, leaving or changing state
+     use the strong ease-out (Tailwind `ease-snappy`). Colour-only hovers
+     keep Tailwind's default curve. The side panel's slide uses a drawer
+     curve, kept in JS (EASE_DRAWER in src/components/panel/config.js, with
+     EASE_SNAPPY mirroring this one for Motion).
+     Durations: 150ms hover reveals and exits, 200ms small fades and state
+     changes, 300ms height changes and row reveals, 400ms the panel slide.
+     Only decorative motion runs longer (cover reveal 700ms, hover zoom 900ms). */
+  --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
+  --color-highlight: var(--highlight);
+  --color-highlight-strong: var(--highlight-strong);
+  --color-highlight-ink: var(--highlight-ink);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Used to main heading like the hero text in home page*/
-h1 {
-  @apply font-serif text-3xl text-slate-950  mb-1 tracking-wide;
+/* ==========================================================================
+   Base styles. Kept in the base layer so utility classes can override them.
+   ========================================================================== */
+
+@layer base {
+  /* Tailwind v4 borders default to currentColor; keep the old soft grey. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Tailwind v4 gives buttons the default arrow; show a hand like links do. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--body);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Headings: the sans, semibold. The serif is kept for special places only
+     (the name on the home page), chosen case by case with `font-serif`. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    line-height: 1.3;
+  }
+
+  @media (min-width: 1200px) {
+    h1 {
+      font-size: 2.25rem;
+    }
+  }
+
+  /* Sans text */
+  h4,
+  h5,
+  h6,
+  p,
+  li,
+  a {
+    font-size: 15px;
+  }
+
+  h4 {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  h5,
+  h6 {
+    font-weight: 400;
+    color: color-mix(in srgb, var(--body) 70%, transparent);
+  }
+
+  p,
+  li {
+    line-height: 1.5;
+    color: var(--body);
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  ::selection {
+    background: var(--highlight-strong);
+  }
 }
 
-/* Used for section headings*/
-h2 {
-  @apply font-sans text-lg font-medium text-slate-800  tracking-wide;
-}
-
-/* Used for heading or smaller paragraphs without bold*/
-h3 {
-  @apply font-sans text-base text-slate-700 tracking-wide leading-relaxed;
-}
-
-/* Used for heading or smaller paragraphs with bold*/
-h4 {
-  @apply font-sans text-sm font-medium text-slate-900  tracking-wide;
-}
-
-/* Used for secondary texts*/
-h5 {
-  @apply font-sans text-slate-600 ;
-}
-
-h6 {
-  @apply font-sans font-light text-slate-500 text-sm tracking-wide;
-}
-
-/* Used for normal paragraphs*/
-p {
-  @apply font-sans text-sm font-normal text-slate-800 tracking-wider leading-loose;
-}
-
-strong {
-  @apply text-slate-300;
-}
-
-li {
-  @apply font-sans text-sm font-normal text-slate-800 tracking-wider leading-loose;
-}
+/* ==========================================================================
+   Page specific helpers
+   ========================================================================== */
 
 .grayscale {
   filter: grayscale(100%);
@@ -62,6 +210,90 @@ li {
 
 .grayscale:hover {
   filter: grayscale(0%);
+}
+
+/* The page surface: the warm canvas colour. The site shell carries it;
+   anything that blends images into it (mix-blend-multiply) needs it on its
+   own box too. The texture sits over everything (html::before/::after). */
+.surface-canvas {
+  background-color: var(--canvas);
+}
+
+/* Paper texture over the whole screen, after flowjam.com: a soft fibre
+   mottle and a fine grain, both fixed in place, nearly transparent and
+   ignored by the mouse. Drawn as SVG noise, so there are no image files.
+   Tuned to match flowjam's textures: grain about 3% opaque on average
+   (peaks near 8%) in a warm grey, half light and half dark specks; fibre
+   about 1% (peaks near 4%). Each layer then runs at a lower opacity than
+   flowjam's (grain 0.5 vs 0.9, fibre 0.25 vs 0.4), so more of the canvas
+   colour shows through. */
+html::before,
+html::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  background-repeat: repeat;
+}
+
+/* Fibre: large, soft blotches. */
+html::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.57 0 0 0 0 0.55 0 0 0 0 0.52 0.07 0 0 0 -0.025'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 1000px;
+  opacity: 0.25;
+}
+
+/* Grain: a fine warm speck, light and dark. */
+html::after {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.12 0 0 0 -0.025'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 108px;
+  opacity: 0.5;
+}
+
+/* Behind the open storybook: the page blurs, with a heavier grain over it
+   (the same speck as html::after, twice as strong), so the blur reads as
+   frosted paper rather than a smear. It fades in and out with the blur. */
+.book-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.24 0 0 0 -0.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 108px;
+  background-repeat: repeat;
+}
+
+/* A thin scrollbar that stays out of sight until the area is hovered or
+   has keyboard focus, then shows in a faint ink. Only keyboard focus
+   (:focus-visible) counts: the panel moves focus into its page when it
+   opens, which would otherwise keep the bar showing. */
+.scrollbar-minimal {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-minimal:hover,
+.scrollbar-minimal:has(:focus-visible) {
+  scrollbar-color: color-mix(in srgb, var(--body) 18%, transparent) transparent;
+}
+
+/* Safari and older Chromium use these instead. */
+.scrollbar-minimal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-minimal::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.scrollbar-minimal:hover::-webkit-scrollbar-thumb,
+.scrollbar-minimal:has(:focus-visible)::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--body) 18%, transparent);
 }
 
 .scrollbar-hide {
@@ -73,14 +305,60 @@ li {
   display: none;
 }
 
-.hero-gradient {
-  background: linear-gradient(180deg, 
-    #FFF5E6 0%, 
-    rgba(255, 240, 235, 0.25) 50%, 
-    rgba(250, 235, 245, 0.5) 75%, 
-    rgba(245, 240, 255, 0.75) 87.5%, 
-    #FAFAFF 100%
-  );
+/* A hand-drawn wavy rule between a page's body and what follows it (the job
+   pages' "Read more"). One 16px wave, repeated across, drawn as a mask so it
+   takes the faded body colour. */
+.squiggle {
+  height: 8px;
+  background-color: color-mix(in srgb, var(--body) 10%, transparent);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 4 Q4 0 8 4 T16 4' fill='none' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") left center / 16px 8px repeat-x;
+}
+
+/* RelatedCard: a musing card laid sideways, kept quiet. An edge and a faint
+   lift at rest; on hover it rises 2px and the shadow deepens a little. */
+.related-card-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.05),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+  transition:
+    translate 300ms var(--ease-snappy),
+    box-shadow 300ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .related-card:hover .related-card-paper {
+    translate: 0 -2px;
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 14px 28px -18px rgb(0 0 0 / 0.2);
+  }
+}
+.related-card:active .related-card-paper {
+  scale: 0.99;
+}
+.related-card[data-active] .related-card-paper {
+  box-shadow:
+    0 0 0 1px var(--color-green-700),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+.related-card:focus-visible .related-card-paper {
+  box-shadow:
+    0 0 0 2px var(--ring),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+
+/* Grain over a still (YouTubeEmbed's poster), so flat, saturated artwork
+   sits in with the paper texture: the site grain, much stronger and blended
+   in overlay so it shows on colour, plus the soft fibre mottle. */
+.poster-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.9 0 0 0 -0.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.09' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.57 0 0 0 0 0.55 0 0 0 0 0.52 0.35 0 0 0 -0.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size: 108px, 600px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
 }
 
 /* Experience timeline. Each company draws the line from its own logo down to
@@ -117,4 +395,530 @@ li {
 .exp-segment:first-child::before {
   top: -60px;
   background: linear-gradient(to bottom, rgba(200, 192, 204, 0), #c8c0cc 60px);
+}
+
+/* Respect "reduce motion": CSS transitions and animations finish at once.
+   (Motion's own animations follow the same setting in SiteShell.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* On the first visit (html.book-peek, set with intro-play on devices that
+   hover), the page loads showing the closed storybook where my photo is: the
+   photo is hidden and a picture of the closed book (captured from the 3D
+   scene, 2x, with its shadow; 28px of margin round the book, which sits
+   flush with the photo's left and bottom edges and grows up and right) sits
+   exactly where the live book will draw, until it takes over (HeroBook). */
+.book-standin {
+  display: none;
+}
+.book-peek .book-standin {
+  display: block;
+  position: absolute;
+  background: url('/book/closed-book.webp') center / 100% 100% no-repeat;
+  left: -28px;
+  top: -55.68px;
+  width: 173.24px;
+  height: 193.39px;
+  max-width: none;
+  pointer-events: none;
+}
+.book-peek .book-peek-photo {
+  visibility: hidden;
+}
+
+/* First load of the home page (html.intro-play, set by INTRO_SCRIPT in
+   lib/intro.js). Things blur in one at a time from the top: the photo, my name
+   and description word by word (these two stay in place), the about text, then
+   each section, which also rises a little as it arrives. */
+.intro-word {
+  display: inline-block;
+}
+.intro-play .intro-photo {
+  animation: intro-rise-blur 650ms var(--ease-snappy) both;
+}
+.intro-play .intro-word {
+  animation: intro-blur-in 500ms var(--ease-snappy) both;
+  animation-delay: calc(160ms + var(--i) * 38ms);
+}
+.intro-play .intro-after > * {
+  animation: intro-rise-blur 700ms var(--ease-snappy) 620ms both;
+}
+.intro-play .intro-after > :nth-child(n + 2) {
+  animation-delay: 780ms;
+}
+.intro-play .intro-flow > :not(.intro-hero, .intro-skip) {
+  animation: intro-rise-blur 750ms var(--ease-snappy) both;
+}
+/* Sections follow one another; any added later join the last step. From the
+   fourth on there is no blur, since these can hold large images. */
+.intro-play .intro-flow > :nth-child(2) { animation-delay: 980ms; }
+.intro-play .intro-flow > :nth-child(3) { animation-delay: 1180ms; }
+.intro-play .intro-flow > :nth-child(n + 4):not(.intro-skip) {
+  animation: intro-rise 750ms var(--ease-snappy) 1380ms both;
+}
+.intro-play .intro-flow > :nth-child(n + 5):not(.intro-skip) {
+  animation-delay: 1560ms;
+}
+@keyframes intro-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+@keyframes intro-rise-blur {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(18px);
+  }
+}
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Musings (components/Musings.js), after the Thoughts rail on
+   justinschueler.com. <html data-musings="list"> picks the list; cards are the
+   default. */
+html[data-musings='list'] .musings-cards,
+html:not([data-musings='list']) .musings-list {
+  display: none;
+}
+
+/* Playground: <html data-playground="list"> picks the list; the bento is the
+   default. */
+html[data-playground='list'] .playground-grid,
+html:not([data-playground='list']) .playground-list {
+  display: none;
+}
+
+/* The list's hover preview (PeekList in Playground.js), after the hero links
+   on justinschueler.com: a card at the cover's own proportions (--r) that
+   trails the pointer. It grows in from 94% at its top left corner while it
+   sharpens and fades in (320ms), and leaves faster (150ms). */
+.playground-peek {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: min(280px, calc(220px * (var(--r, 1.6))));
+  aspect-ratio: var(--r, 1.6);
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 18px 40px -16px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.94;
+  transform-origin: left top;
+  filter: blur(4px);
+  transition:
+    opacity 150ms ease,
+    scale 150ms var(--ease-snappy),
+    filter 150ms ease;
+}
+.playground-peek[data-visible] {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
+  transition:
+    opacity 240ms ease,
+    scale 320ms var(--ease-snappy),
+    filter 240ms ease;
+}
+.playground-peek > * {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (prefers-reduced-motion: reduce) {
+  .playground-peek,
+  .playground-peek[data-visible] {
+    scale: none;
+    filter: none;
+  }
+}
+
+/* The view toggle in a section's header (components/ViewToggle.js): two
+   words, the one showing in ink and underlined, the other faded. Hidden until
+   the pointer is over the section or keyboard focus is inside it; always
+   shown on touch. */
+.view-toggle {
+  transition: opacity 150ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .view-toggle {
+    opacity: 0;
+  }
+  /* Keyboard focus keeps them up, but not the focus a click leaves behind,
+     or they would stay after the pointer has gone. */
+  section:hover > * > .view-toggle,
+  section:has(:focus-visible) > * > .view-toggle {
+    opacity: 1;
+  }
+}
+.view-toggle button {
+  color: color-mix(in srgb, var(--body) 70%, transparent);
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 150ms,
+    text-decoration-color 200ms var(--ease-snappy);
+}
+.view-toggle button:hover {
+  color: var(--ink);
+}
+html[data-musings='list'] [data-toggle='musings'] [data-option='list'],
+html:not([data-musings='list']) [data-toggle='musings'] [data-option='default'],
+html[data-playground='list'] [data-toggle='playground'] [data-option='list'],
+html:not([data-playground='list']) [data-toggle='playground'] [data-option='default'] {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+
+/* The rail runs the full width of the list area (the @container), with the
+   first card lined up on the reading column. --col is that column's width. */
+.musings-rail {
+  --col: min(32rem, 100cqw - 3rem);
+  --full: 100cqw; /* both measured by Musings.js once it runs */
+  --edge: calc((100cqw - var(--col)) / 2);
+  --card-w: min(320px, 72cqw);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--card-w);
+  align-items: start;
+  gap: 0.75rem;
+  width: var(--full);
+  margin-left: calc(-1 * var(--edge));
+  /* Room for the shadows, given back with negative margins. */
+  padding: 1.25rem max(var(--edge), var(--full) - var(--edge) - var(--card-w)) 2.5rem var(--edge);
+  margin-block: -1.25rem -2.5rem;
+  /* Moved by Musings.js only (a spring, no native snapping), so no
+     scrollbar and no native horizontal panning; vertical page scroll on
+     touch still passes through. */
+  overflow-x: hidden;
+  touch-action: pan-y;
+  --side-scale: 0.94; /* first paint only; Musings.js sizes cards after */
+}
+.musings-rail::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .musings-rail {
+    --col: min(32rem, 100cqw - 4rem);
+    --side-scale: 0.88;
+    gap: 3rem;
+  }
+}
+.musings-rail[data-dragging] {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* Each card's scale and opacity are set every frame by Musings.js from its
+   distance to the front slot; nothing here transitions them. */
+
+/* The paper: a miniature page, laid out in units of its own width (--u) so
+   it reads the same at any card size. */
+.musings-doc {
+  container-type: inline-size;
+  transition: translate 450ms var(--ease-snappy);
+}
+.musings-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+  transition: box-shadow 300ms ease;
+}
+/* Cards away from the front sit flatter: an edge and a faint lift only. */
+.musings-card:not([data-current]) .musings-paper {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.05),
+    0 6px 16px -12px rgb(0 0 0 / 0.1);
+}
+.musings-page {
+  --u: calc(100cqw / 400);
+  padding: calc(44 * var(--u)) calc(44 * var(--u)) 0;
+  font-size: calc(16 * var(--u));
+  line-height: 1.6;
+}
+.musings-page-title {
+  font-size: calc(26 * var(--u));
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.musings-page-date {
+  margin: calc(8 * var(--u)) 0 calc(24 * var(--u));
+}
+/* Only the body is clipped and fades out, so the title and date can fly in
+   from outside the card while the views morph. */
+.musings-page-body {
+  mask-image: linear-gradient(#000 25%, transparent 82%);
+}
+.musings-page-body > * + * {
+  margin-top: 1em;
+}
+@media (hover: hover) and (pointer: fine) {
+  .musings-card[data-current] .group\/card:hover .musings-doc {
+    translate: 0 -2px;
+  }
+  .musings-card[data-current] .group\/card:hover .musings-paper {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 0.06),
+      0 2px 4px rgb(0 0 0 / 0.06),
+      0 20px 40px -18px rgb(0 0 0 / 0.28);
+  }
+}
+/* The caption under each card (title and date) is for screen readers only:
+   the card already shows both. */
+.musings-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.musings-card[data-current] .group\/card:active .musings-doc {
+  scale: 0.98;
+  transition: scale 160ms var(--ease-snappy);
+}
+/* The card whose musing is open in the panel (PanelLink marks it
+   data-active) gets a green outline, kept through the hover lift. */
+.musings-card .group\/card[data-active] .musings-paper,
+.musings-card .group\/card[data-active]:hover .musings-paper {
+  box-shadow:
+    0 0 0 1px var(--color-green-700),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+}
+.musings-card .group\/card:focus-visible .musings-paper {
+  box-shadow:
+    0 0 0 2px var(--ring),
+    0 14px 32px -18px rgb(0 0 0 / 0.22);
+}
+/* CoverGrid: the Playground bento, in the look of shahimim.com. Rounded
+   tiles with a hairline edge, each cover filling its tile edge to edge, and
+   the name on a small white label in the bottom-left. Square cells: the row
+   height is the column width. The cover eases to 103% on hover.
+   Tiles fade up 12px as they scroll in (RevealGroup adds .is-in and the
+   stagger in --d). */
+.bento-grid {
+  --gap: 0.5rem;
+  gap: var(--gap);
+  grid-auto-rows: calc((100cqw - var(--gap)) / 2);
+}
+.bento-tile {
+  border-radius: 16px;
+  background: #f4f1ec;
+}
+/* The edge, drawn over the cover so it shows on light and dark art alike;
+   green-700 on the tile whose page is open, the focus ring on keyboard focus. */
+.bento-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  pointer-events: none;
+  transition: box-shadow 200ms var(--ease-snappy);
+}
+.bento-tile[data-active]::after {
+  box-shadow: inset 0 0 0 1px var(--color-green-700);
+}
+.bento-tile:focus-visible::after {
+  box-shadow: inset 0 0 0 2px var(--ring);
+}
+.bento-cover {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+/* --zoom (a cover's `zoom`) crops in, anchored at the cover's `position`. */
+.bento-cover > * {
+  scale: var(--zoom, 1);
+  transition: scale 900ms var(--ease-snappy);
+}
+@media (hover: hover) and (pointer: fine) {
+  .bento-tile:hover .bento-cover > * {
+    scale: calc(var(--zoom, 1) * 1.03);
+  }
+}
+.bento-title {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.125rem 0.5rem;
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: var(--color-ink);
+}
+@media (max-width: 639px) {
+  .bento-tile {
+    border-radius: 12px;
+  }
+  .bento-title {
+    left: 0.5rem;
+    bottom: 0.5rem;
+    max-width: calc(100% - 1rem);
+    padding: 0 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.375rem;
+  }
+}
+.cover-reveal {
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 700ms var(--ease-snappy),
+    translate 700ms var(--ease-snappy);
+  transition-delay: var(--d, 0ms);
+}
+.cover-reveal.is-in {
+  opacity: 1;
+  translate: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover-reveal {
+    translate: none;
+  }
+  .bento-tile:hover .bento-cover > * {
+    scale: var(--zoom, 1);
+  }
+}
+
+/* SquareCursor: a small green square in place of the pointer, after
+   shahimim.com. Only on fine pointers, once the component is running (it sets
+   data-square-cursor on <html>), so the native cursor stays if it doesn't. */
+html[data-square-cursor],
+html[data-square-cursor] * {
+  cursor: none !important;
+}
+.square-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-snappy);
+}
+.square-cursor[data-shown] {
+  opacity: 1;
+}
+/* The square, centred on the pointer. Smaller over anything clickable, and
+   smaller still while pressed. */
+.square-cursor-mark {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  background: var(--color-green-700);
+  transition: scale 120ms var(--ease-snappy);
+}
+.square-cursor[data-over] .square-cursor-mark {
+  scale: 0.6;
+}
+.square-cursor[data-down] .square-cursor-mark {
+  scale: 0.45;
+}
+/* The label beside it over a link, after shahimim.com's pill: what a click
+   does ("Open", "Read", "Visit ↗"). It slides out from the square. */
+.square-cursor-label {
+  position: absolute;
+  top: -11px;
+  left: 10px;
+  padding: 0 7px;
+  background: var(--color-green-700);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity 150ms var(--ease-snappy),
+    translate 150ms var(--ease-snappy);
+}
+.square-cursor[data-label] .square-cursor-label {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 200ms var(--ease-snappy),
+    translate 200ms var(--ease-snappy);
+}
+
+/* While a side panel is open, the home list steps back so the panel is the
+   focus: the whole list fades to 90% and loses 30% of its colour (the green
+   links, photo, logos and covers pull the eye most), and comes back while the
+   pointer is anywhere over the list column or keyboard focus is inside it
+   (:focus-visible, so focus handed back by a closing dialog, like the
+   storybook, doesn't hold it). Wide
+   screens only (below 1024px the panel is a sheet over the list). */
+@media (min-width: 1024px) {
+  /* Stepping back is slow and soft (600ms); coming back is quicker (250ms),
+     so the list answers the pointer straight away. */
+  [data-panel-open] .intro-flow {
+    opacity: 0.9;
+    filter: grayscale(0.3);
+    transition-property: opacity, filter;
+    transition-duration: 600ms;
+    transition-timing-function: var(--ease-snappy);
+  }
+  [data-panel-open]:is(:hover, :has(:focus-visible)) .intro-flow {
+    opacity: 1;
+    filter: none;
+    transition-duration: 250ms;
+  }
+
+  /* A heavier grain over everything behind the panel (the list and the
+     canvas around the panel card; the storybook backdrop's speck, twice the
+     paper's), so it reads as a print set aside. It sits under the panel
+     (z-index 10) and fades with the list. */
+  .site-shell::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.24 0 0 0 -0.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 108px;
+    background-repeat: repeat;
+    opacity: 0;
+    transition: opacity 250ms var(--ease-snappy);
+  }
+  .site-shell:has(> [data-panel-open])::after {
+    opacity: 0.4;
+    transition-duration: 600ms;
+  }
+  .site-shell:has(> [data-panel-open]:is(:hover, :has(:focus-visible)))::after {
+    opacity: 0;
+    transition-duration: 250ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-panel-open] .intro-flow,
+  .site-shell::after {
+    transition: none;
+  }
 }

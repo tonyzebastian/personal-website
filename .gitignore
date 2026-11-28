@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Original 365 Days of Drawing files (1.7 GB); build the WebP versions with scripts/import-drawings.mjs
+/drawings-originals/
+
+# Book illustration originals (large PNGs; the site uses the WebP exports)
+/public/book/temp/
