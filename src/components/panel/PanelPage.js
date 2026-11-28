@@ -24,9 +24,17 @@ import BackLink from '@/components/panel/BackLink';
 //   stretch       in the side panel (data-fills), the page is at least as
 //                 tall as the panel and its last block grows to take the
 //                 space left (give it in-data-fills:flex-1), so a box at the
-//                 end reaches the bottom; the header stays (Dalal Prints)
+//                 end reaches the bottom edge; the header stays (Dalal
+//                 Prints). There the page runs the panel's full width with
+//                 no side padding: the header keeps the reading width, and
+//                 the body's children centre themselves with STRETCH_TEXT,
+//                 so a last box can run edge to edge.
 //   heading       false hides the title and description from sight
 //                 everywhere (kept for screen readers)
+// With `stretch`, in the side panel: back to the reading width, centred.
+export const STRETCH_TEXT =
+  'in-data-fills:mx-auto in-data-fills:w-full in-data-fills:max-w-2xl in-data-fills:px-6 md:in-data-fills:px-10';
+
 export default function PanelPage({
   title,
   href,
@@ -60,10 +68,10 @@ export default function PanelPage({
 
   return (
     <article
-      className={`@container mx-auto w-full px-6 pb-20 in-data-full-view:pt-8 md:px-10 md:in-data-full-view:pt-12 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''} ${stretch ? 'in-data-fills:flex in-data-fills:min-h-full in-data-fills:flex-col in-data-fills:pb-8' : ''}`}
+      className={`@container mx-auto w-full px-6 pb-20 in-data-full-view:pt-8 md:px-10 md:in-data-full-view:pt-12 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''} ${stretch ? 'in-data-fills:flex in-data-fills:min-h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:px-0! in-data-fills:pb-0' : ''}`}
     >
       <header
-        className={`mb-10 flex max-w-2xl flex-col items-start gap-1 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
+        className={`mb-10 flex max-w-2xl flex-col items-start gap-1 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${stretch ? STRETCH_TEXT : ''} ${heading ? '' : 'sr-only'}`}
       >
         {/* Only on a page shown full width on its own: the way home. Pages
             that fill get theirs from the shell instead (or none, immersive). */}

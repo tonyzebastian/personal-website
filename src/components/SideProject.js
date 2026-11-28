@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { sideProjects, junyMadePage, dalalPrintsPage, tonyMakeFilmsPage } from '@/lib/content';
-import PanelPage from '@/components/panel/PanelPage';
+import PanelPage, { STRETCH_TEXT } from '@/components/panel/PanelPage';
 import PhotoGrid from '@/components/PhotoGrid';
 import PosterWall from '@/components/PosterWall';
 
@@ -37,14 +37,17 @@ export default function SideProject({ slug }) {
   if (slug === 'dalal-prints') {
     return (
       <PanelPage title={item.title} meta={[item.kind]} href={dalalPrintsPage.x} linkLabel="@dalalprints on X" stretch>
-        {dalalPrintsPage.paragraphs.map((text) => (
-          <p key={text} className="text-[18px]">
-            {text}
-          </p>
-        ))}
-        {/* In the side panel the box runs to the bottom of the panel (at least
-            420px); elsewhere it keeps a tall shape. */}
-        <div className="group/wall relative mt-2 aspect-[3/5] overflow-hidden rounded-xl @xl:aspect-[4/5] in-data-fills:aspect-auto! in-data-fills:min-h-[420px] in-data-fills:flex-1">
+        <div className={`flex flex-col gap-6 ${STRETCH_TEXT}`}>
+          {dalalPrintsPage.paragraphs.map((text) => (
+            <p key={text} className="text-[18px]">
+              {text}
+            </p>
+          ))}
+        </div>
+        {/* In the side panel the box runs nearly edge to edge (16px from the
+            panel's sides and bottom) and down to the bottom of the panel (at
+            least 420px); elsewhere it keeps a tall shape. */}
+        <div className="group/wall relative mt-2 aspect-[3/5] overflow-hidden rounded-xl @xl:aspect-[4/5] in-data-fills:mx-4 in-data-fills:mb-4 in-data-fills:rounded-t-none in-data-fills:rounded-b-[12px] in-data-fills:aspect-auto! in-data-fills:min-h-[420px] in-data-fills:flex-1">
           <PosterWall />
           {/* A hint that fades in while the pointer is over the wall (always
               shown on touch screens). */}

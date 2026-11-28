@@ -61,7 +61,8 @@ function useIsDesktop() {
 // `fillPaths` lists routes that fill their container edge to edge (no bottom
 // blur in the panel, the whole screen below the Back link on a full page);
 // `noBlurPaths` lists other routes whose panel skips the bottom blur;
-// `immersivePaths` lists fill pages shown full screen with no Back link.
+// `immersivePaths` lists fill pages shown full screen with no Back link; the
+// panel's expand button opens those in a new tab (the rest in this tab).
 // Both the panel and a full page carry data-fills: pages with `fill` stretch
 // to fill whatever carries it (Tailwind `in-data-fills:`).
 export default function SiteShell({
@@ -224,7 +225,9 @@ export default function SiteShell({
     if (event.defaultPrevented || event.button !== 0) return;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = event.target.closest?.('a[href]');
-    if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+    // data-reload (the panel's expand link): a plain page load, so the page
+    // arrives on its own, full width.
+    if (!link || link.target === '_blank' || link.hasAttribute('download') || link.hasAttribute('data-reload')) return;
     const url = new URL(link.href);
     if (url.origin !== window.location.origin) return;
     if (link.hasAttribute('data-full-page')) {
@@ -350,6 +353,7 @@ export default function SiteShell({
                     href={open ? pendingPath ?? pathname : null}
                     title={open ? panelTitles[pendingPath ?? pathname] : null}
                     onClose={close}
+                    newTab={immersivePaths.includes(pendingPath ?? pathname)}
                   />
                   <div className="relative min-h-0 flex-1">
                     <AnimatePresence initial={false}>
