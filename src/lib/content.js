@@ -336,8 +336,8 @@ export const junymade = [
 // from src/lib/dalal-prints.json). `x` is its account, linked in the details line.
 export const dalalPrintsPage = {
   paragraphs: [
-    "Dalal Prints is a series of art posters for Indian companies' earnings calls, made every results season. Each one starts with what the company actually makes or does, an inhaler for Cipla or a Splendor for Hero, and turns it into a single image, with the type kept quiet so the artwork carries the poster.",
-    "It's where I explore visual ideas, one company at a time. Each poster goes up on X a day or two before the call.",
+    "Dalal Prints is a series of posters for Indian companies' earnings calls. The idea came from Quartr's posters for US companies, and I wanted to see how they would look for Indian ones.",
+    "Dalal comes from Dalal Street, the name everyone uses for India's stock market. Prints, because each one is a poster that holds a single quarter still.",
   ],
   x: 'https://x.com/dalalprints',
 };

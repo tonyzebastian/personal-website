@@ -41,7 +41,7 @@ export default function Hero() {
       </div>
       <div className="intro-after mt-3 flex flex-col gap-3">
         {homeAbout.map((paragraph, i) => (
-          <p key={i} className="text-[20px] leading-[1.6]">
+          <p key={i} className="text-[18px] leading-[1.6]">
             {paragraph.map((part, j) =>
               typeof part === 'string' ? (
                 part
