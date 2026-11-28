@@ -22,12 +22,15 @@
 // `links` (optional) { phrase: url } turns those words in the tagline and
 // description into highlight links (LinkedText).
 // `fill` (singles) lets the piece fill the side panel, edge to edge.
+// `immersive` (fill singles): opened full width (the panel's expand button,
+// or a direct link), the piece takes the whole screen with no Back link.
 // `hint` is the short line shown beside a piece's name on hover: what it is,
 // or how to play with it. `description` is the longer text in the lightbox.
 // Piece ids map to components in src/components/playground/pieces/index.js.
 export const playground = [
   {
     slug: 'flock-in-flight',
+    immersive: true,
     title: 'Flock in Flight',
     kind: 'Interactive',
     tagline: 'Press and hold to fly faster',
@@ -50,7 +53,7 @@ export const playground = [
       {
         src: '/playground/animation/olympiade.mp4',
         title: 'Sterrenkunde Olympiade',
-        hint: 'Official logo and animation for the 2019 Sterrenkunde Olympiade',
+        hint: 'Official logo and animation, 2019',
       },
       { src: '/playground/animation/chatwoot.mp4', title: 'Chatwoot', hint: 'Logo animation for Chatwoot' },
       { src: '/playground/animation/5.mp4', title: 'Postman', hint: 'A logo animation I made when I joined Postman' },
@@ -72,13 +75,13 @@ export const playground = [
       {
         id: 'evening-window',
         title: 'Evening Window',
-        hint: 'Late sun and leaf shadows drifting across a wall',
+        hint: 'Leaf shadows drifting across a wall',
         description: 'Late light and leaf shadows on a wall, with a painterly Kuwahara finish.',
       },
       {
         id: 'frosted-glass',
         title: 'Frosted Glass',
-        hint: 'Rain on a fogged window above a night street',
+        hint: 'Rain on a fogged window at night',
         description: 'A fogged skywalk window where every raindrop holds a tiny upside-down street.',
       },
     ],
@@ -95,43 +98,43 @@ export const playground = [
       {
         id: 'image-sphere',
         title: 'Image Sphere',
-        hint: 'Drag to spin it, click a photo to see it full size',
+        hint: 'Drag to spin, click a photo',
         description: 'Images spread over a sphere. Drag to spin it; it keeps some momentum, then drifts on its own. Click an image to see it larger.',
       },
       {
         id: 'image-goo',
         title: 'Image Goo',
-        hint: 'Move your cursor and the photos ooze out around it',
+        hint: 'Photos ooze out around your cursor',
         description: 'Four photos in green bubbles around a drop under your cursor, all one liquid. Move and new photos ooze out of the drop while the old ones are drawn back in; nudge toward one and a thread reaches out to it. Rest on a photo to grow it, click to see it larger.',
       },
       {
         id: 'vision-reveal',
         title: 'Vision Reveal',
-        hint: 'A shader that brings the photo through wherever your cursor wanders',
+        hint: 'Your cursor reveals the photo',
         description: 'A WebGL field that clears where the cursor passes, revealing the image underneath. Needs a mouse or trackpad.',
       },
       {
         id: 'image-loading',
         title: 'Image Loading',
-        hint: 'A placeholder that takes on the photo’s colours while it loads',
+        hint: 'Colours first, photo after',
         description: 'A grid of blinking dots stands in while the image loads, then takes on its colours and fades away to reveal it.',
       },
       {
         id: 'image-stack',
         title: 'Image Stack',
-        hint: 'Drag the top photo away to send it to the back',
+        hint: 'Drag the top photo to the back',
         description: 'A tilted stack of photos. Drag the top one away and it goes to the back.',
       },
       {
         id: 'image-tiles',
         title: 'Image Tiles',
-        hint: 'Fanned photos that straighten up when you hover them',
+        hint: 'Hover to straighten them',
         description: 'Three photos fan out as they arrive and straighten up when you hover them.',
       },
       {
         id: 'image-light',
         title: 'Image Light',
-        hint: 'Move your cursor to light the photos and tilt the cards',
+        hint: 'Your cursor lights and tilts them',
         description: 'The photos sit in the dark and blurred. Your cursor is a spotlight that shows them sharp, and the card tilts towards it.',
       },
     ],
@@ -179,6 +182,7 @@ export const playground = [
   },
   {
     slug: 'school-of-fish',
+    immersive: true,
     title: 'A School of Fish',
     kind: 'Interactive',
     tagline: 'The fish follow your cursor; click to scatter them',
@@ -191,6 +195,7 @@ export const playground = [
   },
   {
     slug: '365-days-of-drawing',
+    immersive: true,
     title: '365 Days of Drawing',
     kind: 'Illustration',
     tagline: 'One drawing a day, for a year',

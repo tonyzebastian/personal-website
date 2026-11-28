@@ -264,14 +264,16 @@ html::after {
 }
 
 /* A thin scrollbar that stays out of sight until the area is hovered or
-   focused, then shows in a faint ink. */
+   has keyboard focus, then shows in a faint ink. Only keyboard focus
+   (:focus-visible) counts: the panel moves focus into its page when it
+   opens, which would otherwise keep the bar showing. */
 .scrollbar-minimal {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
 .scrollbar-minimal:hover,
-.scrollbar-minimal:focus-within {
+.scrollbar-minimal:has(:focus-visible) {
   scrollbar-color: color-mix(in srgb, var(--body) 18%, transparent) transparent;
 }
 
@@ -290,7 +292,7 @@ html::after {
 }
 
 .scrollbar-minimal:hover::-webkit-scrollbar-thumb,
-.scrollbar-minimal:focus-within::-webkit-scrollbar-thumb {
+.scrollbar-minimal:has(:focus-visible)::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--body) 18%, transparent);
 }
 

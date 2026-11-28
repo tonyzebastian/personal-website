@@ -19,23 +19,17 @@ const FULL_PAGE_PATHS = ['/hypersonix/work', ...postmanProjects.map((item) => `/
 // beside its buttons, instead of in the page (Playground pages).
 // Pages that fill their container edge to edge (`fill` in playground.js):
 // the side panel skips its bottom blur, and the full-page view gives them the
-// whole screen below the breadcrumb.
+// whole screen below a Back link.
 const FILL_PATHS = playgroundPages.filter((item) => item.fill).map((item) => `/playground/${item.slug}`);
+// Fill pages that are experiences on their own (`immersive`): opened in a new
+// tab, full screen, with no Back link.
+const IMMERSIVE_PATHS = playgroundPages.filter((item) => item.immersive).map((item) => `/playground/${item.slug}`);
 // Other pages whose side panel skips the bottom blur: Dalal Prints ends in a
 // poster wall that runs to the panel's bottom edge.
 const NO_BLUR_PATHS = ['/dalal-prints'];
-// Every page's short title, for the full-page view's breadcrumb.
-const PAGE_TITLES = {
-  '/about': 'About',
-  '/hypersonix/work': 'Work at Hypersonix',
-  ...Object.fromEntries(postmanProjects.map((item) => [`/postman/${item.slug}`, item.page.title])),
-  ...Object.fromEntries(experience.map((job) => [`/${job.slug}`, job.name])),
-  ...Object.fromEntries(musings.map((musing) => [musing.link, musing.name])),
-  ...Object.fromEntries(sideProjects.map((item) => [item.path, item.title])),
-  ...Object.fromEntries(playgroundPages.map((item) => [`/playground/${item.slug}`, item.title])),
-};
+// Groups and clips show their own full header instead.
 const PANEL_TITLES = Object.fromEntries(
-  playgroundPages.map((item) => [`/playground/${item.slug}`, { title: item.title, tagline: item.tagline, links: item.links }]),
+  playgroundPages.filter((item) => !['group', 'clips'].includes(item.type)).map((item) => [`/playground/${item.slug}`, { title: item.title, tagline: item.tagline, links: item.links }]),
 );
 
 // Home and every page that opens in the side panel share this layout, so the
@@ -49,7 +43,7 @@ export default function SiteLayout({ children }) {
       panelTitles={PANEL_TITLES}
       fillPaths={FILL_PATHS}
       noBlurPaths={NO_BLUR_PATHS}
-      pageTitles={PAGE_TITLES}
+      immersivePaths={IMMERSIVE_PATHS}
     >
       {children}
     </SiteShell>

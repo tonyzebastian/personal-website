@@ -5,14 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter, useSelectedLayoutSegments } from 'next/navigation';
 import { AnimatePresence, LazyMotion, MotionConfig, m, useReducedMotion } from 'motion/react';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import BackLink from '@/components/panel/BackLink';
 import { ActivePathContext } from './ActivePath';
 import FrozenRouter from './FrozenRouter';
 import PanelBlur from './PanelBlur';
@@ -66,9 +59,9 @@ function useIsDesktop() {
 // routes that always show full width; `panelTitles` maps routes whose title
 // shows in the panel's top row (their page hides its own heading there);
 // `fillPaths` lists routes that fill their container edge to edge (no bottom
-// blur in the panel, the whole screen below the breadcrumb on a full page);
+// blur in the panel, the whole screen below the Back link on a full page);
 // `noBlurPaths` lists other routes whose panel skips the bottom blur;
-// `pageTitles` names each route for the full-page view's breadcrumb.
+// `immersivePaths` lists fill pages shown full screen with no Back link.
 // Both the panel and a full page carry data-fills: pages with `fill` stretch
 // to fill whatever carries it (Tailwind `in-data-fills:`).
 export default function SiteShell({
@@ -78,7 +71,7 @@ export default function SiteShell({
   panelTitles = {},
   fillPaths = [],
   noBlurPaths = [],
-  pageTitles = {},
+  immersivePaths = [],
   children,
 }) {
   // The page the router is showing (not the address bar, which stays on "/"
@@ -295,31 +288,24 @@ export default function SiteShell({
   }, []);
 
   if (showFullPage) {
-    const title = pageTitles[pathname];
     // Pages that fill (tools like the drawing wall) take the whole screen
-    // below the breadcrumb; the rest scroll as a normal page.
+    // below a Back link; the rest scroll as a normal page.
     const fills = fillPaths.includes(pathname);
     return (
       <div
         data-fills={fills ? '' : undefined}
+        data-full-view=""
         className={`bg-paper ${fills ? 'flex h-dvh flex-col' : 'min-h-dvh'}`}
         onClickCapture={onFullPageClick}
       >
-        <Breadcrumb className="shrink-0 px-6 pt-3.5 pb-2.5 md:px-8">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href="/" />}>Tony Sebastian</BreadcrumbLink>
-            </BreadcrumbItem>
-            {title && (
-              <>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{title}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </>
-            )}
-          </BreadcrumbList>
-        </Breadcrumb>
+        {/* Pages that fill hide their heading, so their way home sits here;
+            every other page shows its own Back link above its title
+            (PanelPage, shown inside data-full-view). */}
+        {fills && !immersivePaths.includes(pathname) && (
+          <div className="shrink-0 px-6 pt-3.5 pb-2.5 md:px-8">
+            <BackLink />
+          </div>
+        )}
         {fills ? <div className="relative min-h-0 flex-1">{children}</div> : children}
       </div>
     );

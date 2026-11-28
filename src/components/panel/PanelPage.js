@@ -1,9 +1,10 @@
 import { Fragment } from 'react';
 import { ArrowUpRight } from '@phosphor-icons/react/ssr';
+import BackLink from '@/components/panel/BackLink';
 
 // The frame for every page shown in the panel: a header (the title in
 // the sans at 24px, then a details line split by pipes) and the body
-// below.
+// below. Shown full width on its own, a Back link sits above the title.
 //   href          optional website, shown at the end of the details line as
 //                 a link that opens in a new tab
 //   linkLabel     that link's text ("Website" unless set, e.g. "Instagram")
@@ -59,11 +60,14 @@ export default function PanelPage({
 
   return (
     <article
-      className={`@container mx-auto w-full px-6 pb-20 md:px-10 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''} ${stretch ? 'in-data-fills:flex in-data-fills:min-h-full in-data-fills:flex-col in-data-fills:pb-8' : ''}`}
+      className={`@container mx-auto w-full px-6 pb-20 in-data-full-view:pt-8 md:px-10 md:in-data-full-view:pt-12 ${wide ? 'max-w-5xl' : 'max-w-2xl'} ${compact ? 'in-[aside]:pt-6' : ''} ${fill ? 'in-data-fills:flex in-data-fills:h-full in-data-fills:max-w-none in-data-fills:flex-col in-data-fills:p-0!' : ''} ${stretch ? 'in-data-fills:flex in-data-fills:min-h-full in-data-fills:flex-col in-data-fills:pb-8' : ''}`}
     >
       <header
         className={`mb-10 flex max-w-2xl flex-col items-start gap-1 ${compact ? 'in-[aside]:sr-only' : ''} ${fill ? 'in-data-fills:sr-only' : ''} ${heading ? '' : 'sr-only'}`}
       >
+        {/* Only on a page shown full width on its own: the way home. Pages
+            that fill get theirs from the shell instead (or none, immersive). */}
+        <BackLink className="mb-5 hidden in-data-full-view:inline-flex in-data-fills:hidden!" />
         <h1 className="font-sans text-2xl font-semibold tracking-[-0.02em]">{title}</h1>
         {items.length > 0 && (
           <p className="flex flex-wrap items-center gap-x-2.5 font-medium text-body/70 tabular-nums">

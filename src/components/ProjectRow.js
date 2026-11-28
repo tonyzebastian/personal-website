@@ -7,7 +7,7 @@ export default function ProjectRow({ href, logo, title, summary }) {
   return (
     <PanelLink
       href={href}
-      className="group -mx-3 flex items-center gap-4 rounded-md px-3 py-2.5 text-base outline-none transition-[background-color,box-shadow] hover:bg-body/[0.03] focus-visible:bg-body/[0.05] focus-visible:ring-2 focus-visible:ring-ring data-active:bg-paper data-active:shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_1px_3px_rgb(0_0_0/0.04)]"
+      className="group -mx-3 flex items-center gap-4 rounded-md px-3 py-2.5 text-base outline-none transition-[background-color,box-shadow] hover:bg-body/[0.03] focus-visible:bg-body/[0.05] focus-visible:ring-2 focus-visible:ring-ring data-active:bg-paper data-active:shadow-[0_0_0_1px_var(--color-green-700),0_1px_3px_rgb(0_0_0/0.04)]"
     >
       <img
         src={logo}

@@ -10,6 +10,9 @@ import { findPlayground, playgroundPages } from '@/lib/playground';
 // videos, one below the other.
 export const dynamicParams = false;
 
+// Entry types set like the side-project pages (see below).
+const LISTS = ['group', 'clips'];
+
 export function generateStaticParams() {
   return playgroundPages.map(({ slug }) => ({ slug }));
 }
@@ -41,6 +44,23 @@ export default async function PlaygroundEntry({ params }) {
   const entry = findPlayground(slug);
   if (!entry) notFound();
 
+  // Groups and clips show a full header like the side-project pages: the
+  // title, with the description in the details line's place. Singles keep the compact header (the panel's top row names
+  // them) so the piece gets the room.
+  if (LISTS.includes(entry.type)) {
+    return (
+      <PanelPage title={entry.title} description={<LinkedText text={entry.description} links={entry.links} />} wide>
+        <div className="flex flex-col gap-12">
+          {entry.type === 'clips'
+            ? entry.clips.map((clip) => <GroupItem key={clip.src} video={clip.src} title={clip.title} hint={clip.hint} />)
+            : entry.items.map((item) => (
+                <GroupItem key={item.id} id={item.id} title={item.title} hint={item.hint} description={item.description} />
+              ))}
+        </div>
+      </PanelPage>
+    );
+  }
+
   return (
     <PanelPage
       title={entry.title}
@@ -53,18 +73,6 @@ export default async function PlaygroundEntry({ params }) {
         // In the side panel the page's own header is hidden (the panel's top
         // row names it), so the note shows its text here instead.
         <p className="hidden text-body/70 in-[aside]:block">{entry.description}</p>
-      ) : entry.type === 'clips' ? (
-        <div className="flex flex-col gap-12">
-          {entry.clips.map((clip) => (
-            <GroupItem key={clip.src} video={clip.src} title={clip.title} hint={clip.hint} />
-          ))}
-        </div>
-      ) : entry.type === 'group' ? (
-        <div className="flex flex-col gap-12">
-          {entry.items.map((item) => (
-            <GroupItem key={item.id} id={item.id} title={item.title} hint={item.hint} description={item.description} />
-          ))}
-        </div>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
           <GroupItem id={entry.piece} title={entry.title} fill={entry.fill} />

@@ -15,7 +15,8 @@ import { PIECES } from './pieces';
 //           animate as they arrive) and Expand, which opens it on its own in
 //           a lightbox under a top bar with its title and description, with
 //           its controls where it has them. The hint and buttons show on
-//           hover or keyboard focus (always on touch screens).
+//           hover or keyboard focus (always on touch screens), and not at all
+//           in the bottom sheet.
 //   bare    a piece with no line (`bare` in the registry, the single-piece
 //           pages): the panel's own header names it and its expand button
 //           opens it full size. `fill` lets it fill the side panel.
@@ -33,7 +34,7 @@ export default function GroupItem({ id, video, title, hint, description, fill = 
 }
 
 const REVEAL =
-  'opacity-0 transition-opacity duration-150 ease-snappy group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100';
+  'opacity-0 transition-opacity duration-150 ease-snappy group-hover/item:opacity-100 group-focus-within/item:opacity-100 [@media(hover:none)]:opacity-100 in-data-sheet-scroll:hidden';
 // `fill`: wherever it fills (side panel or a filling full page, both
 // data-fills), the stage drops its shape and takes the whole space.
 const FILL =
@@ -54,10 +55,12 @@ function shapeOf(id, fill) {
     : { className: base, style: { aspectRatio: piece?.aspect ?? '16 / 10' } };
 }
 
-// The name, then the hint after a pipe; the hint is cut short on narrow pages.
+// The name, then the hint after a pipe. Hints are written to fit the
+// narrowest side panel; anything longer is clipped without an ellipsis (an
+// ellipsis would show even while the hint is hidden).
 function Caption({ headingId, title, hint }) {
   return (
-    <div className="min-w-0 flex-1 truncate @2xl:overflow-visible @2xl:whitespace-normal">
+    <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap @2xl:overflow-visible @2xl:whitespace-normal">
       <h2 id={headingId} className="inline font-sans text-base font-medium tracking-normal">
         {title}
       </h2>
