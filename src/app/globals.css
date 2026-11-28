@@ -869,7 +869,9 @@ html[data-square-cursor] * {
 /* While a side panel is open, the home list steps back so the panel is the
    focus: the whole list fades to 90% and loses 30% of its colour (the green
    links, photo, logos and covers pull the eye most), and comes back while the
-   pointer is anywhere over the list column or focus is inside it. Wide
+   pointer is anywhere over the list column or keyboard focus is inside it
+   (:focus-visible, so focus handed back by a closing dialog, like the
+   storybook, doesn't hold it). Wide
    screens only (below 1024px the panel is a sheet over the list). */
 @media (min-width: 1024px) {
   /* Stepping back is slow and soft (600ms); coming back is quicker (250ms),
@@ -881,14 +883,40 @@ html[data-square-cursor] * {
     transition-duration: 600ms;
     transition-timing-function: var(--ease-snappy);
   }
-  [data-panel-open]:is(:hover, :focus-within) .intro-flow {
+  [data-panel-open]:is(:hover, :has(:focus-visible)) .intro-flow {
     opacity: 1;
     filter: none;
     transition-duration: 250ms;
   }
+
+  /* A heavier grain over everything behind the panel (the list and the
+     canvas around the panel card; the storybook backdrop's speck, twice the
+     paper's), so it reads as a print set aside. It sits under the panel
+     (z-index 10) and fades with the list. */
+  .site-shell::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 192 192' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 1.8 0 0 -0.36 0 1.8 0 0 -0.38 0 1.8 0 0 -0.41 0.24 0 0 0 -0.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    background-size: 108px;
+    background-repeat: repeat;
+    opacity: 0;
+    transition: opacity 250ms var(--ease-snappy);
+  }
+  .site-shell:has(> [data-panel-open])::after {
+    opacity: 0.4;
+    transition-duration: 600ms;
+  }
+  .site-shell:has(> [data-panel-open]:is(:hover, :has(:focus-visible)))::after {
+    opacity: 0;
+    transition-duration: 250ms;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  [data-panel-open] .intro-flow {
+  [data-panel-open] .intro-flow,
+  .site-shell::after {
     transition: none;
   }
 }

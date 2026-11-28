@@ -328,7 +328,7 @@ export default function SiteShell({
   return (
     <LazyMotion features={loadFeatures} strict>
       <MotionConfig reducedMotion="user">
-        <div className="surface-canvas min-h-dvh lg:flex lg:h-dvh lg:overflow-hidden" onClickCapture={onClickCapture}>
+        <div className="site-shell surface-canvas min-h-dvh lg:flex lg:h-dvh lg:overflow-hidden" onClickCapture={onClickCapture}>
           {/* The list carries the surface itself: as a container it is its own
               layer, so the hero image can only blend with what is inside it.
               On wide screens it sits 16px in from the top and bottom, like the
